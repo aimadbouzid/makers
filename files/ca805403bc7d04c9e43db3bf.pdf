@@ -1,0 +1,80 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 6 0 R /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Length 3303 >>
+stream
+BT /F2 17 Tf 56 790 Td (Photo produit : les mots qui changent tout) Tj ET
+BT /F2 10.5 Tf 56 755 Td (LA STRUCTURE D'UN PROMPT QUI MARCHE) Tj ET
+BT /F1 10.5 Tf 56 740.5 Td (  [quoi] + [comment c'est pose] + [le fond] + [la lumiere]) Tj ET
+BT /F1 10.5 Tf 56 726 Td (  + [l'objectif] + [l'ambiance] + [le format]) Tj ET
+BT /F1 10.5 Tf 56 711.5 Td () Tj ET
+BT /F1 10.5 Tf 56 704.5 Td (LA LUMIERE \(le reglage le plus important\)) Tj ET
+BT /F1 10.5 Tf 56 690 Td (  hard studio light      ombre nette, look pub, percutant) Tj ET
+BT /F1 10.5 Tf 56 675.5 Td (  soft diffused light    doux, haut de gamme, parfum/cosmetique) Tj ET
+BT /F1 10.5 Tf 56 661 Td (  golden hour backlight  chaud, lifestyle, fin de journee) Tj ET
+BT /F1 10.5 Tf 56 646.5 Td (  raking side light      fait ressortir la matiere, le relief) Tj ET
+BT /F1 10.5 Tf 56 632 Td (  neon lights at night   nocturne, cyan et magenta, urbain) Tj ET
+BT /F1 10.5 Tf 56 617.5 Td () Tj ET
+BT /F1 10.5 Tf 56 610.5 Td (L'OBJECTIF \(change la perspective, pas que le flou\)) Tj ET
+BT /F1 10.5 Tf 56 596 Td (  35mm   large, on voit le decor, style reportage) Tj ET
+BT /F1 10.5 Tf 56 581.5 Td (  50mm   neutre, comme l'oeil humain) Tj ET
+BT /F1 10.5 Tf 56 567 Td (  85mm   le produit se detache, fond ecrase : le classique de la pub) Tj ET
+BT /F1 10.5 Tf 56 552.5 Td (  100mm macro  tres gros plan sur la matiere) Tj ET
+BT /F1 10.5 Tf 56 538 Td () Tj ET
+BT /F2 10.5 Tf 56 526 Td (L'OUVERTURE) Tj ET
+BT /F1 10.5 Tf 56 511.5 Td (  f/2    fond tres flou, on isole le sujet) Tj ET
+BT /F1 10.5 Tf 56 497 Td (  f/8    tout est net : c'est ce qu'on veut en photo produit) Tj ET
+BT /F1 10.5 Tf 56 482.5 Td () Tj ET
+BT /F2 10.5 Tf 56 470.5 Td (LE FORMAT) Tj ET
+BT /F1 10.5 Tf 56 456 Td (  --ar 4:5    portrait, le meilleur en fil et en story) Tj ET
+BT /F1 10.5 Tf 56 441.5 Td (  --ar 1:1    carre, fiche produit) Tj ET
+BT /F1 10.5 Tf 56 427 Td (  --ar 16:9   paysage, banniere, macro) Tj ET
+BT /F1 10.5 Tf 56 412.5 Td () Tj ET
+BT /F2 10.5 Tf 56 400.5 Td (LES FONDS QUI FONCTIONNENT) Tj ET
+BT /F1 10.5 Tf 56 386 Td (  solid [couleur] background      franc, energique, sportswear) Tj ET
+BT /F1 10.5 Tf 56 371.5 Td (  textured concrete               brut, urbain) Tj ET
+BT /F1 10.5 Tf 56 357 Td (  warm oak wood                   chaleureux, artisanal) Tj ET
+BT /F1 10.5 Tf 56 342.5 Td (  seamless studio backdrop        neutre, catalogue) Tj ET
+BT /F1 10.5 Tf 56 328 Td () Tj ET
+BT /F2 10.5 Tf 56 316 Td (TROIS CHOSES A TOUJOURS AJOUTER) Tj ET
+BT /F1 10.5 Tf 56 301.5 Td (  no text, no letters, no watermark) Tj ET
+BT /F1 10.5 Tf 56 287 Td (     \(sinon le generateur ecrit du faux texte illisible\)) Tj ET
+BT /F1 10.5 Tf 56 272.5 Td (  --style raw) Tj ET
+BT /F1 10.5 Tf 56 258 Td (     \(moins de "joliesse" automatique, plus de controle\)) Tj ET
+BT /F1 10.5 Tf 56 243.5 Td (  crisp contact shadow) Tj ET
+BT /F1 10.5 Tf 56 229 Td (     \(sans ombre au sol, l'objet flotte et ca se voit\)) Tj ET
+BT /F1 10.5 Tf 56 214.5 Td () Tj ET
+BT /F2 10.5 Tf 56 202.5 Td (POUR UNE SERIE COHERENTE) Tj ET
+BT /F1 10.5 Tf 56 188 Td (Ecris ton bloc de style UNE fois, colle-le a la fin de chaque prompt,) Tj ET
+BT /F1 10.5 Tf 56 173.5 Td (et ne change que le debut. Meme fond, meme lumiere, meme objectif.) Tj ET
+BT /F1 8 Tf 56 34 Td (makers.si - la bibliotheque de la communaute) Tj ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000348 00000 n 
+0000000450 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+3804
+%%EOF

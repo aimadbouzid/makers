@@ -1,0 +1,18 @@
+# Les pages publiques peuvent être référencées : c'est utile pour être trouvé.
+# L'API, les fichiers des membres et l'espace d'administration, non.
+User-agent: *
+Disallow: /api/
+Disallow: /files/
+Allow: /
+
+# Robots d'aspiration de contenu : non merci.
+# (Une politesse, pas une sécurité : un robot malveillant ignore ce fichier.
+#  La vraie protection est le défi anti-robot à l'inscription et les limites de débit.)
+User-agent: GPTBot
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /

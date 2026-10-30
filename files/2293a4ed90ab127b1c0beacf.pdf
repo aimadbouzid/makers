@@ -1,0 +1,77 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 6 0 R /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Length 3005 >>
+stream
+BT /F2 17 Tf 56 790 Td (Ecrire un prompt qui marche) Tj ET
+BT /F2 10.5 Tf 56 755 Td (POURQUOI CA REPOND A COTE) Tj ET
+BT /F1 10.5 Tf 56 740.5 Td (Neuf fois sur dix, ce n'est pas l'IA : c'est que la demande) Tj ET
+BT /F1 10.5 Tf 56 726 Td (pouvait etre comprise de dix facons, et elle en a choisi une.) Tj ET
+BT /F1 10.5 Tf 56 711.5 Td () Tj ET
+BT /F2 10.5 Tf 56 699.5 Td (1. DIS QUI TU ES ET POUR QUI) Tj ET
+BT /F1 10.5 Tf 56 685 Td (   Mauvais : "Ecris un texte sur les baskets.") Tj ET
+BT /F1 10.5 Tf 56 670.5 Td (   Bon :     "Je vends des baskets en ligne. Ecris la fiche produit) Tj ET
+BT /F1 10.5 Tf 56 656 Td (              pour quelqu'un qui hesite entre deux modeles.") Tj ET
+BT /F1 10.5 Tf 56 641.5 Td () Tj ET
+BT /F2 10.5 Tf 56 629.5 Td (2. DONNE UN EXEMPLE DE CE QUE TU VEUX) Tj ET
+BT /F1 10.5 Tf 56 615 Td (   Un seul exemple vaut dix lignes d'explication.) Tj ET
+BT /F1 10.5 Tf 56 600.5 Td (   "Comme ca : [ton exemple]. Fais pareil pour [ton cas].") Tj ET
+BT /F1 10.5 Tf 56 586 Td () Tj ET
+BT /F2 10.5 Tf 56 574 Td (3. DIS CE QUE TU NE VEUX PAS) Tj ET
+BT /F1 10.5 Tf 56 559.5 Td (   C'est le point que tout le monde oublie.) Tj ET
+BT /F1 10.5 Tf 56 545 Td (   "Pas de mots comme revolutionnaire, incontournable, plongez.") Tj ET
+BT /F1 10.5 Tf 56 530.5 Td () Tj ET
+BT /F2 10.5 Tf 56 518.5 Td (4. DEMANDE LE FORMAT) Tj ET
+BT /F1 10.5 Tf 56 504 Td (   "Trois phrases." "Un tableau a deux colonnes." "Moins de 50 mots.") Tj ET
+BT /F1 10.5 Tf 56 489.5 Td (   Sans ca, tu recois toujours une liste a puces interminable.) Tj ET
+BT /F1 10.5 Tf 56 475 Td () Tj ET
+BT /F2 10.5 Tf 56 463 Td (5. AUTORISE-LE A POSER DES QUESTIONS) Tj ET
+BT /F1 10.5 Tf 56 448.5 Td (   "Si quelque chose manque pour bien repondre, demande-le-moi) Tj ET
+BT /F1 10.5 Tf 56 434 Td (    avant de commencer.") Tj ET
+BT /F1 10.5 Tf 56 419.5 Td (   Ca evite les reponses longues et completement a cote.) Tj ET
+BT /F1 10.5 Tf 56 405 Td () Tj ET
+BT /F2 10.5 Tf 56 393 Td (6. DEMANDE UNE VERSION, PUIS CORRIGE) Tj ET
+BT /F1 10.5 Tf 56 378.5 Td (   N'essaie pas d'avoir le resultat parfait du premier coup.) Tj ET
+BT /F1 10.5 Tf 56 364 Td (   "Garde le 2e paragraphe, refais le reste plus court.") Tj ET
+BT /F1 10.5 Tf 56 349.5 Td (   C'est une conversation, pas un distributeur.) Tj ET
+BT /F1 10.5 Tf 56 335 Td () Tj ET
+BT /F2 10.5 Tf 56 323 Td (LE TEST AVANT D'ENVOYER) Tj ET
+BT /F1 10.5 Tf 56 308.5 Td (Relis ton prompt et demande-toi : est-ce qu'un stagiaire competent,) Tj ET
+BT /F1 10.5 Tf 56 294 Td (qui ne connait pas mon projet, saurait quoi faire avec ca ?) Tj ET
+BT /F1 10.5 Tf 56 279.5 Td (Si non, il manque du contexte.) Tj ET
+BT /F1 10.5 Tf 56 265 Td () Tj ET
+BT /F2 10.5 Tf 56 253 Td (CE QUI NE SERT A RIEN) Tj ET
+BT /F1 10.5 Tf 56 238.5 Td (- Dire "s'il te plait" ou promettre un pourboire) Tj ET
+BT /F1 10.5 Tf 56 224 Td (- Ecrire en majuscules pour insister) Tj ET
+BT /F1 10.5 Tf 56 209.5 Td (- Repeter trois fois la meme consigne) Tj ET
+BT /F1 8 Tf 56 34 Td (makers.si - la bibliotheque de la communaute) Tj ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000348 00000 n 
+0000000450 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+3506
+%%EOF

@@ -1,0 +1,71 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 6 0 R /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Length 2613 >>
+stream
+BT /F2 17 Tf 56 790 Td (Installer ton premier skill Claude) Tj ET
+BT /F1 10.5 Tf 56 760 Td (UN SKILL, C'EST QUOI ?) Tj ET
+BT /F1 10.5 Tf 56 745.5 Td (Un dossier avec un fichier SKILL.md dedans. Claude le lit tout seul) Tj ET
+BT /F1 10.5 Tf 56 731 Td (quand il en a besoin. C'est tout. Pas de code, pas d'installation.) Tj ET
+BT /F1 10.5 Tf 56 716.5 Td () Tj ET
+BT /F2 10.5 Tf 56 704.5 Td (OU LE METTRE) Tj ET
+BT /F1 10.5 Tf 56 690 Td (  Pour un seul projet :   .claude/skills/nom-du-skill/SKILL.md) Tj ET
+BT /F1 10.5 Tf 56 675.5 Td (  Pour tous tes projets : ~/.claude/skills/nom-du-skill/SKILL.md) Tj ET
+BT /F1 10.5 Tf 56 661 Td () Tj ET
+BT /F2 10.5 Tf 56 649 Td (A QUOI RESSEMBLE LE FICHIER) Tj ET
+BT /F1 10.5 Tf 56 634.5 Td (  ---) Tj ET
+BT /F1 10.5 Tf 56 620 Td (  name: relecture-avant-commit) Tj ET
+BT /F1 10.5 Tf 56 605.5 Td (  description: Relit le code modifie avant chaque commit.) Tj ET
+BT /F1 10.5 Tf 56 591 Td (  ---) Tj ET
+BT /F1 10.5 Tf 56 576.5 Td () Tj ET
+BT /F1 10.5 Tf 56 569.5 Td (  Puis tes instructions, en francais, comme a un collegue.) Tj ET
+BT /F1 10.5 Tf 56 555 Td () Tj ET
+BT /F2 10.5 Tf 56 543 Td (LES 3 LIGNES QUI COMPTENT) Tj ET
+BT /F1 10.5 Tf 56 528.5 Td (1. Le nom : en minuscules, avec des tirets. Pas d'espace.) Tj ET
+BT /F1 10.5 Tf 56 514 Td (2. La description : c'est elle qui decide QUAND le skill se declenche.) Tj ET
+BT /F1 10.5 Tf 56 499.5 Td (   Sois precis. "Aide au code" ne declenchera jamais rien.) Tj ET
+BT /F1 10.5 Tf 56 485 Td (3. Le reste : des instructions claires, pas un roman.) Tj ET
+BT /F1 10.5 Tf 56 470.5 Td () Tj ET
+BT /F2 10.5 Tf 56 458.5 Td (VERIFIER QUE CA MARCHE) Tj ET
+BT /F1 10.5 Tf 56 444 Td (Demande a Claude : "quels skills as-tu ?" Il doit citer le tien.) Tj ET
+BT /F1 10.5 Tf 56 429.5 Td (S'il ne le voit pas : verifie le nom du dossier et du fichier.) Tj ET
+BT /F1 10.5 Tf 56 415 Td () Tj ET
+BT /F2 10.5 Tf 56 403 Td (LES 3 ERREURS CLASSIQUES) Tj ET
+BT /F1 10.5 Tf 56 388.5 Td (- Fichier nomme skill.md au lieu de SKILL.md \(les majuscules comptent\)) Tj ET
+BT /F1 10.5 Tf 56 374 Td (- Description trop vague : le skill ne se declenche jamais) Tj ET
+BT /F1 10.5 Tf 56 359.5 Td (- Instructions trop longues : va a l'essentiel, il lit tout a chaque fois) Tj ET
+BT /F1 10.5 Tf 56 345 Td () Tj ET
+BT /F2 10.5 Tf 56 333 Td (AVANT D'INSTALLER UN SKILL TROUVE SUR INTERNET) Tj ET
+BT /F1 10.5 Tf 56 318.5 Td (Ouvre-le et lis-le. Un skill peut faire executer des commandes) Tj ET
+BT /F1 10.5 Tf 56 304 Td (sur ton ordinateur. Personne ne garantit ce qu'il fait vraiment.) Tj ET
+BT /F1 8 Tf 56 34 Td (makers.si - la bibliotheque de la communaute) Tj ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000348 00000 n 
+0000000450 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+3114
+%%EOF

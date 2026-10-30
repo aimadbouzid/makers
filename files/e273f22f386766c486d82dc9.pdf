@@ -1,0 +1,74 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 6 0 R /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Length 3045 >>
+stream
+BT /F2 17 Tf 56 790 Td (Les erreurs de debutant avec l'IA) Tj ET
+BT /F2 10.5 Tf 56 755 Td (1. CROIRE CE QU'ELLE DIT SANS VERIFIER) Tj ET
+BT /F1 10.5 Tf 56 740.5 Td (   Une IA peut inventer une source, une date, une fonction qui n'existe pas,) Tj ET
+BT /F1 10.5 Tf 56 726 Td (   et le dire avec la meme assurance que le reste.) Tj ET
+BT /F1 10.5 Tf 56 711.5 Td (   Regle : tout ce qui est verifiable se verifie. Un lien, un chiffre,) Tj ET
+BT /F1 10.5 Tf 56 697 Td (   un nom : tu cliques, tu regardes.) Tj ET
+BT /F1 10.5 Tf 56 682.5 Td () Tj ET
+BT /F2 10.5 Tf 56 670.5 Td (2. LUI DONNER ACCES A TROP DE CHOSES, TROP TOT) Tj ET
+BT /F1 10.5 Tf 56 656 Td (   Avant de la laisser modifier ou supprimer quoi que ce soit,) Tj ET
+BT /F1 10.5 Tf 56 641.5 Td (   fais-lui d'abord ECRIRE ce qu'elle ferait. Tu compares. Tu valides.) Tj ET
+BT /F1 10.5 Tf 56 627 Td (   Ensuite seulement tu lui donnes la main.) Tj ET
+BT /F1 10.5 Tf 56 612.5 Td () Tj ET
+BT /F2 10.5 Tf 56 600.5 Td (3. COLLER DES INFOS QU'ON NE DEVRAIT PAS COLLER) Tj ET
+BT /F1 10.5 Tf 56 586 Td (   Mots de passe, cles d'acces, numero de carte, piece d'identite,) Tj ET
+BT /F1 10.5 Tf 56 571.5 Td (   donnees de tes clients : jamais dans une conversation.) Tj ET
+BT /F1 10.5 Tf 56 557 Td (   Si tu dois montrer un exemple, remplace par des valeurs bidon.) Tj ET
+BT /F1 10.5 Tf 56 542.5 Td () Tj ET
+BT /F2 10.5 Tf 56 530.5 Td (4. ACCEPTER LE PREMIER JET) Tj ET
+BT /F1 10.5 Tf 56 516 Td (   Le premier resultat est rarement le bon. Ce n'est pas grave :) Tj ET
+BT /F1 10.5 Tf 56 501.5 Td (   dis ce qui ne va pas et demande une correction ciblee.) Tj ET
+BT /F1 10.5 Tf 56 487 Td (   "Trop long, garde l'idee du 2e paragraphe" vaut mieux que de tout refaire.) Tj ET
+BT /F1 10.5 Tf 56 472.5 Td () Tj ET
+BT /F2 10.5 Tf 56 460.5 Td (5. TOUT RECOMMENCER A CHAQUE FOIS) Tj ET
+BT /F1 10.5 Tf 56 446 Td (   Si tu repetes les memes consignes a chaque conversation,) Tj ET
+BT /F1 10.5 Tf 56 431.5 Td (   mets-les dans un fichier CLAUDE.md. Il est lu automatiquement.) Tj ET
+BT /F1 10.5 Tf 56 417 Td () Tj ET
+BT /F2 10.5 Tf 56 405 Td (6. INSTALLER UN SKILL SANS LE LIRE) Tj ET
+BT /F1 10.5 Tf 56 390.5 Td (   Un skill trouve sur internet peut lancer des commandes chez toi.) Tj ET
+BT /F1 10.5 Tf 56 376 Td (   Ouvre le fichier. Lis-le. C'est du texte, ca prend deux minutes.) Tj ET
+BT /F1 10.5 Tf 56 361.5 Td () Tj ET
+BT /F2 10.5 Tf 56 349.5 Td (7. LUI DEMANDER SON AVIS SUR SON PROPRE TRAVAIL) Tj ET
+BT /F1 10.5 Tf 56 335 Td (   Elle trouvera ca tres bien. Demande plutot :) Tj ET
+BT /F1 10.5 Tf 56 320.5 Td (   "Quels sont les 3 problemes les plus graves la-dedans ?") Tj ET
+BT /F1 10.5 Tf 56 306 Td () Tj ET
+BT /F2 10.5 Tf 56 294 Td (LA QUESTION A SE POSER AVANT DE LA LAISSER AGIR) Tj ET
+BT /F1 10.5 Tf 56 279.5 Td (Si elle se trompe completement sur ce coup-la,) Tj ET
+BT /F1 10.5 Tf 56 265 Td (est-ce que je peux revenir en arriere ?) Tj ET
+BT /F1 10.5 Tf 56 250.5 Td (Si la reponse est non, ne lui donne pas la main.) Tj ET
+BT /F1 8 Tf 56 34 Td (makers.si - la bibliotheque de la communaute) Tj ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000348 00000 n 
+0000000450 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+3546
+%%EOF

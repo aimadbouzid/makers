@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>makers.si – la bibliothèque de la communauté</title>
+  <meta name="description" content="makers.si : skills Claude, prompts, idées, sondages et PDF partagés par la communauté des vibe codeurs et de l’IA. Chaque partage est relu avant publication.">
+  <meta name="theme-color" content="#010409">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <!-- Les deux polices visibles dès la première image de la page : chargées en priorité. -->
+  <link rel="preload" href="fonts/ibm-plex-sans-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/ibm-plex-mono-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header id="header" class="site-header"></header>
+  <div id="view" class="wrap"></div>
+  <footer class="site-footer">
+    <div class="foot">
+      <span class="logo">makers<i>.</i>si</span>
+      <nav aria-label="Informations légales">
+        <a href="#/aide">Aide</a>
+        <a href="#/charte">Charte</a>
+        <a href="#/conditions">Conditions</a>
+        <a href="#/confidentialite">Confidentialité</a>
+        <a href="#/cookies">Cookies</a>
+        <a href="#/mentions-legales">Mentions légales</a>
+      </nav>
+      <p class="credit">Créé par <a href="https://elyana.net/" target="_blank" rel="noopener">From Artist to Artist</a> · <a href="https://elyana.net/" target="_blank" rel="noopener">elyana.net</a></p>
+    </div>
+  </footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script>window.MAKERS_STATIQUE = true;</script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
