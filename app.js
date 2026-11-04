@@ -6,14 +6,32 @@ const TYPES = {
     label: 'Skill Claude', short: 'Skill', plural: 'Skills Claude',
     about: 'Un skill, c’est un mode d’emploi que Claude lit tout seul quand ta demande correspond. Ceux-ci sont prêts à installer, en trois étapes.',
     hint: 'Le mode d’emploi que Claude lit, et ses fichiers.', example: 'Ex. : « Relecture avant commit »',
-    fields: ['tree', 'url', 'images', 'tags'],
+    fields: ['tree', 'url', 'images', 'modele', 'tags'],
     titleEx: 'Relecture automatique avant chaque commit', descEx: 'À quoi il sert, ce qu’il fait, dans quel cas tu l’utilises.',
+  },
+  agent: {
+    label: 'Agent', short: 'Agent', plural: 'Agents',
+    about: 'Des agents qui font un travail tout seuls : une consigne, des outils, et un endroit où s’arrêter.',
+    hint: 'Un agent qui travaille seul, et ce qu’il lui faut.', example: 'Ex. : « Un agent qui relit mes PR »',
+    fields: ['content', 'url', 'images', 'modele', 'tags'],
+    titleEx: 'Un agent qui trie mes mails et répond aux plus simples',
+    descEx: 'Ce qu’il fait sans toi, ce qu’il te demande, et où il s’arrête tout seul.',
+    contentLabel: 'Sa consigne et ses outils', contentEx: 'Rôle : …\n\nOutils dont il dispose :\n- …\n\nQuand il s’arrête et demande :\n- …',
+  },
+  mcp: {
+    label: 'Serveur MCP', short: 'MCP', plural: 'Serveurs MCP',
+    about: 'Des serveurs MCP : ce qui donne à un modèle des outils, des fichiers ou une base à consulter.',
+    hint: 'Un serveur qui donne des outils à un modèle.', example: 'Ex. : « Un MCP pour ma base Postgres »',
+    fields: ['content', 'url', 'images', 'modele', 'tags'],
+    titleEx: 'Un serveur MCP pour interroger ma base Postgres',
+    descEx: 'Les outils qu’il expose, ce qu’il faut pour l’installer, et ce qu’il ne sait pas faire.',
+    contentLabel: 'La configuration', contentEx: '{\n  "mcpServers": {\n    "postgres": {\n      "command": "npx",\n      "args": ["-y", "…"]\n    }\n  }\n}',
   },
   prompt: {
     label: 'Prompt', short: 'Prompt', plural: 'Prompts',
     about: 'Des prompts qui marchent, prêts à coller dans ta conversation.',
     hint: 'Un prompt à coller tel quel.', example: 'Ex. : « Explique-moi ce code »',
-    fields: ['content', 'url', 'images', 'tags'],
+    fields: ['content', 'url', 'images', 'modele', 'tags'],
     titleEx: 'Transformer une idée floue en cahier des charges', descEx: 'Ce qu’il donne en sortie, et sur quel modèle tu l’as testé.',
     contentLabel: 'Le prompt à copier', contentEx: 'Tu es… Ta mission est de…\n\nContraintes :\n- …',
   },
@@ -106,12 +124,27 @@ const ICON = {
   alerte: svg('<path d="M8 2.3 14.6 13.7H1.4z"/><path d="M8 6.4v3.3"/><path d="M8 11.7h.01"/>'),
   bulle: svg('<path d="M13.5 9.5a1.5 1.5 0 0 1-1.5 1.5H6l-3.5 2.5V4a1.5 1.5 0 0 1 1.5-1.5h8A1.5 1.5 0 0 1 13.5 4z"/>'),
   poubelle: svg('<path d="M2.8 4.3h10.4M6.3 4.3V2.8h3.4v1.5M4.3 4.3l.6 8.4a1 1 0 0 0 1 .9h4.2a1 1 0 0 0 1-.9l.6-8.4"/>'),
+  loupe: svg('<circle cx="7" cy="7" r="4.6"/><path d="M10.6 10.6 14 14"/>'),
+  menu: svg('<path d="M2.5 4h11M2.5 8h11M2.5 12h11"/>'),
+  maison: svg('<path d="M2.5 7 8 2.5 13.5 7v6.5H2.5z"/><path d="M6.3 13.5V9.2h3.4v4.3"/>'),
+  perso: svg('<circle cx="8" cy="5.4" r="2.6"/><path d="M2.9 13.6a5.1 5.1 0 0 1 10.2 0"/>'),
+  // Un agent : une tête qui travaille toute seule.
+  agent: svg('<rect x="2.8" y="5.6" width="10.4" height="7.6" rx="1.8"/><path d="M8 5.6V2.8M5.9 9.2h.01M10.1 9.2h.01"/>'),
+  // Un serveur MCP : une prise. C'est exactement ce qu'il fait — il branche des
+  // outils sur un modèle.
+  mcp: svg('<path d="M5.8 2.2v3.4M10.2 2.2v3.4"/><rect x="3.6" y="5.6" width="8.8" height="4" rx="1.2"/><path d="M8 9.6v4.2"/>'),
+  // Le modèle sur lequel c'est essayé.
+  etincelle: svg('<path d="M8 2.2v11.6M2.2 8h11.6M4.2 4.2l7.6 7.6M11.8 4.2l-7.6 7.6"/>'),
 };
 
 // --- Utilitaires ------------------------------------------------------------
 // `limits` est renseigné par /api/me : le formulaire prévient avant l'envoi plutôt que
 // de laisser partir 5 Mo pour un refus. Valeurs de repli si l'appel échoue.
-const S = { me: null, admin: false, pending: 0, promo: null, marche: null, limits: { pdfKb: 200, fileMb: 15, imageMb: 10, images: 3 } };
+// `stats` sert au rail, qui est dessiné sur toutes les pages : on le garde ici
+// pour ne pas redemander les mêmes compteurs à chaque changement de page.
+// `modeles` vient du serveur (jamais recopié ici) : le formulaire ne peut donc
+// pas proposer une famille que le serveur refuserait.
+const S = { me: null, admin: false, pending: 0, promo: null, marche: null, stats: null, modeles: {}, limits: { pdfKb: 200, fileMb: 15, imageMb: 10, images: 3 } };
 
 // Une barre fine en haut de page dès le clic : la navigation demande un aller-retour
 // réseau, et sans ce signal on a l'impression que le clic n'a rien fait.
@@ -156,13 +189,13 @@ async function apiStatique(chemin, method) {
   if (method !== 'GET') {
     throw Object.assign(new Error('Cette copie du site est en lecture seule. Elle sert à consulter la bibliothèque ; pour partager, voter ou créer un compte, il faut la version complète.'), { status: 403 });
   }
-  const { posts, stats, limits, promo, collections = [] } = await chargeStatique();
+  const { posts, stats, limits, promo, modeles = {}, collections = [] } = await chargeStatique();
   const [base, qs] = chemin.split('?');
   const q = new URLSearchParams(qs || '');
 
   // `promo` décrit l'offre (places, durée, tarif), pas son état : une copie de fichiers
   // n'a pas d'horloge, donc elle ne sait pas combien de places sont libres à cet instant.
-  if (base === '/me') return { member: null, admin: false, pending: 0, limits, promo };
+  if (base === '/me') return { member: null, admin: false, pending: 0, limits, promo, modeles };
   if (base === '/stats') return stats;
 
   const points = p => p.points;
@@ -252,8 +285,11 @@ async function apiStatique(chemin, method) {
   if (base === '/posts') {
     const t = q.get('t') || '', tag = (q.get('tag') || '').toLowerCase();
     const mot = (q.get('q') || '').toLowerCase().trim();
+    const fam = (q.get('m') || '').toLowerCase();
     const tri = q.get('s') || 'top';
-    let list = ouverts.filter(p => (!t || p.type === t) && (!tag || p.tags.includes(tag)));
+    let list = ouverts.filter(p => (!t || p.type === t)
+      && (!fam || p.modele?.famille === fam)
+      && (!tag || p.tags.includes(tag)));
     if (mot) {
       list = list.filter(p => [p.title, p.description, p.content, p.author, p.tags.join(' ')]
         .join(' ').toLowerCase().includes(mot));
@@ -308,6 +344,17 @@ function ago(ts) {
 const size = n => n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} Ko` : `${(n / 1048576).toFixed(1).replace('.', ',')} Mo`;
 const domain = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u; } };
 
+// Une copie se confirme sur le bouton qui l'a faite. Le message au coin de
+// l'écran arrivait trop loin du geste pour qu'on le relie au clic : on cliquait
+// « Copier », quelque chose apparaissait en bas à gauche, et on recliquait.
+function confirme(el, mot = 'Copié') {
+  const avant = el.innerHTML;
+  el.innerHTML = html`${ICON.vote}${mot}`.s;
+  el.classList.add('copie');
+  clearTimeout(el.chronoCopie);
+  el.chronoCopie = setTimeout(() => { el.innerHTML = avant; el.classList.remove('copie'); }, 1600);
+}
+
 let toastTimer;
 function toast(msg) {
   const t = $('#toast');
@@ -321,32 +368,163 @@ const view = $('#view');
 // La politique de sécurité du site refuse les attributs `style` écrits dans le HTML.
 // La largeur des barres de sondage passe donc par `data-pct`, puis par le CSSOM, qu'elle autorise.
 const applyBars = root => $$('[data-pct]', root).forEach(b => { b.style.width = b.dataset.pct + '%'; });
+// Le remplacement du contenu reste synchrone, et c'est volontaire : plusieurs
+// vues interrogent le DOM à la ligne suivante (le formulaire de partage règle
+// ses champs, le composeur dessine sa liste). Une transition différée d'une
+// image — `startViewTransition` — les ferait travailler sur une page encore
+// vide. Le fondu d'entrée est donc fait en CSS, sur l'élément neuf : même
+// effet à l'œil, aucun décalage.
 const render = (tpl) => { view.innerHTML = tpl.s; applyBars(view); window.scrollTo(0, 0); };
 const go = h => { location.hash = h; };
 
 // --- Composants ---------------------------------------------------------------
+// La barre du haut. Le champ de recherche a laissé sa place au déclencheur de la
+// palette : un champ ne sait que chercher, une palette cherche et fait. Elle
+// trouve les partages, les catégories, les pages, et exécute les gestes
+// courants — tout au clavier, ce que le champ ne permettait pas.
 function header() {
-  const q = new URLSearchParams((location.hash.split('?')[1] || '')).get('q') || '';
+  const choix = window.makersTheme?.lu?.() || 'auto';
+  // Le nom lu doit contenir le mot visible, sinon « clique sur papier » dicté à
+  // voix haute ne trouve pas le bouton (le `title` seul prenait le dessus).
+  const theme = (cle, mot, titre) => html`<button type="button" data-action="theme" data-theme="${cle}"
+    aria-pressed="${String(choix === cle)}" aria-label="Thème ${mot} — ${titre}" title="${titre}">${mot}</button>`;
   $('#header').innerHTML = html`
     <div class="bar">
+      <button class="menu-btn" type="button" data-action="menu" aria-label="Ouvrir les sections" aria-expanded="false">${ICON.menu}</button>
       <a class="logo" href="#/" aria-label="makers.si, accueil">makers<i>.</i>si</a>
-      <form class="search" data-form="search" role="search">
-        <input type="text" name="q" value="${q}" placeholder="Chercher une idée, un skill, un PDF…" aria-label="Rechercher" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="suggest">
-        <kbd>/</kbd>
-        <ul class="suggest hidden" id="suggest" role="listbox"></ul>
-      </form>
+      <button class="cmd" type="button" data-action="palette" aria-label="Chercher un partage ou taper une commande">
+        ${ICON.loupe}<span>Chercher, ou taper une commande…</span><kbd>⌘K</kbd>
+      </button>
       <div class="bar-end">
-        <a class="btn ghost" href="#/top">${ICON.cup}Top 5</a>
-        <a class="btn ghost hide-sm" href="#/aide">Aide</a>
+        <div class="theme" role="group" aria-label="Apparence">
+          ${theme('auto', 'auto', 'Suivre le réglage de l’appareil')}
+          ${theme('papier', 'papier', 'Fond clair')}
+          ${theme('nuit', 'nuit', 'Fond sombre')}
+        </div>
         ${S.admin ? html`<a class="btn small" href="#/admin">À valider${S.pending ? html`<span class="badge">${S.pending}</span>` : ''}</a>` : ''}
         ${S.me
-          ? html`<span class="purse" title="Gemmes qu’il te reste à donner cette semaine">${ICON.gem}${S.me.gemsLeft}</span>
-            <a class="who" href="#/mes-partages">@${S.me.pseudo}</a><a class="btn primary" href="#/partager">${ICON.plus}Partager</a>`
+          ? html`<span class="purse hide-sm" title="Gemmes qu’il te reste à donner cette semaine">${ICON.gem}${S.me.gemsLeft}</span>
+            <a class="who" href="#/mes-partages">@${S.me.pseudo}</a>`
           : STATIQUE
-            ? html`<span class="lecture-seule" title="Copie consultable : on lit tout, on n’écrit rien">${ICON.lock}lecture seule</span>`
-            : html`<a class="btn ghost" href="#/connexion">Connexion</a><a class="btn primary" href="#/rejoindre">Rejoindre</a>`}
+            ? html`<span class="lecture-seule hide-sm" title="Copie consultable : on lit tout, on n’écrit rien">${ICON.lock}lecture seule</span>`
+            : html`<a class="btn ghost hide-sm" href="#/connexion">Connexion</a>
+              <!-- Sur téléphone, la barre du bas porte déjà « Entrer » : garder
+                   ce bouton ici faisait déborder la barre du haut. -->
+              <a class="btn primary hide-sm" href="#/rejoindre">Rejoindre</a>`}
       </div>
     </div>`.s;
+}
+
+// --- Le rail et la barre du bas ---------------------------------------------------
+// Le rail est la table des matières de la bibliothèque, et il ne bouge jamais :
+// on change de catégorie depuis n'importe quelle page. C'est ce qui fait la
+// différence entre une suite de pages et un outil.
+const TYPE_ICONE = {
+  skill: 'dossier', agent: 'agent', mcp: 'mcp', prompt: 'code', idee: 'ampoule',
+  sondage: 'sondage', montage: 'play', pdf: 'doc', lien: 'out', info: 'megaphone',
+};
+
+function railHTML(stats, path, q) {
+  const surFil = path === '/';
+  const t = surFil ? (q.get('t') || '') : '';
+  const tag = surFil ? (q.get('tag') || '') : '';
+  const mot = surFil ? (q.get('q') || '') : '';
+  const prem = surFil && q.get('p') === '1';
+  const mod = surFil ? (q.get('m') || '') : '';
+  const tri = q.get('s');
+  // Changer de catégorie remet à zéro la recherche et le tag, mais garde le tri :
+  // quelqu'un qui lit « les mieux notés » veut continuer à les lire ailleurs.
+  // Une entrée du rail remet à zéro la recherche et les autres filtres, mais
+  // garde le tri : qui lit « les mieux notés » veut continuer à les lire ailleurs.
+  const vers = (clef, valeur) => {
+    const n = new URLSearchParams();
+    if (valeur) n.set(clef, valeur);
+    if (tri && tri !== 'top') n.set('s', tri);
+    const s = n.toString();
+    return '#/' + (s ? '?' + s : '');
+  };
+  const compte = n => (n == null ? '' : html`<span>${n}</span>`);
+  const total = stats ? Object.values(stats.byType).reduce((a, b) => a + b, 0) : null;
+  const rien = !t && !tag && !mot && !prem && !mod && surFil;
+
+  return html`
+    <section>
+      <h3 class="cote">La bibliothèque</h3>
+      <a href="${vers('t', '')}" class="${rien ? 'on' : ''}">Tout ${compte(total)}</a>
+      ${Object.entries(TYPES).map(([cle, v]) => html`
+        <a href="${vers('t', cle)}" class="k-${cle} ${stats && !stats.byType?.[cle] ? 'vide' : ''} ${t === cle && !prem ? 'on' : ''}">
+          ${ICON[TYPE_ICONE[cle]]}${v.plural} ${compte(stats?.byType?.[cle])}</a>`)}
+    </section>
+
+    <!-- « Montre-moi ce qui tourne sur Claude. » La rubrique n'apparaît que
+         lorsqu'au moins un partage dit sur quoi il a été essayé : une liste de
+         modèles sans rien derrière ne ferait que promettre du vide. -->
+    ${Object.keys(stats?.byModele || {}).length ? html`
+      <section>
+        <h3 class="cote">Essayé sur</h3>
+        ${Object.entries(stats.byModele).map(([cle, n]) => html`
+          <a href="${vers('m', cle)}" class="${mod === cle ? 'on' : ''}">
+            ${ICON.etincelle}${S.modeles[cle] || cle} ${compte(n)}</a>`)}
+      </section>` : ''}
+
+    <section>
+      <h3 class="cote">Parcours</h3>
+      <a href="#/collections" class="${path === '/collections' || path.startsWith('/c/') ? 'on' : ''}">
+        ${ICON.lignes}Collections ${compte(stats?.collections)}</a>
+      <a href="#/top" class="${path === '/top' ? 'on' : ''}">${ICON.cup}Top 5 ${compte(null)}</a>
+      ${stats?.premium ? html`
+        <a href="#/?p=1" class="${prem ? 'on' : ''}">${ICON.lock}Espace privé ${compte(stats.premium)}</a>` : ''}
+    </section>
+
+    ${STATIQUE ? '' : html`
+      <section>
+        <h3 class="cote">${S.me ? 'Chez moi' : 'Participer'}</h3>
+        ${S.me
+          ? html`
+            <a class="btn primary" href="#/partager">${ICON.plus}Partager</a>
+            <a href="#/mes-partages" class="${path === '/mes-partages' ? 'on' : ''}">${ICON.dossier}Mes partages</a>
+            <a href="#/mes-ventes" class="${path === '/mes-ventes' ? 'on' : ''}">${ICON.file}Mes ventes</a>
+            <a href="#/membre/${encodeURIComponent(S.me.pseudo)}">${ICON.perso}Mon profil</a>`
+          : html`
+            <a class="btn primary" href="#/rejoindre">${ICON.plus}Créer mon compte</a>
+            <a href="#/connexion">${ICON.lock}Me connecter</a>`}
+      </section>`}
+
+    <div class="rail-bas">
+      <p>Chaque partage est relu avant publication.
+        <a href="#/aide">Comment ça marche</a> · <a href="#/charte">la charte</a>.</p>
+      <p class="hide-sm">Tape <kbd>?</kbd> pour les raccourcis.</p>
+    </div>`;
+}
+
+// Les cinq cases de la barre du bas, sur téléphone. « Partager » au centre,
+// à la couleur de la maison : c'est le geste qu'on vient faire.
+function barreBasHTML(path) {
+  const on = p => (path === p ? 'on' : '');
+  return html`
+    <a href="#/" class="${on('/')}">${ICON.maison}Biblio</a>
+    <a href="#/collections" class="${on('/collections')}">${ICON.lignes}Parcours</a>
+    ${STATIQUE
+      ? html`<a href="#/aide" class="${on('/aide')}">${ICON.ampoule}Aide</a>`
+      : html`<a href="${S.me ? '#/partager' : '#/rejoindre'}" class="appoint ${on('/partager')}">${ICON.plus}Partager</a>`}
+    <a href="#/top" class="${on('/top')}">${ICON.cup}Top</a>
+    <a href="${S.me ? '#/mes-partages' : '#/connexion'}" class="${on('/mes-partages')}">${ICON.perso}${S.me ? 'Moi' : 'Entrer'}</a>`;
+}
+
+// Le rail se dessine tout de suite avec les chiffres qu'on a déjà, puis se
+// corrige quand ils arrivent : il ne doit jamais retarder l'affichage de la page.
+async function rail() {
+  const [path, qs] = (location.hash.slice(1) || '/').split('?');
+  const q = new URLSearchParams(qs || '');
+  const dessine = () => {
+    const r = $('#rail'), b = $('#barre-bas');
+    if (r) r.innerHTML = railHTML(S.stats, path, q).s;
+    if (b) b.innerHTML = barreBasHTML(path).s;
+  };
+  dessine();
+  if (S.stats) return;
+  try { S.stats = await api('/stats'); dessine(); }
+  catch { /* hors ligne : le rail reste sans compteurs, les liens marchent */ }
 }
 
 const kind = t => html`<span class="kind k-${t}">${TYPES[t]?.short || t}</span>`;
@@ -367,6 +545,14 @@ const sponsoBadge = p => (p.promo
 const prixBadge = p => (p.prix
   ? html`<span class="pin vente" title="Le contenu de ce partage s’achète">${p.prix} ${p.devise || ''}</span>`
   : '');
+// Le modèle sur lequel ça a été essayé. Cliquable : c'est aussi un filtre, parce
+// que « montre-moi tout ce qui tourne sur Claude » est une vraie question.
+const nomFamille = m => S.modeles?.[m.famille] || m.famille;
+const modeleBadge = p => (p.modele
+  ? html`<a class="modele" href="#/?m=${encodeURIComponent(p.modele.famille)}"
+      title="Essayé sur ${p.modele.label} — voir tout ce qui tourne sur ${nomFamille(p.modele)}">${p.modele.label}</a>`
+  : '');
+
 const auteurLien = p => p.authorLink
   ? html`<a class="auteur" href="#/membre/${encodeURIComponent(p.authorLink)}">${rond(p.author)}@${p.author}</a>`
   : html`<span class="auteur">${rond(p.author)}@${p.author}</span>`;
@@ -557,19 +743,23 @@ catch { /* navigation privée ou stockage bloqué : on garde la liste */ }
 
 const item = (p, rang = null) => (vueFil === 'cartes' ? carte(p, rang) : ligne(p, rang));
 
-// L'affichage d'origine : une ligne par partage, toutes les informations visibles.
+// Une ligne de l'index. La grille se lit de gauche à droite comme une fiche de
+// catalogue : la cote (le type) dans la marge, le titre et ce que c'est au
+// centre, les chiffres à droite en chasse fixe, la gemme au bout.
+//
+// Ce qui a disparu par rapport à l'ancienne liste : les tags de chaque ligne.
+// Trente-huit lignes à trois tags faisaient cent quatorze liens bleus en
+// concurrence avec les titres, pour une navigation qu'on fait trois fois par
+// mois. Ils restent sur la page d'un partage et dans le colophon du bas.
 function ligne(p, rang = null) {
   const thumb = p.images?.[0]?.thumb;
   const podium = rang && rang <= 3 ? rang : 0;
+  const vu = apercu(p);
   return html`
-    <article class="item ${p.pinned ? 'pinned' : ''} ${thumb ? 'has-thumb' : ''} ${podium ? 'podium rang-' + podium : ''}">
-      <div class="vote-col">
-        ${podium ? html`<span class="rang" title="${rang}ᵉ au classement, ${p.points} points">Top ${rang}</span>` : rang ? html`<span class="rang-n">${rang}</span>` : ''}
-        ${gemButton(p, { compact: true })}
-      </div>
-      <div>
+    <article class="item k-${p.type} ${p.pinned ? 'pinned' : ''} ${thumb ? 'has-thumb' : ''} ${podium ? 'podium rang-' + podium : ''}">
+      ${kind(p.type)}
+      <div class="item-corps">
         <div class="item-top">
-          ${kind(p.type)}
           <a class="item-title" href="#/p/${p.id}">${fr(p.title)}</a>
           ${p.locked && !p.prix ? html`<span class="pin lock">${ICON.lock}privé</span>` : ''}
           ${prixBadge(p)}
@@ -577,19 +767,21 @@ function ligne(p, rang = null) {
           ${p.pinned ? html`<span class="pin">${ICON.pin}épinglé</span>` : ''}
         </div>
         <p class="item-desc">${fr(p.description)}</p>
-        <div class="meta">
-          ${starsView(p)}
-          ${p.commentsCount ? html`<span class="repl" title="${p.commentsCount} réponse${p.commentsCount > 1 ? 's' : ''}">${ICON.bulle}${p.commentsCount}</span>` : ''}
-          ${p.tags.map(tagLink)}
-          ${auteurLien(p)}
-          <span>${ago(p.approvedAt || p.createdAt)}</span>
-          ${attachments(p)}
-          ${p.treeCount ? html`<span>${p.treeCount} fichier${p.treeCount > 1 ? 's' : ''}</span>` : ''}
-          ${p.poll ? html`<span>${p.poll.total} vote${p.poll.total > 1 ? 's' : ''}</span>` : ''}
-          ${p.images?.length > 1 ? html`<span>${p.images.length} photos</span>` : ''}
-        </div>
       </div>
       ${thumb ? html`<a class="thumb" href="#/p/${p.id}" tabindex="-1" aria-hidden="true"><img src="${thumb}" alt="" loading="lazy"></a>` : ''}
+      <div class="faits">
+        ${modeleBadge(p)}
+        ${vu ? html`<span>${vu}</span>` : ''}
+        ${starsView(p)}
+        ${p.commentsCount ? html`<span class="repl" title="${p.commentsCount} réponse${p.commentsCount > 1 ? 's' : ''}">${ICON.bulle}${p.commentsCount}</span>` : ''}
+        ${auteurLien(p)}
+        <span>${ago(p.approvedAt || p.createdAt)}</span>
+      </div>
+      <div class="vote-col">
+        ${podium ? html`<span class="rang" title="${rang}ᵉ au classement, ${p.points} points">n° ${rang}</span>`
+          : rang ? html`<span class="rang-n">${rang}</span>` : ''}
+        ${gemButton(p, { compact: true })}
+      </div>
     </article>`;
 }
 
@@ -624,6 +816,7 @@ function carte(p, rang = null) {
         <a class="carte-titre" href="#/p/${p.id}">${fr(p.title)}</a>
         <div class="carte-bas">
           ${gemButton(p, { court: true })}
+          ${modeleBadge(p)}
           ${starsView(p)}
           ${p.commentsCount ? html`<span class="repl" title="${p.commentsCount} réponse${p.commentsCount > 1 ? 's' : ''}">${ICON.bulle}${p.commentsCount}</span>` : ''}
           <span class="carte-auteur">${auteurLien(p)}</span>
@@ -632,7 +825,10 @@ function carte(p, rang = null) {
     </article>`;
 }
 
-const BLOCK_LABEL = { skill: 'Le contenu du skill', prompt: 'Le prompt', idee: 'L’idée en détail', montage: 'Les étapes' };
+const BLOCK_LABEL = {
+  skill: 'Le contenu du skill', agent: 'Sa consigne et ses outils', mcp: 'La configuration',
+  prompt: 'Le prompt', idee: 'L’idée en détail', montage: 'Les étapes',
+};
 
 const HOWTO = 'Un skill, c’est un mode d’emploi écrit pour Claude : tu le poses une fois dans un dossier, et il s’en sert tout seul quand ta demande correspond. Sur la page d’un skill, les trois étapes sont écrites en haut : copier, créer le dossier .claude/skills/nom-du-skill/ dans ton projet (ou ~/.claude/skills/nom-du-skill/ pour l’avoir partout), redémarrer Claude. Lis toujours ce que fait un skill avant de l’installer : il peut lancer des actions sur ton ordinateur, et personne ne garantit à ta place qu’il est sans danger. Un prompt, lui, se colle directement dans la conversation.';
 
@@ -746,7 +942,8 @@ async function feedView(q) {
   const t = q.get('t') || '', tag = q.get('tag') || '', query = q.get('q') || '';
   const sort = SORTS[q.get('s')] ? q.get('s') : 'top';
   const prem = q.get('p') === '1' ? '1' : '';
-  const params = new URLSearchParams({ t, tag, q: query, s: sort, p: prem });
+  const mod = q.get('m') || '';
+  const params = new URLSearchParams({ t, tag, q: query, s: sort, p: prem, m: mod });
   const cle = 'fil:' + params;
   const vu = duCache(cle);
   const frais = Promise.all([api('/posts?' + params), api('/stats'), api('/top?periode=semaine'), api('/collections?limit=3')])
@@ -756,105 +953,111 @@ async function feedView(q) {
   const { posts, total: combien, suite } = liste;
   const link = (over) => {
     const n = new URLSearchParams();
-    const merged = { t, tag, q: query, s: sort, p: prem, ...over };
+    const merged = { t, tag, q: query, s: sort, p: prem, m: mod, ...over };
     for (const [k, v] of Object.entries(merged)) if (v && !(k === 's' && v === 'top')) n.set(k, v);
     const s = n.toString();
     return '#/' + (s ? '?' + s : '');
   };
+  const nomModele = mod ? (S.modeles[mod] || mod) : '';
   const title = query ? `Résultats pour « ${query} »` : tag ? `#${tag}`
-    : prem ? 'Espace privé' : t ? TYPES[t].plural : 'Tous les partages';
-  const total = Object.values(stats.byType).reduce((a, b) => a + b, 0);
+    : prem ? 'Espace privé'
+      : t && mod ? `${TYPES[t].plural} essayés sur ${nomModele}`
+        : mod ? `Essayé sur ${nomModele}`
+          : t ? TYPES[t].plural : 'Tous les partages';
+  // Le rail affiche les mêmes compteurs sur toutes les pages : il les prend ici
+  // plutôt que de redemander la même chose au serveur.
+  S.stats = stats;
+  rail();
+  const nu = !t && !tag && !query && !prem && !mod;
 
   render(html`
-    <div class="layout">
-      <nav class="nav" aria-label="Catégories">
-        <h3>Catégories</h3>
-        <a href="#/" class="${!t && !tag && !query && !prem ? 'on' : ''}">Tout <span>${total}</span></a>
-        ${Object.entries(TYPES).map(([k, v]) => html`<a href="${link({ t: k, tag: '', q: '', p: '' })}" class="${!prem && t === k ? 'on' : ''}">${v.plural} <span>${stats.byType[k]}</span></a>`)}
-        ${stats.premium ? html`<a class="nav-premium ${prem ? 'on' : ''}" href="${link({ p: '1', t: '', tag: '', q: '' })}">${ICON.lock}Espace privé <span>${stats.premium}</span></a>` : ''}
-        <a class="nav-collections" href="#/collections">${ICON.lignes}Collections <span>${stats.collections ?? 0}</span></a>
-      </nav>
+    <div>
+      ${S.me || !nu ? '' : html`
+        <section class="start" aria-label="Bienvenue">
+          <div><b>Bienvenue. Tu peux tout lire sans compte.</b>
+          <span>Un compte sert à partager, noter et voter.</span></div>
+          ${STATIQUE ? '' : html`<a class="btn primary" href="#/rejoindre">Créer mon compte</a>`}
+        </section>`}
 
-      <main>
-        ${S.me || t || tag || query ? '' : html`
-          <!-- Une ligne, pas un panneau. Les quatre raccourcis qui étaient ici répétaient
-               la colonne de gauche et repoussaient les partages de 300 pixels. -->
-          <section class="start" aria-label="Bienvenue">
-            <div><b>Bienvenue. Tu peux tout lire sans compte.</b>
-            <span>Un compte sert à partager, noter et voter.</span></div>
-            ${STATIQUE ? '' : html`<a class="btn primary" href="#/rejoindre">Créer mon compte</a>`}
-          </section>`}
-        <div class="toolbar">
-          <h1>${title}<small>${combien}</small></h1>
-          <div class="tabs">
-            ${Object.entries(SORTS).map(([k, label]) => html`<a href="${link({ s: k })}" class="${sort === k ? 'on' : ''}">${label}</a>`)}
+      <!-- L'étagère : la sélection de la semaine, posée à l'entrée. Dans une
+           bibliothèque, la table des nouveautés est devant la porte — pas dans
+           une colonne de droite que personne ne regarde. -->
+      ${nu && top.posts.length ? html`
+        <section class="etagere" aria-label="Le top de la semaine">
+          <div class="etagere-tete">
+            <h2 class="cote">Cette semaine</h2>
+            <a href="#/top">Le classement complet →</a>
           </div>
-          <div class="tabs vues" role="group" aria-label="Affichage">
-            ${Object.entries(VUES).map(([k, label]) => html`<button type="button" data-action="vue" data-vue="${k}"
-              class="${vueFil === k ? 'on' : ''}" aria-pressed="${String(vueFil === k)}">${ICON[k === 'liste' ? 'lignes' : 'grille']}${label}</button>`)}
+          <div class="etagere-liste">
+            ${top.posts.slice(0, 3).map((p, i) => html`
+              <a class="etagere-item k-${p.type} ${i < 3 ? 'podium rang-' + (i + 1) : ''}" href="#/p/${p.id}">
+                <span class="etagere-rang">n° ${i + 1} · ${TYPES[p.type]?.short || p.type}</span>
+                <span class="etagere-titre">${fr(p.title)}</span>
+                <span class="etagere-pts">${p.points} points</span>
+              </a>`)}
           </div>
+        </section>` : ''}
+
+      <div class="toolbar">
+        <h1>${title}<small>${combien} ${combien > 1 ? 'partages' : 'partage'}</small></h1>
+        <div class="tabs">
+          ${Object.entries(SORTS).map(([k, label]) => html`<a href="${link({ s: k })}" class="${sort === k ? 'on' : ''}">${label}</a>`)}
         </div>
-        ${prem ? html`<p class="about-type">${ICON.lock} Partages réservés. Tu vois le sujet de chacun ; le contenu demande l’accès à l’espace privé.</p>`
+        <div class="tabs vues" role="group" aria-label="Affichage">
+          ${Object.entries(VUES).map(([k, label]) => html`<button type="button" data-action="vue" data-vue="${k}"
+            class="${vueFil === k ? 'on' : ''}" aria-pressed="${String(vueFil === k)}">${ICON[k === 'liste' ? 'lignes' : 'grille']}${label}</button>`)}
+        </div>
+      </div>
+      ${prem ? html`<p class="about-type">${ICON.lock} Partages réservés. Tu vois le sujet de chacun ; le contenu demande l’accès à l’espace privé.</p>`
+        : mod ? html`<p class="about-type">${ICON.etincelle} Ce que des membres ont essayé sur ${nomModele}, et qui a marché chez eux. On range les familles, pas les versions : la version exacte est écrite à côté de chaque partage.</p>`
           : t && !query && !tag ? html`<p class="about-type">${TYPES[t].about}</p>` : ''}
-        <div class="${vueFil === 'cartes' ? 'grille' : 'list'}">
-          ${posts.length ? (() => {
-            // Le classement ne numérote que le tri « Top », et saute les partages épinglés
-            // comme les places payées : ils sont en tête pour une autre raison que leurs points.
-            // Sans ça une place achetée porterait la médaille du premier, et payer ressemblerait
-            // à gagner — exactement ce que la charte promet qui n'arrive pas.
-            const classe = sort === 'top' && !query && !tag;
-            let rang = 0;
-            return posts.map(p => item(p, classe && !p.pinned && !p.promo ? ++rang : null));
-          })() : html`
-            <div class="empty">
-              ${query ? html`Aucun résultat pour « ${query} ».<br>Essaie un mot plus court, ou parcours les catégories.<br>` : html`Rien ici pour l’instant.<br>`}
-              ${stats.tags.length && query ? html`<div class="tagcloud center">${stats.tags.slice(0, 8).map(x => tagLink(x.tag))}</div>` : ''}
-              <a class="btn primary" href="${S.me ? '#/partager' : '#/rejoindre'}">${S.me ? 'Partager quelque chose' : 'Rejoindre pour partager'}</a></div>`}
-        </div>
-        ${suite ? html`<div class="plus"><button class="btn" data-action="plus" data-suite="${suite}" data-params="${params}">Voir plus<span class="muted"> · ${combien - posts.length} restants</span></button></div>` : ''}
-      </main>
+      <div class="${vueFil === 'cartes' ? 'grille' : 'list'}">
+        ${posts.length ? (() => {
+          // Le classement ne numérote que le tri « Top », et saute les partages épinglés
+          // comme les places payées : ils sont en tête pour une autre raison que leurs points.
+          // Sans ça une place achetée porterait la médaille du premier, et payer ressemblerait
+          // à gagner — exactement ce que la charte promet qui n'arrive pas.
+          const classe = sort === 'top' && !query && !tag;
+          let rang = 0;
+          return posts.map(p => item(p, classe && !p.pinned && !p.promo ? ++rang : null));
+        })() : html`
+          <div class="empty">
+            ${query ? html`Aucun résultat pour « ${query} ».<br>Essaie un mot plus court, ou parcours les catégories.<br>` : html`Rien ici pour l’instant.<br>`}
+            ${stats.tags.length && query ? html`<div class="tagcloud center">${stats.tags.slice(0, 8).map(x => tagLink(x.tag))}</div>` : ''}
+            <a class="btn primary" href="${S.me ? '#/partager' : '#/rejoindre'}">${S.me ? 'Partager quelque chose' : 'Rejoindre pour partager'}</a></div>`}
+      </div>
+      ${suite ? html`<div class="plus"><button class="btn" data-action="plus" data-suite="${suite}" data-params="${params}">Voir plus<span class="muted"> · ${combien - posts.length} restants</span></button></div>` : ''}
 
-      <aside class="aside">
-        ${top.posts.length ? html`
-          <section class="aside-top">
-            <h3>${ICON.cup}Top 5 de la semaine</h3>
-            <ol class="top-list mini">${top.posts.map((p, i) => html`
-              <li class="top-line ${i < 3 ? 'podium rang-' + (i + 1) : ''}">
-                <span class="top-rang">${i + 1}</span>
-                <a class="top-titre" href="#/p/${p.id}">${fr(p.title)}</a>
-                <span class="top-pts"><b>${p.points}</b></span>
-              </li>`)}</ol>
-            <p><a href="#/top">Voir le classement complet →</a></p>
-          </section>` : ''}
-        ${colls?.collections?.length ? html`
-          <section class="aside-coll">
-            <h3>${ICON.lignes}Collections</h3>
-            <p>Des parcours composés par des membres : par où commencer, dans quel ordre.</p>
-            <ul class="aside-liste">${colls.collections.map(c => html`
-              <li><a href="#/c/${c.id}">${fr(c.title)}</a><span class="muted">${c.count} partages</span></li>`)}</ul>
-            <p><a href="#/collections">Toutes les collections →</a></p>
-          </section>` : ''}
+      <!-- Le colophon. Ce qui remplissait la colonne de droite se lit mieux à la
+           fin du catalogue, en petit : c'est la fin de l'objet, pas un encart
+           qu'on double à chaque défilement. -->
+      <div class="colophon">
         <section>
-          <h3>À propos</h3>
-          <p>${stats.members} membres · ${stats.posts} partages · ${stats.gems} gemmes données. Tout ce qui s’affiche ici a été relu.</p>
+          <h3>Cette bibliothèque</h3>
+          <p>${stats.members} membre${stats.members > 1 ? 's' : ''} · ${stats.posts} partages · ${stats.gems} gemmes données.
+            Tout ce qui s’affiche ici a été relu avant publication.</p>
+          ${colls?.collections?.length ? html`<p><a href="#/collections">${stats.collections} parcours composés par des membres →</a></p>` : ''}
         </section>
         <section>
           <h3>Le classement</h3>
           <p>Tu reçois quelques gemmes par semaine. Donne-les à ce qui t’a vraiment servi : une gemme pèse lourd, une étoile un peu. C’est ce qui fait monter un partage dans le <a href="#/top">Top 5</a>.</p>
         </section>
         <section>
-          <h3>Règles</h3>
+          <h3>Les règles</h3>
           <ol>
             <li>Chaque partage est validé avant publication.</li>
-            <li>Les réponses, elles, paraissent tout de suite, signées.</li>
+            <li>Les réponses paraissent tout de suite, signées.</li>
             <li>Pas de vidéo importée : colle le lien.</li>
             <li>Cite ta source si ce n’est pas toi.</li>
             <li>Pas de pub déguisée : une <a href="#/mise-en-avant">place payée</a> est toujours signalée.</li>
           </ol>
-          <p><a href="#/aide">Besoin d’aide ?</a></p>
         </section>
-        ${stats.tags.length ? html`<section><h3>Tags</h3><div class="tagcloud">${stats.tags.map(x => tagLink(x.tag))}</div></section>` : ''}
-      </aside>
+        ${stats.tags.length ? html`
+          <section>
+            <h3>Les sujets</h3>
+            <div class="tagcloud">${stats.tags.map(x => tagLink(x.tag))}</div>
+          </section>` : ''}
+      </div>
     </div>`);
 
   // Affiché depuis le cache : si la version fraîche diffère, on remet la page à jour sans
@@ -984,14 +1187,19 @@ async function postView(id) {
   // viennent pas (copie consultable, partage réservé), la page se contente du reste.
   let reponses = [];
   try { reponses = (await api(`/posts/${id}/comments`)).comments || []; } catch { reponses = []; }
+  // La classe du type porte la couleur de la catégorie à toute la page : les
+  // numéros des étapes, l'icône d'une pièce jointe, le filet du dossier. Une
+  // page de skill est verte, une page de prompt est cyan — chaque type a son
+  // identité au lieu d'un violet unique partout.
   render(html`
-    <div class="narrow post">
+    <div class="narrow post k-${p.type}">
       <a class="back" href="#/">← Tous les partages</a>
       ${p.status === 'pending' ? html`<div class="notice">En attente de validation. Toi seul(e) vois ce partage pour l’instant.</div>` : ''}
       ${p.status === 'rejected' ? html`<div class="notice bad">Refusé${p.rejectReason ? ' : ' + p.rejectReason : '.'}</div>` : ''}
       <div>${kind(p.type)}${p.premium ? html` <span class="pin lock">${ICON.lock}espace privé</span>` : ''}${p.prix ? html` ${prixBadge(p)}` : ''}${p.promo ? html` ${sponsoBadge(p)}` : ''}</div>
       <h1>${fr(p.title)}</h1>
-      <div class="post-meta">${auteurLien(p)}<span>${ago(p.approvedAt || p.createdAt)}</span>${p.tags.map(tagLink)}</div>
+      <div class="post-meta">${auteurLien(p)}<span>${ago(p.approvedAt || p.createdAt)}</span>${
+        p.modele ? html`<span class="modele-ligne">essayé sur ${modeleBadge(p)}</span>` : ''}${p.tags.map(tagLink)}</div>
       ${postBody(p, { howto: true })}
       ${p.status === 'approved' || !p.status ? html`<div class="post-actions">
           ${gemButton(p)}
@@ -1146,6 +1354,15 @@ function shareView(q) {
           <input id="s-images" type="file" name="images" accept="image/jpeg,image/png,image/webp" multiple>
           <small>JPG, PNG ou WebP. Elles sont compressées automatiquement et la position GPS est effacée.</small>
           <div class="previews" id="previews"></div></div>
+        <div class="field" data-field="modele"><label for="s-modele">Essayé sur quel modèle ? <span class="muted">(facultatif)</span></label>
+          <div class="duo">
+            <select id="s-modele" name="modele">
+              <option value="">Je ne précise pas</option>
+              ${Object.entries(S.modeles).map(([cle, nom]) => html`<option value="${cle}">${nom}</option>`)}
+            </select>
+            <input type="text" name="modeleVersion" maxlength="40" placeholder="Opus 5" aria-label="Version du modèle">
+          </div>
+          <small>La famille d’abord, la version à côté si tu la connais. C’est la première chose qu’on se demande devant un prompt : <b>« ça marche sur quoi ? »</b> On range les familles, jamais les versions : une version est périmée en deux mois, une famille dure des années.</small></div>
         <div class="field" data-field="tags"><label for="s-tags">Tags <span class="muted">(facultatif)</span></label><input id="s-tags" type="text" name="tags" placeholder="claude-code, sous-titres">
           <small>5 maximum, séparés par des virgules. Ils aident à retrouver ton partage.</small></div>
         <div class="field" data-field="prix"><label for="s-prix">Prix <span class="muted">(facultatif — laisse vide pour offrir)</span></label>
@@ -1169,7 +1386,8 @@ function applyType(type) {
     // voix à compter. Le champ prix n'est donc pas listé type par type.
     const on = row.dataset.field === 'prix' ? type !== 'sondage' : t.fields.includes(row.dataset.field);
     row.classList.toggle('hidden', !on);
-    $$('input, textarea', row).forEach(i => { i.disabled = !on; });
+    // `select` était oublié ici : un champ caché continuait d'être envoyé.
+    $$('input, textarea, select', row).forEach(i => { i.disabled = !on; });
   });
   $('#l-url').innerHTML = type === 'lien' ? 'Le lien' : 'Lien <span class="muted">(facultatif)</span>';
   $('#s-url').required = type === 'lien';
@@ -1363,6 +1581,8 @@ function helpView() {
       <details class="faq"><summary>C’est quoi l’espace privé ?</summary><p>Une section à part, marquée d’un cadenas, qui contient des partages réservés. Tout le monde voit le sujet, mais le contenu demande un accès. Aujourd’hui il se donne à la main : écris-nous pour le demander.</p></details>
       <details class="faq"><summary>On peut payer pour être en haut ?</summary><p>Oui, et c’est écrit dessus : un partage dont la place a été payée porte la mention « sponsorisé » tant qu’elle dure. Ce qui s’achète est la place, jamais la publication — le partage passe la même relecture que les autres, et payer ne donne ni gemme, ni étoile, ni point. <a href="#/mise-en-avant">Voir comment ça marche</a>.</p></details>
       <details class="faq"><summary>C’est quoi une collection ?</summary><p>Un parcours : des partages déjà publiés, remis dans l’ordre où on devrait les lire, avec un mot sur chacun. « Démarrer avec Claude Code en une soirée », par exemple. Tu n’écris rien de neuf — tu ranges, et ranger demande du jugement. Clique « Composer » depuis <a href="#/collections">les collections</a>, choisis au moins deux partages, et envoie : elle est relue comme un partage. La modifier la renvoie en relecture, sauf si tu ne touches qu’aux notes.</p></details>
+      <details class="faq"><summary>C’est quoi « essayé sur » ?</summary><p>Devant un prompt ou un agent, la première question est « ça marche sur quoi ? » — le même prompt peut être excellent sur un modèle et inutile sur un autre. Quand tu partages un skill, un agent, un serveur MCP ou un prompt, tu peux donc dire sur quel modèle tu l’as essayé. On range les <b>familles</b> (Claude, GPT, Gemini…) et tu écris la version à côté (« Opus 5 »), parce qu’une famille dure des années quand une version est périmée en deux mois. Le rail de gauche te laisse alors tout filtrer : « montre-moi ce qui tourne sur Claude ». C’est facultatif, et mieux vaut le laisser vide que de deviner : annoncer un modèle qu’on n’a pas essayé, c’est refusé par la <a href="#/charte">charte</a>.</p></details>
+      <details class="faq"><summary>Un agent, un serveur MCP : quelle différence avec un skill ?</summary><p>Un <b>skill</b> est un mode d’emploi que Claude lit tout seul quand ta demande correspond : tu le poses dans un dossier et tu l’oublies. Un <b>agent</b> fait un travail du début à la fin sans toi — il boucle, il se sert d’outils, et il s’arrête quand c’est fini ou quand il a besoin de toi. Un <b>serveur MCP</b> ne fait rien tout seul : il <i>donne</i> des outils à un modèle (une base de données, des fichiers, une API), et c’est le modèle qui s’en sert. En résumé : le skill explique, l’agent exécute, le MCP branche.</p></details>
       <details class="faq"><summary>Je peux vendre un skill que j’ai écrit ?</summary><p>Oui. Mets un prix dans le formulaire de partage : le <b>contenu</b> ne s’ouvre alors qu’après l’achat, mais le titre, la description et les tags restent publics — sinon personne ne saurait ce qu’il achète. Ton partage passe la même relecture que les autres, et l’équipe peut refuser une vente comme elle refuse un contenu. La plateforme retient ${S.marche?.commission ?? 5} % sur chaque vente, le reste te revient. Tu suis tout dans <a href="#/mes-ventes">Mes ventes</a>.</p></details>
       <details class="faq"><summary>Comment se passe un achat ?</summary><p>Tu cliques « Acheter » : ça enregistre une commande, ça ne prend pas d’argent. Le paiement se règle avec nous hors du site (il n’y a pas encore de paiement en ligne), et le contenu s’ouvre dès que la commande est confirmée. Tu retrouves tes commandes dans <a href="#/mes-achats">Mes achats</a>.</p></details>
       <details class="faq"><summary>Pourquoi une vérification à l’inscription ?</summary><p>Pour bloquer les robots qui créent des comptes en masse. Elle se fait toute seule en une seconde, il n’y a pas d’image à déchiffrer, et aucun service extérieur n’est appelé.</p></details>
@@ -1773,6 +1993,9 @@ async function route() {
   const [path, qs] = (location.hash.slice(1) || '/').split('?');
   const q = new URLSearchParams(qs || '');
   header();
+  // Le rail et la barre du bas sont redessinés à chaque page : c'est là qu'on
+  // voit quelle section est ouverte. Ils ne bloquent pas l'affichage de la vue.
+  rail();
   // Dans une copie en lecture seule, les pages qui écrivent n'ont nulle part où écrire.
   if (STATIQUE && (['/rejoindre', '/connexion', '/partager', '/compte', '/mes-partages', '/mes-ventes', '/mes-achats', '/admin'].includes(path)
     || path === '/collection' || path.startsWith('/collection/'))) {
@@ -1814,6 +2037,7 @@ async function refreshMe() {
     if (r.limits) S.limits = r.limits;
     if (r.promo) S.promo = r.promo;
     if (r.marche) S.marche = r.marche;
+    if (r.modeles) S.modeles = r.modeles;
   } catch { /* hors ligne : on reste visiteur */ }
 }
 
@@ -1916,19 +2140,22 @@ document.addEventListener('click', async (e) => {
       $(`[data-depot-chemin="${id}"]`).textContent = f.path;
       $(`[data-depot-contenu="${id}"]`).textContent = f.content;
     } else if (action === 'copy-fichier') {
-      const chemin = $(`[data-depot-chemin="${id}"]`).textContent;
       await navigator.clipboard.writeText($(`[data-depot-contenu="${id}"]`).textContent);
-      toast(`${chemin} copié.`);
+      confirme(el);
     } else if (action === 'tout-copier') {
       // Chaque fichier précédé de son chemin : on peut recréer le dossier à l'identique.
       const tree = depots.get(id) || [];
       const tout = tree.map(f => `===== ${f.path} =====\n${f.content}`).join('\n\n');
       await navigator.clipboard.writeText(tout);
-      toast(`${tree.length} fichiers copiés.`);
+      confirme(el, `${tree.length} fichier${tree.length > 1 ? 's' : ''} copié${tree.length > 1 ? 's' : ''}`);
     } else if (action === 'copy') {
       const text = $(`[data-copy="${id}"]`).textContent;
       await navigator.clipboard.writeText(text);
-      toast('Copié.');
+      confirme(el);
+    } else if (action === 'theme') {
+      // Le choix est gardé sur l'appareil par theme.js, jamais envoyé au serveur.
+      window.makersTheme?.choisis(el.dataset.theme);
+      header();
     } else if (action === 'logout') {
       await api('/logout', { method: 'POST' });
       Object.assign(S, { me: null, admin: false, pending: 0 });
@@ -2048,10 +2275,6 @@ document.addEventListener('submit', async (e) => {
   if (err) err.textContent = '';
   const fd = new FormData(form);
   try {
-    if (kindOf === 'search') {
-      const q = String(fd.get('q')).trim();
-      return go('#/' + (q ? '?q=' + encodeURIComponent(q) : ''));
-    }
     btn && (btn.disabled = true);
     if (kindOf === 'join') {
       if (!fd.get('accept')) return fail('Coche la case pour accepter les conditions et la politique de confidentialité.');
@@ -2165,15 +2388,6 @@ document.addEventListener('change', (e) => {
   if (e.target.name === 'file') verifiePdf(e.target);
 });
 
-// Suggestions de recherche pendant la frappe.
-let suggestTimer, suggestSeq = 0;
-function closeSuggest() {
-  const box = $('#suggest');
-  if (!box) return;
-  box.classList.add('hidden');
-  box.innerHTML = '';
-  $('.search input')?.setAttribute('aria-expanded', 'false');
-}
 // Les notes du composeur : on les garde en mémoire au fil de la frappe, sinon elles
 // disparaîtraient au premier réordonnancement.
 document.addEventListener('input', (e) => {
@@ -2207,45 +2421,21 @@ document.addEventListener('input', (e) => {
   }, 200);
 });
 
-document.addEventListener('input', (e) => {
-  if (!e.target.matches('.search input')) return;
-  clearTimeout(suggestTimer);
-  const q = e.target.value.trim();
-  if (q.length < 2) return closeSuggest();
-  suggestTimer = setTimeout(async () => {
-    const seq = ++suggestSeq;
-    try {
-      const { posts } = await api('/posts?' + new URLSearchParams({ q }));
-      if (seq !== suggestSeq) return;
-      const box = $('#suggest');
-      if (!box) return;
-      box.innerHTML = (posts.length
-        ? posts.slice(0, 6).map(p => html`<li role="option"><a href="#/p/${p.id}">${kind(p.type)}<span>${p.title}</span></a></li>`)
-        : [html`<li class="none">Aucun résultat pour « ${q} »</li>`]).map(x => x.s).join('') +
-        html`<li class="all"><a href="#/?q=${encodeURIComponent(q)}">Voir tous les résultats</a></li>`.s;
-      box.classList.remove('hidden');
-      e.target.setAttribute('aria-expanded', 'true');
-    } catch { closeSuggest(); }
-  }, 160);
-});
-document.addEventListener('click', (e) => { if (!e.target.closest('.search')) closeSuggest(); });
-document.addEventListener('keydown', (e) => {
-  if (!e.target.matches?.('.search input')) return;
-  const links = $$('#suggest a');
-  if (e.key === 'Escape') { closeSuggest(); return; }
-  if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' || !links.length) return;
-  e.preventDefault();
-  const i = links.indexOf(document.activeElement);
-  const next = e.key === 'ArrowDown' ? (i + 1) % links.length : (i <= 0 ? links.length - 1 : i - 1);
-  links[next].focus();
-});
-document.addEventListener('keydown', (e) => {
-  if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) {
-    e.preventDefault();
-    $('.search input')?.focus();
-  }
-});
+window.addEventListener('hashchange', route);
 
-window.addEventListener('hashchange', () => { closeSuggest(); route(); });
+// --- Le pont vers l'atelier -------------------------------------------------------
+// atelier.js — la palette de commandes et le clavier — est un module séparé,
+// chargé juste après celui-ci. Il n'importe rien : il lit ce pont. Il est posé
+// avant le premier appel réseau, donc il est prêt quand l'autre module
+// s'exécute. Si atelier.js ne se charge pas, rien ici ne casse : le site se
+// conduit à la souris, comme n'importe quel site.
+window.makers = {
+  api,
+  etat: S,
+  statique: STATIQUE,
+  icones: Object.fromEntries(Object.entries(ICON).map(([k, v]) => [k, v.s])),
+  types: Object.entries(TYPES).map(([cle, v]) => ({ cle, label: v.plural, court: v.short })),
+};
+
 await refreshMe();
 route();

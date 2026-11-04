@@ -5,12 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>makers.si – la bibliothèque de la communauté</title>
   <meta name="description" content="makers.si : skills Claude, prompts, idées, sondages et PDF partagés par la communauté des vibe codeurs et de l’IA. Chaque partage est relu avant publication.">
-  <meta name="theme-color" content="#010409">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#090a0e">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <!-- Les deux polices visibles dès la première image de la page : chargées en priorité. -->
   <link rel="preload" href="fonts/ibm-plex-sans-400.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="fonts/ibm-plex-mono-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/ibm-plex-mono-600.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
+  <!-- Le thème est posé avant le premier affichage, sinon on verrait un éclair
+       de nuit avant de passer au papier. Un fichier, pas une balise en ligne :
+       la politique de sécurité du site refuse les scripts écrits dans le HTML. -->
+  <script type="module" src="theme.js"></script>
   <link rel="canonical" href="https://aimadbouzid.github.io/makers/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="makers.si">
@@ -23,6 +28,10 @@
 </head>
 <body>
   <header id="header" class="site-header"></header>
+  <!-- Le rail existe sur toutes les pages : on change de catégorie depuis la
+       page d'un partage, depuis un formulaire, depuis l'administration. -->
+  <nav id="rail" class="rail" aria-label="Sections de la bibliothèque"></nav>
+  <div class="voile" aria-hidden="true"></div>
   <div id="view" class="wrap"></div>
   <footer class="site-footer">
     <div class="foot">
@@ -38,8 +47,13 @@
       <p class="credit">Créé par <a href="https://elyana.net/" target="_blank" rel="noopener">From Artist to Artist</a> · <a href="https://elyana.net/" target="_blank" rel="noopener">elyana.net</a></p>
     </div>
   </footer>
+  <!-- Sur un téléphone, les quatre destinations qu'on atteint vraiment au doigt. -->
+  <nav id="barre-bas" class="barre-bas" aria-label="Accès rapide"></nav>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script>window.MAKERS_STATIQUE = true;</script>
   <script type="module" src="app.js"></script>
+  <!-- La palette de commandes et le clavier. Si ce fichier manque, le site
+       fonctionne exactement comme sans lui : rien ici n'est indispensable. -->
+  <script type="module" src="atelier.js"></script>
 </body>
 </html>

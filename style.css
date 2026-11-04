@@ -1,7 +1,38 @@
+/* ===========================================================================
+   makers.si — « L'Atelier »
+   ---------------------------------------------------------------------------
+   Le parti pris, en une phrase : ce site n'est pas un fil d'actualité, c'est
+   le catalogue d'un atelier. Tout découle de là.
+
+   Ce que ça change, concrètement :
+   - Un index réglé par des filets, pas des cartes posées sur un fond. Une
+     bibliothèque se parcourt du regard, en descendant ; des cartes arrondies
+     avec une ombre chacune font regarder les cartes, pas leur contenu.
+   - La couleur du type devient la colonne vertébrale. Chaque partage porte à
+     sa gauche un filet de 2 px à la couleur de sa catégorie, et son étiquette
+     en monospace dans la marge. En descendant la page, on lit la composition
+     de la bibliothèque à la couleur, sans lire un mot.
+   - Les angles se resserrent (6 px au lieu de 12), les ombres disparaissent
+     presque. Ce sont les deux réglages qui séparent un catalogue technique
+     d'un tableau de bord de logiciel.
+   - Le monospace en petites capitales porte toutes les étiquettes. C'est la
+     signature : un catalogue a des cotes, des rubriques, des numéros.
+   - Les chiffres sont en chasse fixe tabulaire, donc les colonnes de points
+     s'alignent verticalement d'une ligne à l'autre.
+   - Deux thèmes complets. « Nuit » garde l'identité du site ; « Papier » n'est
+     pas une inversion mais un vrai papier chaud, avec ses propres couleurs de
+     catégorie assez foncées pour se lire sur du blanc cassé.
+
+   Le vocabulaire de classes d'origine est gardé en entier : les pages HTML
+   fabriquées pour les moteurs de recherche (scripts/pages-statiques.js) et
+   l'espace d'administration s'en servent. Ce qui change, c'est ce que chaque
+   classe veut dire, jamais son nom.
+   =========================================================================== */
+
 /* IBM Plex Sans / Mono, licence OFL 1.1 (public/fonts/LICENSE.txt).
-   Hébergées sur le site : aucun appel à un service extérieur, donc rien n'est envoyé à un tiers.
-   Sous-ensemble latin : couvre tous les accents français, y compris œ.
-   `swap` : le texte s'affiche tout de suite avec la police de l'appareil, puis bascule. */
+   Hébergées par le site : aucun appel à un service extérieur, donc rien n'est
+   envoyé à un tiers. Sous-ensemble latin : tous les accents français, œ compris.
+   `swap` : le texte s'affiche tout de suite avec la police de l'appareil. */
 @font-face {
   font-family: 'IBM Plex Sans';
   src: url('fonts/ibm-plex-sans-400.woff2') format('woff2');
@@ -34,958 +65,1421 @@
 }
 
 /* ===========================================================================
-   Les repères du site
-   Les couleurs sont celles d'origine, gardées telles quelles. Ce qui change,
-   c'est tout le reste : des angles arrondis, de l'air entre les blocs, un texte
-   à la taille de la lecture, et des ombres douces pour détacher les cartes.
+   1. Les repères — thème « Nuit »
+   C'est le thème par défaut : il tient l'identité du site, et il s'applique
+   aussi quand JavaScript ne tourne pas. theme.js pose toujours un
+   `data-theme` explicite, donc il n'y a jamais deux palettes à maintenir en
+   double dans ce fichier.
    =========================================================================== */
 :root {
   color-scheme: dark;
-  --bg: #0d1117;                 /* le fond de la page */
-  --bg-deep: #010409;            /* la barre du haut, plus sombre que la page */
-  --surface: #161b22;            /* panneaux, cartes, listes */
-  --surface-2: #21262d;          /* boutons au repos, pastilles */
-  --surface-3: #30363d;          /* survol */
-  --ink: #e6edf3;
-  --ink-soft: #c9d1d9;           /* le texte courant, un cran sous les titres */
-  --muted: #8b949e;
-  --line: #30363d;
-  --line-strong: #4b535d;
-  /* Le violet reste la couleur de la maison : liens, sélection, bouton principal. */
-  --brand: #8b80f0;              /* le violet du point du logo */
-  --accent: #a78bfa;             /* assez clair pour se lire sur le fond sombre */
-  --accent-emphasis: #6d4aff;    /* violet plein, porte du texte blanc */
-  --accent-subtle: color-mix(in srgb, var(--brand) 15%, transparent);
+
+  --bg: #0c0d12;              /* la page */
+  --bar: #090a0e;             /* la barre du haut et le rail */
+  --bg-deep: #08090d;         /* ce qui est en creux : code, arborescences */
+  --surface: #13141b;         /* ce qui est posé dessus : panneaux, cartes */
+  --surface-2: #1b1d26;       /* boutons au repos, pastilles */
+  --surface-3: #262935;       /* survol */
+
+  --ink: #eceef4;             /* les titres */
+  --ink-soft: #c7ccd8;        /* le texte courant */
+  --muted: #8a90a0;           /* ce qui accompagne */
+  --line: #212430;            /* le filet ordinaire : la trame du catalogue */
+  --line-strong: #363a4a;     /* le filet qui sépare vraiment */
+
+  --brand: #8b80f0;
+  --accent: #a78bfa;
+  --accent-emphasis: #6d4aff;
+  --accent-subtle: color-mix(in srgb, var(--brand) 16%, transparent);
   --accent-ink: #ffffff;
-  --ok: #3fb950;
-  --warn: #d29922;
-  --bad: #f85149;
-  /* Une couleur par type de partage. Tout en gris, le fil se lisait ligne par ligne ;
-     avec la couleur, on repère un skill d'un PDF sans lire, ce qui est tout l'intérêt
-     d'une grille. Ces teintes sont choisies claires pour tenir sur le fond sombre. */
-  --k-skill: #56d4a0;            /* vert : ce qu'on installe */
-  --k-prompt: #5cc8d2;           /* cyan : ce qu'on copie */
-  --k-idee: #e8b45a;             /* ambre : ce qu'on imagine */
-  --k-sondage: #f08cc4;          /* rose : ce qu'on vote */
-  --k-pdf: #f2807e;              /* corail : ce qu'on lit */
-  --k-lien: #79a8f5;             /* bleu : ce qui mène ailleurs */
-  --k-info: #b69be0;             /* violet clair : les actus */
-  --k-montage: #f0a05c;          /* orange : le montage */
+
+  --ok: #43b968;
+  --warn: #d6a02a;
+  --bad: #f2564b;
+
+  /* Une couleur par catégorie. Choisies claires : elles vivent sur du noir.
+     Agent prend un vert-jaune franc (il travaille, il avance) et le serveur MCP
+     un bleu-vert éteint : c'est de la plomberie, ça branche des outils sur un
+     modèle, et ça n'a pas à crier plus fort que ce qu'on vient chercher. */
+  --k-skill: #5bd6a4;
+  --k-agent: #a8d84f;
+  --k-mcp: #8fb8c4;
+  --k-prompt: #56c8d8;
+  --k-idee: #e8b55c;
+  --k-sondage: #f08cc4;
+  --k-pdf: #f4837e;
+  --k-lien: #7aa8f7;
+  --k-info: #b69be0;
+  --k-montage: #f0a05c;
+
   --star: #e8b43a;
   --or: #e8b43a;
   --argent: #c3ccd6;
   --bronze: #d49a6a;
-  /* Des angles franchement arrondis : c'est le réglage qui, à lui seul, fait la
-     différence entre un tableau de bord technique et quelque chose qu'on a envie
-     de toucher. */
-  --radius: 12px;
-  --r-sm: 10px;
-  --r-lg: 18px;
+
+  /* Des angles serrés. Le site passait de « catalogue » à « tableau de bord »
+     uniquement à cause de ses 12 px d'arrondi. */
+  --radius: 6px;
+  --r-sm: 4px;
+  --r-lg: 10px;
   --r-pill: 999px;
-  /* Les blocs se détachent par une ombre douce plutôt que par un trait de 1 px. */
-  --ombre-1: 0 1px 2px rgb(0 0 0 / .35);
-  --ombre-2: 0 12px 32px -16px rgb(0 0 0 / .8);
-  --ombre-3: 0 20px 48px -20px rgb(0 0 0 / .85);
-  /* La liste de secours sert tant que la police n'est pas chargée, ou si elle échoue. */
+
+  /* Presque pas d'ombre : ce qui sépare les blocs, ici, c'est un filet.
+     L'ombre est réservée à ce qui flotte vraiment (palette, tiroir, message). */
+  --ombre-1: none;
+  --ombre-2: 0 16px 40px -20px rgb(0 0 0 / .75);
+  --ombre-3: 0 28px 64px -24px rgb(0 0 0 / .85);
+  --voile: rgb(4 5 8 / .72);
+
   --font: 'IBM Plex Sans', ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* La mesure de lecture : 68 caractères. Au-delà, l'œil perd sa ligne. */
+  --mesure: 68ch;
+  --rail: 248px;
+  --barre-h: 56px;
 }
 
+/* ===========================================================================
+   2. Thème « Papier »
+   Pas une inversion : un papier chaud, une encre presque noire, et des
+   couleurs de catégorie assombries exprès pour rester lisibles dessus.
+   =========================================================================== */
+:root[data-theme="papier"] {
+  color-scheme: light;
+
+  --bg: #faf9f6;
+  --bar: #fffefb;
+  --bg-deep: #f1efe8;         /* le creux est plus foncé que la page, pas plus clair */
+  --surface: #ffffff;
+  --surface-2: #f2f0ea;
+  --surface-3: #e7e4da;
+
+  --ink: #17181d;
+  --ink-soft: #3a3d46;
+  --muted: #71747c;
+  --line: #e4e0d7;
+  --line-strong: #cbc6b9;
+
+  --brand: #5b46d6;
+  --accent: #5235c9;
+  --accent-emphasis: #4a2fc0;
+  --accent-subtle: color-mix(in srgb, var(--brand) 11%, transparent);
+  --accent-ink: #ffffff;
+
+  --ok: #0f7a45;
+  --warn: #8a6100;
+  --bad: #c0392f;
+
+  --k-skill: #0f7a56;
+  --k-agent: #5c7510;
+  --k-mcp: #2f6676;
+  --k-prompt: #0e6c7a;
+  --k-idee: #85560a;
+  --k-sondage: #ab3577;
+  --k-pdf: #bb3a30;
+  --k-lien: #2a5fc4;
+  --k-info: #6341b4;
+  --k-montage: #9e4d09;
+
+  --star: #a07000;
+  --or: #8a6100;
+  --argent: #6d7076;
+  --bronze: #8a5a2a;
+
+  --ombre-1: none;
+  --ombre-2: 0 14px 34px -22px rgb(40 36 24 / .35);
+  --ombre-3: 0 24px 56px -24px rgb(40 36 24 / .42);
+  --voile: rgb(28 26 20 / .34);
+}
+
+/* ===========================================================================
+   3. Bases
+   =========================================================================== */
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
 body {
   margin: 0;
   background: var(--bg);
-  color: var(--ink);
-  /* 16 px : la taille de lecture normale. Le site était réglé sur 14, la taille
-     d'un éditeur de code, et demandait un effort à tout le monde. */
-  font: 16px/1.6 var(--font);
+  color: var(--ink-soft);
+  font: 16.5px/1.65 var(--font);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+/* Pas de transition sur le fond de la page : les couleurs de texte, elles,
+   changent d'un coup. Pendant les 200 ms d'un fondu du fond, on se retrouvait
+   avec de l'encre noire sur un fond encore noir. Un changement de thème doit
+   être instantané ou ne pas être. */
+
+h1, h2, h3, h4 { color: var(--ink); font-weight: 700; letter-spacing: -.022em; }
 a { color: inherit; }
 button, input, select, textarea { font: inherit; color: inherit; }
 .hidden { display: none !important; }
 .muted { color: var(--muted); }
-.mono { font-family: var(--mono); }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--r-sm); }
-::selection { background: color-mix(in srgb, var(--accent-emphasis) 45%, transparent); }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
-/* En-tête */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+::selection { background: color-mix(in srgb, var(--accent-emphasis) 40%, transparent); }
+::placeholder { color: var(--muted); }
+
+/* L'étiquette du catalogue : monospace, petites capitales, interlettrage ouvert.
+   Elle sert partout — rubriques du rail, titres de section, légendes de tableau.
+   C'est elle qui donne le ton « fiche technique » plutôt que « blog ». */
+.cote {
+  font: 600 11.5px/1 var(--mono);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Les chiffres s'alignent d'une ligne à l'autre. */
+.chiffre { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* ===========================================================================
+   4. La barre du haut
+   56 px, un filet en bas, rien d'autre. Au centre, le déclencheur de la
+   palette : il remplace le champ de recherche, parce que la palette cherche
+   dans tout le site et sait aussi faire des choses.
+   =========================================================================== */
 .site-header {
-  position: sticky; top: 0; z-index: 10;
-  background: color-mix(in srgb, var(--bg-deep) 82%, transparent);
-  backdrop-filter: saturate(140%) blur(14px);
-  -webkit-backdrop-filter: saturate(140%) blur(14px);
+  position: sticky; top: 0; z-index: 40;
+  background: color-mix(in srgb, var(--bar) 88%, transparent);
+  backdrop-filter: saturate(130%) blur(12px);
+  -webkit-backdrop-filter: saturate(130%) blur(12px);
   border-bottom: 1px solid var(--line);
 }
-.bar { max-width: 1160px; margin: 0 auto; padding: 0 24px; height: 68px; display: flex; align-items: center; gap: 18px; }
-.logo { font: 700 23px var(--font); text-decoration: none; letter-spacing: -.035em; white-space: nowrap; }
+.bar {
+  height: var(--barre-h);
+  padding: 0 20px;
+  display: flex; align-items: center; gap: 14px;
+}
+.logo {
+  font: 700 19px var(--font); text-decoration: none; letter-spacing: -.04em;
+  white-space: nowrap; color: var(--ink);
+  /* Le logo occupe exactement la largeur du rail : son point tombe sur la
+     colonne de l'index, et la page a un axe. */
+  flex: none; width: calc(var(--rail) - 20px);
+}
 .logo i { color: var(--brand); font-style: normal; }
-.search { flex: 1; max-width: 460px; position: relative; }
-.search input {
-  width: 100%; height: 42px; padding: 0 38px 0 16px; font-size: 15px;
-  border: 1px solid transparent; border-radius: var(--r-pill); background: var(--surface-2);
-  transition: background-color .15s, border-color .15s, box-shadow .15s;
-}
-.search input::placeholder { color: var(--muted); }
-.search input:hover { background: var(--surface-3); }
-.search input:focus {
-  background: var(--surface); border-color: var(--accent-emphasis); outline: none;
-  box-shadow: 0 0 0 4px var(--accent-subtle);
-}
-.search kbd {
-  position: absolute; right: 12px; top: 10px; font: 12px var(--font); color: var(--muted);
-  border: 1px solid var(--line-strong); border-radius: 6px; padding: 1px 7px; pointer-events: none;
-}
-.bar-end { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-.who { font: 600 14px var(--font); color: var(--muted); text-decoration: none; padding: 0 4px; }
-.who:hover { color: var(--ink); }
-/* Compteur rond collé à un libellé. */
-.badge { font: 700 12px var(--font); background: var(--accent-emphasis); color: var(--accent-ink); padding: 1px 8px; border-radius: var(--r-pill); margin-left: 7px; }
-/* Copie consultable : on lit tout, on n'écrit rien. */
-.lecture-seule {
-  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px;
-  border-radius: var(--r-pill); background: var(--surface-2); color: var(--muted); font-size: 14px;
-}
-.lecture-seule .ico { width: 14px; height: 14px; }
+.bar-end { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 
-/* Boutons
-   40 px de haut : on vise juste au doigt, ce que les 32 px d'origine ne permettaient pas.
-   Pas de trait visible au repos, un fond qui s'éclaircit au survol, et un léger
-   enfoncement au clic pour que le bouton réponde. */
-.btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px;
-  border: 1px solid transparent; border-radius: var(--radius); background: var(--surface-2);
-  text-decoration: none; cursor: pointer; font: 600 15px var(--font); white-space: nowrap;
-  transition: background-color .15s, border-color .15s, transform .08s, box-shadow .15s;
+/* Le déclencheur de la palette : large, calme, avec son raccourci écrit. */
+.cmd {
+  flex: 1; max-width: 420px; height: 34px;
+  display: flex; align-items: center; gap: 9px;
+  padding: 0 10px 0 12px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface); color: var(--muted);
+  font: 14px var(--font); text-align: left; cursor: pointer;
+  transition: border-color .15s, color .15s, background-color .15s;
 }
-.btn:hover { background: var(--surface-3); }
-.btn:active { transform: translateY(1px); }
-.btn.primary {
-  background: var(--accent-emphasis); color: var(--accent-ink);
-  box-shadow: 0 6px 18px -8px color-mix(in srgb, var(--accent-emphasis) 90%, transparent);
+.cmd:hover { border-color: var(--line-strong); color: var(--ink-soft); }
+.cmd .ico { width: 15px; height: 15px; flex: none; }
+.cmd span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+kbd {
+  font: 600 11px var(--mono); color: var(--muted);
+  border: 1px solid var(--line-strong); border-radius: 4px;
+  padding: 2px 5px; line-height: 1; white-space: nowrap;
 }
-.btn.primary:hover { background: color-mix(in srgb, var(--accent-emphasis) 86%, #fff); }
-.btn.primary:active { background: color-mix(in srgb, var(--accent-emphasis) 88%, #000); }
-.btn.ghost { background: transparent; color: var(--ink-soft); }
-.btn.ghost:hover { background: var(--surface-2); color: var(--ink); }
-/* Valider et refuser : la couleur n'arrive qu'au survol, pour que la rangée
-   de boutons reste calme tant qu'on n'a rien choisi. */
-.btn.ok { color: var(--ok); }
-.btn.ok:hover { background: var(--ok); color: #10231a; }
-.btn.bad { color: var(--bad); }
-.btn.bad:hover { background: var(--bad); color: #2a1113; }
-.btn.small { height: 34px; padding: 0 13px; font-size: 14px; border-radius: var(--r-sm); }
-.btn:disabled { opacity: .45; cursor: default; background: var(--surface-2); transform: none; }
-.ico { width: 16px; height: 16px; flex: none; }
-.btn.small .ico { width: 14px; height: 14px; }
 
-/* Mise en page */
-.wrap { max-width: 1160px; margin: 0 auto; padding: 36px 24px 96px; }
-.layout { display: grid; grid-template-columns: 212px minmax(0, 1fr) 280px; gap: 40px; align-items: start; }
-.narrow { max-width: 720px; margin: 0 auto; }
-.nav { position: sticky; top: 92px; display: flex; flex-direction: column; gap: 3px; }
-.nav h3, .aside h3 { margin: 0 0 10px; font: 700 13px var(--font); color: var(--muted); letter-spacing: .02em; text-transform: uppercase; }
-/* Une ligne par catégorie : rien au repos, un fond au survol, et la catégorie
-   ouverte teintée en violet plutôt que marquée d'un trait. */
-.nav a {
-  display: flex; justify-content: space-between; align-items: center; gap: 10px;
-  min-height: 40px; padding: 7px 14px; border-radius: var(--radius);
-  text-decoration: none; color: var(--ink-soft); font-size: 15px;
+/* Le choix du thème : trois états, en monospace, dans un rail. */
+.theme {
+  display: inline-flex; padding: 2px; gap: 1px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface);
+}
+.theme button {
+  border: 0; background: none; cursor: pointer; color: var(--muted);
+  font: 600 10.5px var(--mono); letter-spacing: .06em; text-transform: uppercase;
+  padding: 4px 8px; border-radius: 3px; line-height: 1.4;
   transition: background-color .14s, color .14s;
 }
-.nav a:hover { background: var(--surface-2); color: var(--ink); }
-.nav a.on { background: var(--accent-subtle); color: var(--accent); font-weight: 600; }
-.nav a span { font: 13px var(--font); color: var(--muted); }
-.nav a.on span { color: var(--accent); }
-.aside { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 92px; }
-/* Les encarts de droite étaient des pavés de texte gris posés sur le fond.
-   Chacun devient une petite carte : on sait où commence et où finit une idée. */
-.aside > section {
-  background: var(--surface); border-radius: var(--r-lg); padding: 18px 18px 16px;
-  border: 1px solid var(--line);
-}
-.aside p { margin: 0 0 8px; font-size: 14.5px; color: var(--muted); line-height: 1.55; }
-.aside p:last-child { margin-bottom: 0; }
-.aside ol { margin: 0; padding-left: 20px; font-size: 14.5px; color: var(--muted); }
-.aside li { margin-bottom: 7px; }
-.aside li:last-child { margin-bottom: 0; }
-.tagcloud { display: flex; flex-wrap: wrap; gap: 8px; }
+.theme button:hover { color: var(--ink); }
+.theme button[aria-pressed="true"] { background: var(--surface-3); color: var(--ink); }
 
-/* Bandeau d'invitation */
-.intro {
-  border-radius: var(--r-lg); padding: 20px; margin-bottom: 20px; background: var(--surface);
-  border: 1px solid var(--line); box-shadow: var(--ombre-1);
-  display: flex; gap: 20px; align-items: center; justify-content: space-between;
+.who { font: 600 13.5px var(--font); color: var(--muted); text-decoration: none; padding: 0 2px; }
+.who:hover { color: var(--ink); }
+.badge {
+  font: 700 11px var(--mono); background: var(--accent-emphasis); color: var(--accent-ink);
+  padding: 1px 6px; border-radius: 3px; margin-left: 6px;
 }
-.intro b { display: block; font-size: 17px; margin-bottom: 3px; }
-.intro span { color: var(--muted); font-size: 15px; }
+.lecture-seule {
+  display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  color: var(--muted); font: 600 11.5px var(--mono); letter-spacing: .05em; text-transform: uppercase;
+}
+.lecture-seule .ico { width: 13px; height: 13px; }
 
-/* Liste */
-.toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 12px; flex-wrap: wrap; }
-/* Trois enfants dans la barre : le titre à gauche, puis les tris et le sélecteur
-   d'affichage collés à droite. Sans ça, space-between les écarterait l'un de l'autre. */
-.toolbar h1 { margin: 0 auto 0 0; font-size: 23px; letter-spacing: -.02em; }
-.toolbar .vues { margin-left: 8px; }
-.toolbar h1 small { font: 15px var(--font); color: var(--muted); margin-left: 10px; font-weight: 400; }
-/* Contrôle segmenté : un rail arrondi, et l'onglet actif posé dessus comme une pastille. */
-.tabs { display: inline-flex; gap: 2px; padding: 3px; background: var(--surface); border-radius: var(--r-pill); font-size: 14px; }
-.tabs a { padding: 6px 14px; border-radius: var(--r-pill); text-decoration: none; color: var(--muted); line-height: 20px; transition: background-color .14s, color .14s; }
-.tabs a:hover { color: var(--ink); }
-.tabs a.on { color: var(--ink); background: var(--surface-3); font-weight: 600; }
-.list { border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line); overflow: hidden; box-shadow: var(--ombre-1); }
-.item { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 16px; padding: 20px; border-bottom: 1px solid var(--line); }
-.item:last-child { border-bottom: 0; }
-.item:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
-.item.pinned { background: color-mix(in srgb, var(--brand) 8%, transparent); }
-/* Le bouton gemme : le mot est écrit à côté du chiffre, parce qu'un losange et un
-   nombre tout seuls ne disent ni qu'on peut cliquer, ni ce que ça fait. */
-.vote {
-  display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; height: fit-content;
-  width: auto; border: 1px solid var(--line-strong); border-radius: var(--r-pill);
-  background: var(--surface-2); color: var(--ink-soft); cursor: pointer;
-  font: inherit; font-size: 14px; transition: background-color .14s, color .14s, border-color .14s;
-}
-.vote b { font-weight: 700; font-size: 14.5px; }
-.vote-mot { font-size: 13.5px; }
-/* En liste, le bouton reprend sa colonne étroite : icône au-dessus, chiffre en dessous. */
-.vote.compacte {
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  width: 100%; padding: 9px 0; border-radius: var(--radius);
-}
-.vote.compacte b { font-size: 13px; font-weight: 700; }
-/* Au pied d'une carte : le losange et le chiffre, sans le mot. L'étiquette accessible
-   dit toujours « Donner une gemme », donc rien ne se perd pour qui n'y voit pas. */
-.vote.court { gap: 6px; padding: 6px 12px; font-size: 13.5px; }
-.vote.court b { font-size: 13.5px; }
-.vote:hover { background: var(--surface-3); border-color: var(--line-strong); color: var(--ink); }
-.vote.on { background: var(--accent-subtle); border-color: var(--accent-emphasis); color: var(--accent); }
+/* Le bouton qui ouvre le rail sur petit écran. */
+.menu-btn { display: none; }
 
-/* Le sélecteur d'affichage, à côté des tris. */
-.vues button {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 14px; border-radius: var(--r-pill); line-height: 20px;
-  border: 0; background: none; color: var(--muted);
-  font: inherit; font-size: 14px; cursor: pointer; transition: background-color .14s, color .14s;
+/* ===========================================================================
+   5. Le rail — la colonne de gauche, permanente
+   Elle existe sur toutes les pages, pas seulement sur le fil : on change de
+   catégorie depuis la page d'un partage, depuis un formulaire, depuis l'admin.
+   C'est ce qui fait passer le site de « suite de pages » à « application ».
+   =========================================================================== */
+.rail {
+  position: fixed; top: var(--barre-h); left: 0; bottom: 0; width: var(--rail);
+  z-index: 30;
+  display: flex; flex-direction: column; gap: 22px;
+  padding: 22px 14px 28px;
+  overflow-y: auto; overscroll-behavior: contain;
+  background: var(--bar);
+  border-right: 1px solid var(--line);
+  scrollbar-width: thin;
 }
-.vues button:hover { color: var(--ink); }
-.vues button.on { color: var(--ink); background: var(--surface-3); font-weight: 600; }
+.rail section { display: flex; flex-direction: column; gap: 1px; }
+.rail .cote { padding: 0 10px 8px; }
+
+/* Une ligne du rail : rien au repos, la couleur de la catégorie quand elle est
+   ouverte. Le compteur est à droite, en chasse fixe, donc les nombres
+   s'alignent les uns sous les autres. */
+.rail a, .rail .rail-btn {
+  position: relative;
+  display: flex; align-items: center; gap: 9px;
+  min-height: 32px; padding: 5px 10px;
+  border: 0; background: none; width: 100%; text-align: left;
+  border-radius: var(--r-sm);
+  text-decoration: none; color: var(--ink-soft);
+  font: 14.5px var(--font); cursor: pointer;
+  transition: background-color .13s, color .13s;
+}
+.rail a:hover, .rail .rail-btn:hover { background: var(--surface-2); color: var(--ink); }
+.rail a span:last-child {
+  margin-left: auto; flex: none;
+  font: 12px var(--mono); font-variant-numeric: tabular-nums; color: var(--muted);
+}
+.rail a .ico { width: 14px; height: 14px; flex: none; color: var(--muted); }
+/* La catégorie ouverte : un filet de 2 px à sa couleur, et l'encre pleine.
+   Pas de pastille violette — le violet est la couleur de la maison, pas celle
+   d'un état. */
+.rail a.on {
+  color: var(--ink); font-weight: 600;
+  background: color-mix(in srgb, var(--k, var(--brand)) 10%, transparent);
+}
+.rail a.on::before {
+  content: ''; position: absolute; left: 0; top: 4px; bottom: 4px; width: 2px;
+  border-radius: 2px; background: var(--k, var(--brand));
+}
+.rail a.on span:last-child { color: var(--k, var(--accent)); }
+.rail a.on .ico { color: var(--k, var(--accent)); }
+/* Une rubrique encore vide reste visible mais en retrait : elle dit ce que la
+   bibliothèque accueille, sans faire croire qu'il y a quelque chose à y lire. */
+.rail a.vide { opacity: .45; }
+.rail a.vide:hover, .rail a.vide.on { opacity: 1; }
+.rail-sep { height: 1px; background: var(--line); margin: 2px 10px; }
+.rail .btn { margin: 0 2px 2px; }
+.rail-bas { margin-top: auto; }
+.rail-bas p { margin: 0; padding: 0 10px; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.rail-bas a { display: inline; padding: 0; min-height: 0; color: var(--muted); text-decoration: underline; text-decoration-color: var(--line-strong); }
+.rail-bas a:hover { background: none; color: var(--accent); }
+
+/* Le voile du tiroir, sur petit écran seulement. */
+.voile {
+  position: fixed; inset: 0; z-index: 29; background: var(--voile);
+  opacity: 0; pointer-events: none; transition: opacity .2s ease;
+  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+}
+body.rail-ouvert .voile { opacity: 1; pointer-events: auto; }
+
+/* ===========================================================================
+   6. La barre du bas — téléphones
+   Les quatre destinations qu'on atteint vraiment au doigt, plus « Partager ».
+   =========================================================================== */
+.barre-bas { display: none; }
+
+/* ===========================================================================
+   7. Mise en page
+   =========================================================================== */
+.wrap {
+  margin-left: var(--rail);
+  padding: 32px 36px 96px;
+  max-width: calc(var(--rail) + 1180px);
+  /* Une page courte ne doit pas faire remonter le pied de page au milieu de
+     l'écran : il reste en bas, et le rail garde toute sa hauteur. */
+  min-height: calc(100vh - var(--barre-h) - 180px);
+}
+/* Les pages fabriquées pour les moteurs de recherche (une par partage, une par
+   collection — voir scripts/pages-statiques.js) sont des pages seules : elles
+   n'ont pas de rail, donc rien ne doit lui être réservé à gauche. Elles
+   réemploient tout le reste du vocabulaire, d'où ce simple décalage annulé. */
+body.page-seule .wrap { margin-left: auto; margin-right: auto; max-width: 920px; }
+body.page-seule .site-footer { margin-left: 0; }
+body.page-seule .foot { max-width: 920px; margin: 0 auto; }
+body.page-seule .logo { width: auto; }
+
+/* Les pages « document » (un partage, un formulaire, une page légale) tiennent
+   dans la mesure de lecture et restent alignées à gauche sur la colonne de
+   l'index : un texte qui se recentre à chaque page fait sauter la mise en page. */
+.narrow { max-width: 760px; }
+.layout { display: block; }
+
+/* ===========================================================================
+   8. Boutons
+   Franchement rectangulaires, 34 px au repos, le texte en demi-gras.
+   =========================================================================== */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  height: 36px; padding: 0 14px;
+  border: 1px solid var(--line-strong); border-radius: var(--radius);
+  background: var(--surface); color: var(--ink);
+  text-decoration: none; cursor: pointer;
+  font: 600 14px var(--font); white-space: nowrap;
+  transition: background-color .14s, border-color .14s, color .14s;
+}
+.btn:hover { background: var(--surface-2); border-color: var(--line-strong); }
+.btn:active { background: var(--surface-3); }
+.btn.primary {
+  background: var(--accent-emphasis); border-color: var(--accent-emphasis); color: var(--accent-ink);
+}
+.btn.primary:hover { background: color-mix(in srgb, var(--accent-emphasis) 88%, #fff); border-color: transparent; }
+.btn.primary:active { background: color-mix(in srgb, var(--accent-emphasis) 88%, #000); }
+.btn.ghost { background: none; border-color: transparent; color: var(--ink-soft); }
+.btn.ghost:hover { background: var(--surface-2); color: var(--ink); border-color: transparent; }
+.btn.ok { color: var(--ok); }
+.btn.ok:hover { background: color-mix(in srgb, var(--ok) 14%, transparent); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
+.btn.bad { color: var(--bad); }
+.btn.bad:hover { background: color-mix(in srgb, var(--bad) 13%, transparent); border-color: color-mix(in srgb, var(--bad) 45%, transparent); }
+.btn.small { height: 30px; padding: 0 11px; font-size: 13px; }
+.btn:disabled { opacity: .45; cursor: default; }
+.ico { width: 15px; height: 15px; flex: none; }
+.btn.small .ico { width: 13px; height: 13px; }
+/* Une copie qui se confirme sur le bouton lui-même : le message dans le coin
+   de l'écran arrivait trop loin du geste pour qu'on le relie au clic. */
+.btn.copie { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 50%, transparent); }
+
+/* ===========================================================================
+   9. La barre de l'index : titre, tris, affichage
+   =========================================================================== */
+.toolbar {
+  display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap;
+  padding-bottom: 12px; margin-bottom: 0;
+  border-bottom: 1px solid var(--line-strong);
+}
+.toolbar h1 {
+  margin: 0 auto 0 0; font-size: 22px; letter-spacing: -.03em; line-height: 1.2;
+  display: flex; align-items: baseline; gap: 10px;
+}
+.toolbar h1 small {
+  font: 600 11.5px var(--mono); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--muted); font-variant-numeric: tabular-nums;
+}
+/* Les tris : du texte, séparé par des filets verticaux. Un contrôle segmenté
+   arrondi aurait ramené l'air « tableau de bord » qu'on vient d'enlever. */
+.tabs { display: inline-flex; align-items: center; gap: 0; font-size: 13.5px; }
+.tabs a, .vues button {
+  padding: 4px 11px; text-decoration: none; color: var(--muted);
+  border: 0; background: none; cursor: pointer; font: inherit; line-height: 1.5;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: color .14s, border-color .14s;
+}
+.tabs a:hover, .vues button:hover { color: var(--ink); }
+.tabs a.on, .vues button.on {
+  color: var(--ink); font-weight: 600; border-bottom-color: var(--accent);
+}
+.vues { display: inline-flex; margin-left: 4px; }
 .vues .ico { width: 14px; height: 14px; }
-.item-top { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.item-title { font-weight: 700; font-size: 17.5px; line-height: 1.35; text-decoration: none; text-wrap: balance; letter-spacing: -.01em; }
-.item-title:hover { color: var(--accent); }
+.vues button { display: inline-flex; align-items: center; gap: 5px; }
+
+/* ===========================================================================
+   10. L'index — une ligne par partage
+   La grille : [étiquette] [titre et description] [faits] [gemme].
+   Les faits et la gemme sont à droite, en chasse fixe : c'est la colonne de
+   chiffres d'un catalogue, et elle s'aligne d'une ligne à l'autre.
+   =========================================================================== */
+.list { border-bottom: 1px solid var(--line); }
+.item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) auto auto;
+  align-items: start; gap: 0 18px;
+  padding: 15px 14px 15px 18px;
+  border-bottom: 1px solid var(--line);
+  transition: background-color .13s ease;
+}
+.item:last-child { border-bottom: 0; }
+/* Le filet de couleur : la colonne vertébrale de l'index. */
+.item::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+  background: var(--k, var(--line-strong)); opacity: .72;
+  transition: opacity .13s ease, width .13s ease;
+}
+.item:hover { background: color-mix(in srgb, var(--ink) 3.5%, transparent); }
+.item:hover::before { opacity: 1; width: 3px; }
+.item.pinned { background: color-mix(in srgb, var(--brand) 6%, transparent); }
+/* Le clavier (j et k) déplace le focus d'un titre à l'autre. La ligne entière
+   s'allume alors, pas seulement le mot : sans ça on perd sa place en descendant. */
+.item:focus-within { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.item:focus-within::before { opacity: 1; width: 3px; }
+
+/* L'étiquette du type, dans la marge. Le point de couleur et le mot, rien de plus. */
+.item .kind { margin-top: 2px; }
+.item-corps { min-width: 0; }
+.item-top { display: flex; gap: 9px; align-items: baseline; flex-wrap: wrap; }
+.item-title {
+  font: 700 16.5px/1.35 var(--font); letter-spacing: -.018em;
+  color: var(--ink); text-decoration: none; text-wrap: balance;
+}
+.item-title:hover { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .item-desc {
-  margin: 6px 0 10px; color: var(--muted); font-size: 15px; line-height: 1.55;
+  margin: 4px 0 0; color: var(--muted); font-size: 14.5px; line-height: 1.5;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 12px; font-size: 13.5px; color: var(--muted); }
-.meta a { text-decoration: none; }
-/* Les tags : une pastille pleine et discrète, qui se teinte au survol. */
-.tag {
-  display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: var(--r-pill);
-  font: 500 13.5px var(--font); color: var(--ink-soft); background: var(--surface-2);
-  border: 1px solid transparent; text-decoration: none; transition: background-color .14s, color .14s, border-color .14s;
+/* La ligne de faits : tout ce qui se compte, aligné à droite en chasse fixe. */
+.faits {
+  display: flex; align-items: center; gap: 14px; flex: none;
+  font: 12.5px var(--mono); font-variant-numeric: tabular-nums; color: var(--muted);
+  padding-top: 3px;
 }
-.tag:hover { background: var(--accent-subtle); border-color: var(--accent-emphasis); color: var(--accent); }
-/* L'étiquette du type : elle porte la couleur de sa catégorie, pour qu'on reconnaisse
-   un PDF d'un skill sans lire. Un point de couleur devant le mot, plutôt qu'un aplat
-   coloré qui entrait en concurrence avec le titre. */
+.faits > * { white-space: nowrap; }
+.faits .auteur { font-family: var(--font); font-size: 13px; }
+.item .thumb { grid-column: 3; }
+.item.has-thumb .faits { grid-column: 4; }
+.item.has-thumb { grid-template-columns: 84px minmax(0, 1fr) auto auto auto; }
+
+/* La métadonnée en ligne, là où elle sert encore (page d'un partage, admin). */
+.meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px;
+  font-size: 13.5px; color: var(--muted);
+}
+.meta a { text-decoration: none; }
+
+/* L'étiquette de catégorie. */
 .kind {
   display: inline-flex; align-items: center; gap: 6px;
-  font: 600 13px var(--font); color: var(--k, var(--muted));
-  background: color-mix(in srgb, var(--k, var(--muted)) 13%, transparent);
-  border-radius: var(--r-pill); padding: 0 11px; line-height: 24px; white-space: nowrap;
+  font: 600 11px var(--mono); letter-spacing: .07em; text-transform: uppercase;
+  color: var(--k, var(--muted)); white-space: nowrap; line-height: 1.5;
 }
-.kind::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+.kind::before {
+  content: ''; width: 5px; height: 5px; border-radius: 50%;
+  background: currentColor; flex: none;
+}
 .k-skill { --k: var(--k-skill); } .k-montage { --k: var(--k-montage); } .k-pdf { --k: var(--k-pdf); }
 .k-lien { --k: var(--k-lien); } .k-info { --k: var(--k-info); }
 .k-prompt { --k: var(--k-prompt); } .k-idee { --k: var(--k-idee); } .k-sondage { --k: var(--k-sondage); }
-.pin { font: 13px var(--font); color: var(--accent); display: inline-flex; gap: 5px; align-items: center; }
-.empty { padding: 64px 24px; text-align: center; color: var(--muted); font-size: 15px; line-height: 1.7; }
-.empty .btn { margin-top: 18px; }
+.k-agent { --k: var(--k-agent); } .k-mcp { --k: var(--k-mcp); }
 
-/* Page d'un partage */
-.back { font-size: 14.5px; color: var(--muted); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 22px; }
-.back:hover { color: var(--ink); }
-.post h1 { font-size: 32px; line-height: 1.22; letter-spacing: -.025em; margin: 14px 0 10px; text-wrap: balance; }
-.post .lead { font-size: 17px; line-height: 1.65; white-space: pre-line; margin: 20px 0; text-wrap: pretty; color: var(--ink-soft); }
-.post-meta { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 14px; color: var(--muted); align-items: center; }
-.block { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--bg-deep); margin: 20px 0; overflow: hidden; }
-.block-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 11px 16px; background: var(--surface); border-bottom: 1px solid var(--line); font: 600 13.5px var(--font); color: var(--muted); }
-pre.code { margin: 0; padding: 18px; font: 13.5px/1.7 var(--mono); white-space: pre-wrap; word-break: break-word; overflow: auto; max-height: 480px; color: var(--ink-soft); }
-.attach { display: flex; align-items: center; gap: 14px; padding: 16px; text-decoration: none; }
-.attach:hover { background: var(--surface); }
-.attach .ico { width: 22px; height: 22px; color: var(--muted); }
-.attach b { display: block; font-size: 15px; overflow-wrap: anywhere; }
-.attach small { color: var(--muted); font: 13px var(--font); }
-.attach .go { margin-left: auto; color: var(--accent); font-size: 14px; font-weight: 600; white-space: nowrap; }
-.post-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
-/* La largeur pleine de .vote est faite pour la colonne étroite de la liste ;
-   en bas d'un partage, le bouton reprend la taille de son contenu. */
-.post-actions .vote { width: auto; padding: 8px 15px; }
-.notice {
-  border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent); border-radius: var(--radius);
-  background: color-mix(in srgb, var(--warn) 11%, transparent);
-  padding: 13px 16px; margin: 16px 0; font-size: 15px;
+/* Le modèle sur lequel un partage a été essayé. Encadré plutôt que coloré : il
+   ne doit pas entrer en concurrence avec l'étiquette de la catégorie, qui porte
+   déjà la seule couleur de la ligne. */
+.modele {
+  display: inline-flex; align-items: center; white-space: nowrap;
+  font: 600 11.5px var(--mono); letter-spacing: .04em;
+  color: var(--ink-soft); text-decoration: none;
+  border: 1px solid var(--line-strong); border-radius: 3px; padding: 1px 6px;
+  transition: border-color .13s, color .13s;
 }
-.notice.bad { border-color: color-mix(in srgb, var(--bad) 35%, transparent); background: color-mix(in srgb, var(--bad) 11%, transparent); }
-.notice.ok { border-color: color-mix(in srgb, var(--ok) 35%, transparent); background: color-mix(in srgb, var(--ok) 11%, transparent); }
+.modele:hover { border-color: var(--accent); color: var(--accent); }
+.modele-ligne { display: inline-flex; align-items: center; gap: 7px; }
 
-/* Formulaires */
-.page-title { font-size: 30px; letter-spacing: -.025em; margin: 0 0 8px; line-height: 1.2; }
-.page-sub { color: var(--muted); margin: 0 0 30px; font-size: 16px; }
-.field { margin-bottom: 22px; }
-.field > label, .field > .lbl { display: block; font-weight: 600; font-size: 15px; margin-bottom: 7px; }
-.field small { display: block; color: var(--muted); font-size: 13.5px; margin-top: 7px; }
-input[type=text], input[type=email], input[type=password], input[type=url], textarea, select {
-  width: 100%; padding: 11px 15px; font-size: 15.5px;
-  border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--surface);
-  transition: border-color .15s, box-shadow .15s, background-color .15s;
+/* Les tags : du texte précédé d'un dièse, pas une pastille. Vingt pastilles
+   grises sur une page en faisaient le motif dominant. */
+.tag {
+  font: 13px var(--font); color: var(--muted); text-decoration: none;
+  border-bottom: 1px solid transparent; transition: color .13s, border-color .13s;
 }
-input[type=text]:hover, input[type=email]:hover, input[type=password]:hover,
-input[type=url]:hover, textarea:hover, select:hover { border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
-input[type=text]:focus, input[type=email]:focus, input[type=password]:focus,
-input[type=url]:focus, textarea:focus, select:focus {
-  border-color: var(--accent-emphasis); outline: none; background: var(--bg-deep);
-  box-shadow: 0 0 0 4px var(--accent-subtle);
-}
-::placeholder { color: var(--muted); }
-textarea { min-height: 130px; resize: vertical; line-height: 1.6; }
-textarea.code { font: 13.5px/1.6 var(--mono); min-height: 180px; }
-input[type=file] { font-size: 15px; }
-.check { display: flex; gap: 11px; align-items: flex-start; font-size: 15px; color: var(--ink-soft); line-height: 1.5; }
-.check input { margin-top: 4px; width: 18px; height: 18px; accent-color: var(--accent-emphasis); flex: none; }
-.form-error { color: var(--bad); font-size: 15px; margin: 0 0 14px; min-height: 0; }
-.switch { font-size: 15px; color: var(--muted); margin-top: 22px; }
-.switch a { color: var(--accent); }
-.steps { margin: 0 0 26px; padding: 0; list-style: none; border-radius: var(--r-lg); background: var(--surface); border: 1px solid var(--line); overflow: hidden; }
-.steps li { padding: 14px 18px; border-bottom: 1px solid var(--line); font-size: 15px; color: var(--muted); }
-.steps li:last-child { border-bottom: 0; }
-.steps b { color: var(--ink); }
+.tag:hover { color: var(--accent); border-bottom-color: currentColor; }
+.tagcloud { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.tagcloud.center { justify-content: flex-start; margin: 14px 0; }
 
-/* Admin */
-.admin-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 22px; flex-wrap: wrap; }
-.card { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); padding: 20px; margin-bottom: 14px; box-shadow: var(--ombre-1); }
-.card h3 { margin: 8px 0 6px; font-size: 18px; letter-spacing: -.01em; }
-.card p { margin: 8px 0; white-space: pre-line; font-size: 15px; }
-.card .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; align-items: center; }
-.reject-form { display: flex; gap: 10px; margin-top: 12px; }
-.reject-form input { flex: 1; }
-/* Une place payée porte une couleur à elle, jamais celle de l'accent du site :
-   il ne faut pas la confondre avec une épingle de l'équipe. */
+/* Les mentions : privé, en vente, sponsorisé, épinglé. */
+.pin {
+  display: inline-flex; align-items: center; gap: 4px;
+  font: 600 11px var(--mono); letter-spacing: .06em; text-transform: uppercase;
+  color: var(--accent);
+}
+.pin .ico { width: 12px; height: 12px; }
+.pin.lock { color: var(--muted); }
 .pin.sponso { color: var(--warn); }
-/* Un prix se lit comme une étiquette, pas comme une alerte : il informe, il n'avertit pas. */
-.pin.vente {
-  color: var(--ok); background: color-mix(in srgb, var(--ok) 13%, transparent);
-  padding: 1px 9px; border-radius: var(--r-pill); font-weight: 600;
-}
-.promo-form { flex-wrap: wrap; }
-.promo-form input[type="number"] { flex: 0 0 120px; }
-.promo-form input[type="text"] { flex: 1 1 220px; }
-.admin-sous-titre { margin: 30px 0 12px; font-size: 17px; letter-spacing: -.01em; }
-.admin-sous-titre small { font: 14px var(--font); color: var(--muted); margin-left: 10px; font-weight: 400; }
-.table { width: 100%; border-collapse: collapse; font-size: 15px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
-.table th, .table td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); }
-.table th { font: 600 13px var(--font); color: var(--muted); background: var(--bg-deep); text-transform: uppercase; letter-spacing: .03em; }
-.table tbody tr:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
-.table tr:last-child td { border-bottom: 0; }
-.status {
-  display: inline-flex; align-items: center; height: 24px; padding: 0 11px; border-radius: var(--r-pill);
-  font: 600 13px var(--font); color: var(--c); background: color-mix(in srgb, var(--c) 15%, transparent);
-}
-.status.pending { --c: var(--warn); } .status.approved { --c: var(--ok); } .status.rejected { --c: var(--bad); }
+.pin.vente { color: var(--ok); font-variant-numeric: tabular-nums; }
 
-/* Classement : les trois premiers du tri « Top » */
-.vote-col { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+/* Le rang. Les trois premiers prennent leur métal, le reste un simple numéro. */
+.vote-col { display: flex; align-items: center; gap: 10px; flex: none; padding-top: 1px; }
 .rang {
-  font: 700 11px var(--font); color: var(--muted);
-  background: var(--surface-2); border-radius: var(--r-pill);
-  padding: 2px 9px; line-height: 16px; white-space: nowrap;
+  font: 700 11px var(--mono); letter-spacing: .05em; color: var(--muted);
+  white-space: nowrap;
 }
-.rang-n { font: 12px var(--font); color: var(--muted); }
+.rang-n { font: 12px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
 .rang-1 { --rang: var(--or); } .rang-2 { --rang: var(--argent); } .rang-3 { --rang: var(--bronze); }
-.item.podium .rang { color: var(--rang); background: color-mix(in srgb, var(--rang) 16%, transparent); }
+.item.podium .rang { color: var(--rang); }
 
-/* --- Les cartes du fil ------------------------------------------------------------
-   Une grille plutôt qu'une liste dense : on choisit avec les yeux, pas en lisant
-   huit informations grises par ligne. */
-.grille { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+/* La gemme. Le signal rare du site : elle mérite d'être un vrai bouton. */
+.vote {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 10px; height: fit-content; width: auto;
+  border: 1px solid var(--line-strong); border-radius: var(--radius);
+  background: none; color: var(--muted); cursor: pointer;
+  font: 600 13px var(--font); font-variant-numeric: tabular-nums;
+  transition: background-color .13s, color .13s, border-color .13s;
+}
+.vote .ico { width: 13px; height: 13px; }
+.vote b { font: 700 13px var(--mono); font-variant-numeric: tabular-nums; }
+.vote-mot { font-size: 12.5px; font-weight: 400; }
+.vote:hover { border-color: var(--accent); color: var(--ink); }
+.vote.on {
+  border-color: var(--accent); color: var(--accent);
+  background: var(--accent-subtle);
+}
+.vote.compacte, .vote.court { padding: 5px 9px; }
+.vote.compacte .vote-mot, .vote.court .vote-mot { display: none; }
+
+/* Les étoiles en lecture. */
+.stars { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); }
+.stars .ico { width: 12px; height: 12px; }
+.stars i { display: inline-flex; color: var(--star); }
+.stars b { font: 700 12.5px var(--mono); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.stars.big { gap: 1px; }
+.stars.big button {
+  background: none; border: 0; padding: 3px; cursor: pointer; color: var(--line-strong);
+  display: inline-flex; border-radius: 3px;
+}
+.stars.big .ico { width: 21px; height: 21px; }
+.stars.big button.on { color: var(--star); }
+.stars.big:hover button { color: var(--line-strong); }
+.stars.big button:hover, .stars.big button:hover ~ button { color: inherit; }
+.stars.big:hover button:hover, .stars.big button:hover { color: var(--star); }
+
+.repl { display: inline-flex; align-items: center; gap: 4px; }
+.repl .ico { width: 12px; height: 12px; }
+.purse {
+  display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 9px;
+  border: 1px solid color-mix(in srgb, var(--brand) 40%, transparent); border-radius: var(--radius);
+  font: 700 12.5px var(--mono); color: var(--accent); font-variant-numeric: tabular-nums;
+}
+.purse .ico { width: 13px; height: 13px; }
+
+/* La pastille à initiale de l'auteur : elle dit « quelqu'un a partagé ça ». */
+.auteur { color: var(--ink-soft); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.auteur:hover { color: var(--accent); }
+.rond {
+  flex: none; width: 19px; height: 19px; border-radius: 3px; display: grid; place-items: center;
+  background: var(--surface-3); color: var(--ink-soft);
+  font: 700 10px var(--mono); letter-spacing: 0;
+}
+.auteur:hover .rond { background: var(--accent-subtle); color: var(--accent); }
+
+.empty {
+  padding: 72px 20px; text-align: left; color: var(--muted);
+  font-size: 15px; line-height: 1.7; border-bottom: 1px solid var(--line);
+}
+.empty .btn { margin-top: 16px; }
+
+/* ===========================================================================
+   11. La vue en cartes
+   Même langage que l'index : un cadre d'un pixel, le filet de couleur en haut,
+   les faits en bas en chasse fixe. Aucune ombre, aucun soulèvement au survol.
+   =========================================================================== */
+/* Les filets sont dessinés autour de chaque case, pas peints sous la grille.
+   Avec un fond qui traverse les interstices, une dernière rangée incomplète
+   laissait un rectangle gris à la place de la case manquante. Une ombre portée
+   d'un pixel ne prend aucune place et se superpose exactement dans l'intervalle. */
+.grille {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+  gap: 1px; border: 1px solid var(--line);
+}
 .carte {
   display: flex; flex-direction: column; overflow: hidden;
-  border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface);
-  box-shadow: var(--ombre-1);
-  transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+  background: var(--bg); position: relative;
+  box-shadow: 0 0 0 1px var(--line);
+  transition: background-color .14s ease;
 }
-.carte:hover { border-color: var(--line-strong); transform: translateY(-3px); box-shadow: var(--ombre-2); }
-/* Un partage épinglé : la bordure prend la couleur de la maison, puisqu'il n'y a plus
-   de bande colorée pour le signaler. */
-.carte.pinned { border-color: color-mix(in srgb, var(--brand) 45%, transparent); }
-@media (prefers-reduced-motion: reduce) { .carte { transition: none; } .carte:hover { transform: none; } }
-
-/* Le visuel n'existe que s'il y a une vraie photo : une bande de couleur vide avec
-   une icône au milieu mangeait un quart de la carte sans rien apprendre à personne. */
-.carte-visuel {
-  position: relative; display: block;
-  aspect-ratio: 16 / 7; background: var(--bg-deep);
-  overflow: hidden;
+.carte::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px;
+  background: var(--k, var(--line-strong)); opacity: .5; transition: opacity .14s;
 }
+.carte:hover, .carte:focus-within { background: var(--surface); }
+.carte:hover::before, .carte:focus-within::before { opacity: 1; }
+.carte.pinned { background: color-mix(in srgb, var(--brand) 6%, transparent); }
+.carte-visuel { position: relative; display: block; aspect-ratio: 16 / 8; background: var(--bg-deep); overflow: hidden; }
 .carte-visuel img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .medaille {
-  position: absolute; top: 10px; left: 10px; width: 26px; height: 26px;
-  display: grid; place-items: center; border-radius: 50%;
-  background: var(--rang, var(--line-strong)); color: #1a1a18;
-  font: 700 13px var(--font); box-shadow: var(--ombre-1);
+  position: absolute; top: 8px; left: 8px; min-width: 20px; height: 20px; padding: 0 5px;
+  display: grid; place-items: center; border-radius: 3px;
+  background: var(--rang, var(--line-strong)); color: #14130f;
+  font: 700 11px var(--mono);
 }
-/* Sans photo, le rang rejoint la ligne du type, à la taille d'une pastille. */
-.medaille.plate { position: static; width: 22px; height: 22px; font-size: 12px; box-shadow: none; }
-
-.carte-corps { display: flex; flex-direction: column; gap: 7px; padding: 16px 18px 14px; flex: 1; }
-.carte.sans-visuel .carte-corps { padding-top: 18px; }
-.carte-haut { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-/* Deux lignes au maximum, et des lignes qui se touchent presque : un titre de carte
-   est une étiquette, pas un paragraphe. Le couper à une seule ligne lui ferait perdre
-   sa fin, donc on réduit son poids plutôt que son contenu. */
+.medaille.plate { position: static; }
+.carte-corps { display: flex; flex-direction: column; gap: 8px; padding: 15px 16px 13px; flex: 1; }
+.carte-haut { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
 .carte-titre {
-  font-size: 15.5px; font-weight: 700; line-height: 1.22; letter-spacing: -.015em;
+  font: 700 15.5px/1.3 var(--font); letter-spacing: -.018em; color: var(--ink);
   text-decoration: none; text-wrap: balance;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 .carte-titre:hover { color: var(--accent); }
-/* Pas de description sur une carte : le titre, le type et la note suffisent à choisir
-   quoi ouvrir, et deux lignes de gris sous chaque titre faisaient une page de texte.
-   La description reste entière dans la vue Liste et sur la page du partage. */
-/* Une seule ligne, jamais deux : le pied passait sur deux rangs sur toutes les cartes
-   et mangeait un tiers de leur hauteur. Ce qui ne tient pas est rogné plutôt que
-   renvoyé à la ligne — le pseudo le plus long perd sa fin, la rangée reste droite. */
 .carte-bas {
-  display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; overflow: hidden;
-  margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line);
-  font-size: 13.5px; color: var(--muted);
+  display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; overflow: hidden;
+  margin-top: auto; padding-top: 11px; border-top: 1px solid var(--line);
+  font: 12.5px var(--mono); font-variant-numeric: tabular-nums; color: var(--muted);
 }
 .carte-bas > * { flex: none; }
-.carte-auteur { margin-left: auto; min-width: 0; overflow: hidden; white-space: nowrap; }
-/* Le détail (le domaine d'un lien, le nombre de fichiers d'un skill) se lit à côté du
-   type : les deux disent de quoi il s'agit. Au pied de la carte, il ne tenait pas et se
-   faisait rogner sans prévenir. */
-.carte-detail { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.carte-auteur { margin-left: auto; min-width: 0; overflow: hidden; white-space: nowrap; font-family: var(--font); }
+.carte-detail { font: 12.5px var(--mono); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
-/* Ce qu'il y a dans un skill : une liste de pièces, pas une arborescence de dépôt */
-.depot { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); margin: 20px 0; overflow: hidden; }
-.depot-head {
-  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  padding: 13px 16px; border-bottom: 1px solid var(--line); font-size: 15px;
-}
-.depot-head .ico { width: 17px; height: 17px; color: var(--k-skill); }
-.depot-head b { font: 600 15px var(--font); }
-.depot-head .muted { font: 13.5px var(--font); }
-.depot-head .btn { margin-left: auto; }
-.depot-corps { display: grid; grid-template-columns: minmax(160px, 220px) minmax(0, 1fr); }
-.depot-arbre { border-right: 1px solid var(--line); padding: 10px; display: flex; flex-direction: column; gap: 3px; min-width: 0; background: var(--bg-deep); }
-.depot-dossier {
-  display: flex; align-items: center; gap: 7px; padding: 8px 8px 4px;
-  font: 600 12px var(--font); color: var(--muted); text-transform: uppercase; letter-spacing: .03em;
-}
-.depot-dossier .ico { width: 13px; height: 13px; }
-.depot-fichier {
-  display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
-  padding: 9px 11px; border: 0; border-radius: var(--r-sm); background: none; color: var(--ink-soft);
-  font: 14px var(--font); cursor: pointer; min-width: 0; transition: background-color .14s, color .14s;
-}
-.depot-fichier span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.depot-fichier .ico { width: 15px; height: 15px; flex: none; }
-.depot-fichier:hover { background: var(--surface-2); color: var(--ink); }
-.depot-fichier.on { background: var(--accent-subtle); color: var(--accent); font-weight: 600; }
-.depot-fichier.dedans { padding-left: 24px; }
-.depot-vue { min-width: 0; display: flex; flex-direction: column; background: var(--bg-deep); }
-.depot-barre {
-  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
-  border-bottom: 1px solid var(--line); font: 13px var(--mono); color: var(--muted);
-}
-.depot-barre code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.depot-barre .btn { margin-left: auto; }
-.depot-vue pre.code { border: 0; max-height: 440px; }
+/* Miniatures */
+.thumb { display: block; width: 86px; height: 58px; border-radius: var(--r-sm); overflow: hidden; background: var(--bg-deep); flex: none; }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-/* Les trois étapes pour se servir d'un skill : la question qu'on se pose vraiment
-   en arrivant sur la page, avant même de regarder les fichiers. */
-.mode-emploi { margin: 22px 0; }
-.mode-emploi h2 { font-size: 18px; margin: 0 0 12px; letter-spacing: -.01em; }
-.etapes { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; counter-reset: etape; }
-.etapes li {
-  display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 14px; align-items: start;
-  padding: 15px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-  font-size: 15px; line-height: 1.55;
+/* ===========================================================================
+   12. Le bandeau d'accueil et l'étagère du haut
+   =========================================================================== */
+.start {
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  border: 1px solid var(--line); border-left: 2px solid var(--brand);
+  padding: 14px 18px; margin-bottom: 26px; background: var(--surface);
 }
-.etapes li::before {
-  counter-increment: etape; content: counter(etape);
-  display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
-  background: var(--accent-subtle); color: var(--accent); font: 700 14px var(--font);
+.start b { display: block; font-size: 15.5px; color: var(--ink); letter-spacing: -.015em; }
+.start span { color: var(--muted); font-size: 14px; }
+.start .btn { flex: none; }
+.intro { border: 1px solid var(--line); padding: 18px; margin-bottom: 18px; display: flex; gap: 18px; align-items: center; justify-content: space-between; }
+.intro b { display: block; font-size: 16px; color: var(--ink); }
+.intro span { color: var(--muted); font-size: 14.5px; }
+
+/* L'étagère : les trois premiers de la semaine, posés en haut de l'index.
+   Dans une bibliothèque, la sélection est sur une table à l'entrée — pas dans
+   une colonne de droite que personne ne lit. */
+.etagere { margin-bottom: 28px; }
+.etagere-tete { display: flex; align-items: baseline; gap: 12px; padding-bottom: 9px; border-bottom: 1px solid var(--line-strong); }
+.etagere-tete .cote { padding: 0; }
+.etagere-tete a { margin-left: auto; font-size: 13px; color: var(--muted); text-decoration: none; }
+.etagere-tete a:hover { color: var(--accent); }
+.etagere-liste { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-top: 0; }
+.etagere-item {
+  position: relative; display: flex; flex-direction: column; gap: 7px;
+  padding: 14px 15px 13px; background: var(--bg); text-decoration: none;
+  transition: background-color .14s;
 }
-.etapes b { display: block; margin-bottom: 2px; }
-.etapes span { color: var(--muted); }
-.etapes code {
-  font: 13px var(--mono); background: var(--bg-deep); color: var(--ink-soft);
-  padding: 2px 7px; border-radius: 6px; overflow-wrap: anywhere;
+.etagere-item:hover { background: var(--surface); }
+.etagere-item::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--k, var(--line-strong)); opacity: .5; }
+.etagere-rang { font: 700 10.5px var(--mono); letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+.etagere-item.podium .etagere-rang { color: var(--rang); }
+.etagere-titre { font: 700 14.5px/1.32 var(--font); letter-spacing: -.015em; color: var(--ink); text-wrap: balance; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.etagere-item:hover .etagere-titre { color: var(--accent); }
+.etagere-pts { font: 12px var(--mono); font-variant-numeric: tabular-nums; color: var(--muted); margin-top: auto; }
+
+/* « Voir plus » */
+.plus { display: flex; margin: 22px 0 4px; }
+.plus .btn { min-width: 220px; justify-content: center; }
+
+/* Le colophon : ce qui fermait la colonne de droite se lit mieux à la fin du
+   catalogue, en petit, sur trois colonnes. C'est la fin de l'objet. */
+.colophon {
+  margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--line-strong);
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 28px 36px;
 }
-.prudence {
-  display: flex; gap: 11px; align-items: flex-start; margin-top: 12px;
-  padding: 13px 16px; border-radius: var(--radius); font-size: 14.5px; line-height: 1.55;
-  background: color-mix(in srgb, var(--warn) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--warn) 28%, transparent);
+.colophon section { display: flex; flex-direction: column; gap: 8px; }
+.colophon h3 { margin: 0; font: 600 11.5px var(--mono); letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+.colophon p { margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--muted); }
+.colophon ol { margin: 0; padding-left: 18px; font-size: 13.5px; line-height: 1.6; color: var(--muted); }
+.colophon li { margin-bottom: 5px; }
+.colophon a { color: var(--ink-soft); }
+.colophon a:hover { color: var(--accent); }
+
+.about-type {
+  margin: 16px 0 0; padding: 0 0 0 14px; border-left: 2px solid var(--line-strong);
+  color: var(--muted); font-size: 14.5px; line-height: 1.6; max-width: var(--mesure);
+}
+.about-type .ico { width: 14px; height: 14px; vertical-align: -2px; }
+
+/* ===========================================================================
+   13. La page d'un partage — un document
+   La couleur de la catégorie tient toute la page : le filet sous le colophon,
+   les liens, les éléments actifs. Une page de skill est verte, une page de
+   prompt est cyan. C'est ce qui donne à chaque type sa propre identité.
+   =========================================================================== */
+.back {
+  display: inline-flex; align-items: center; gap: 6px; margin-bottom: 26px;
+  font: 600 11.5px var(--mono); letter-spacing: .07em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none;
+}
+.back:hover { color: var(--ink); }
+
+.post h1 {
+  font-size: 34px; line-height: 1.15; letter-spacing: -.035em; margin: 10px 0 0;
+  text-wrap: balance; max-width: 24ch;
+}
+/* Le colophon d'un partage : l'étiquette, l'auteur, la date, les tags, séparés
+   par des filets. C'est la ligne d'identification d'une fiche. */
+.post-meta {
+  display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;
+  margin-top: 14px; padding: 10px 0; font-size: 13.5px; color: var(--muted);
+  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+}
+.post-meta .auteur { font-weight: 600; color: var(--ink); }
+.post-meta .rond { width: 22px; height: 22px; font-size: 11px; }
+.post .lead {
+  font-size: 17.5px; line-height: 1.65; white-space: pre-line; margin: 24px 0;
+  text-wrap: pretty; color: var(--ink-soft); max-width: var(--mesure);
+}
+
+/* Les blocs en creux : code, pièces jointes, liens. */
+.block { border: 1px solid var(--line); background: var(--bg-deep); margin: 22px 0; overflow: hidden; }
+.block-head {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 9px 14px; background: var(--surface); border-bottom: 1px solid var(--line);
+  font: 600 11.5px var(--mono); letter-spacing: .07em; text-transform: uppercase; color: var(--muted);
+}
+pre.code {
+  margin: 0; padding: 16px; font: 13.5px/1.7 var(--mono);
+  white-space: pre-wrap; word-break: break-word; overflow: auto; max-height: 520px;
   color: var(--ink-soft);
 }
-.prudence .ico { width: 17px; height: 17px; color: var(--warn); margin-top: 2px; }
+.attach { display: flex; align-items: center; gap: 13px; padding: 14px; text-decoration: none; }
+.attach:hover { background: var(--surface); }
+.attach .ico { width: 20px; height: 20px; color: var(--k, var(--muted)); }
+.attach b { display: block; font-size: 14.5px; color: var(--ink); overflow-wrap: anywhere; }
+.attach small { color: var(--muted); font: 12.5px var(--mono); }
+.attach .go {
+  margin-left: auto; color: var(--accent); white-space: nowrap;
+  font: 600 11.5px var(--mono); letter-spacing: .07em; text-transform: uppercase;
+}
+.post-actions {
+  display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+  margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line-strong);
+}
+.post-actions .vote { padding: 7px 13px; }
+.post-actions .sep { width: 1px; height: 22px; background: var(--line); }
 
-/* Éditeur de fichiers du formulaire de partage */
-.fichiers { display: flex; flex-direction: column; gap: 12px; }
-.fichier-ligne { border: 1px solid var(--line-strong); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
-.fichier-tete { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--line); }
-.fichier-tete input { border: 0; background: none; font: 13.5px var(--mono); padding: 4px 6px; }
+.notice {
+  border: 1px solid color-mix(in srgb, var(--warn) 38%, transparent);
+  border-left-width: 2px; border-left-color: var(--warn);
+  background: color-mix(in srgb, var(--warn) 9%, transparent);
+  padding: 12px 15px; margin: 18px 0; font-size: 14.5px; max-width: var(--mesure);
+}
+.notice.bad { border-color: color-mix(in srgb, var(--bad) 38%, transparent); border-left-color: var(--bad); background: color-mix(in srgb, var(--bad) 9%, transparent); }
+.notice.ok { border-color: color-mix(in srgb, var(--ok) 38%, transparent); border-left-color: var(--ok); background: color-mix(in srgb, var(--ok) 9%, transparent); }
+
+.locked {
+  border: 1px solid var(--line-strong); border-left: 2px solid var(--brand);
+  background: var(--surface); padding: 18px; margin: 22px 0; max-width: var(--mesure);
+}
+.locked-head { display: flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 7px; }
+.locked-head .ico { width: 16px; height: 16px; color: var(--accent); }
+.locked p { margin: 7px 0 13px; font-size: 14.5px; color: var(--ink-soft); }
+
+/* Le mode d'emploi d'un skill : trois étapes, numérotées en chasse fixe. */
+.mode-emploi { margin: 26px 0; }
+.mode-emploi h2 { font: 600 11.5px var(--mono); letter-spacing: .09em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+.etapes { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; counter-reset: etape; border-top: 1px solid var(--line); max-width: var(--mesure); }
+.etapes li {
+  display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 14px; align-items: baseline;
+  padding: 14px 2px; border-bottom: 1px solid var(--line); font-size: 14.5px; line-height: 1.55;
+}
+.etapes li::before {
+  counter-increment: etape; content: counter(etape, decimal-leading-zero);
+  font: 600 11.5px var(--mono); letter-spacing: .05em; color: var(--k, var(--accent));
+}
+.etapes b { display: block; margin-bottom: 2px; color: var(--ink); }
+.etapes span { color: var(--muted); }
+.etapes code { font: 12.5px var(--mono); background: var(--bg-deep); color: var(--ink-soft); padding: 2px 6px; border-radius: 3px; overflow-wrap: anywhere; }
+.prudence {
+  display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; max-width: var(--mesure);
+  padding: 12px 14px; font-size: 14px; line-height: 1.55;
+  background: color-mix(in srgb, var(--warn) 8%, transparent);
+  border-left: 2px solid var(--warn); color: var(--ink-soft);
+}
+.prudence .ico { width: 16px; height: 16px; color: var(--warn); margin-top: 2px; }
+
+/* Le dossier d'un skill. */
+.depot { border: 1px solid var(--line); background: var(--surface); margin: 22px 0; overflow: hidden; }
+.depot-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 11px 14px; border-bottom: 1px solid var(--line); font-size: 14px; }
+.depot-head .ico { width: 16px; height: 16px; color: var(--k-skill); }
+.depot-head b { font: 600 14px var(--font); color: var(--ink); }
+.depot-head .muted { font: 12.5px var(--mono); }
+.depot-head .btn { margin-left: auto; }
+.depot-corps { display: grid; grid-template-columns: minmax(150px, 210px) minmax(0, 1fr); }
+.depot-arbre { border-right: 1px solid var(--line); padding: 8px; display: flex; flex-direction: column; gap: 1px; min-width: 0; background: var(--bg-deep); }
+.depot-dossier { display: flex; align-items: center; gap: 6px; padding: 7px 7px 4px; font: 600 10.5px var(--mono); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.depot-dossier .ico { width: 12px; height: 12px; }
+.depot-fichier {
+  display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+  padding: 7px 9px; border: 0; border-radius: var(--r-sm); background: none; color: var(--ink-soft);
+  font: 13px var(--mono); cursor: pointer; min-width: 0; transition: background-color .13s, color .13s;
+}
+.depot-fichier span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.depot-fichier .ico { width: 13px; height: 13px; flex: none; }
+.depot-fichier:hover { background: var(--surface-2); color: var(--ink); }
+.depot-fichier.on { background: var(--surface-3); color: var(--ink); font-weight: 600; }
+.depot-fichier.dedans { padding-left: 22px; }
+.depot-vue { min-width: 0; display: flex; flex-direction: column; background: var(--bg-deep); }
+.depot-barre { display: flex; align-items: center; gap: 10px; padding: 9px 13px; border-bottom: 1px solid var(--line); font: 12.5px var(--mono); color: var(--muted); }
+.depot-barre code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.depot-barre .btn { margin-left: auto; }
+.depot-vue pre.code { border: 0; max-height: 460px; }
+
+.gallery { display: grid; gap: 12px; margin: 22px 0; max-width: var(--mesure); }
+.gallery a { display: block; border: 1px solid var(--line); overflow: hidden; background: var(--surface); }
+.gallery img { display: block; width: 100%; height: auto; }
+.howto { margin: 4px 0 20px; font-size: 14.5px; color: var(--muted); }
+.howto summary { cursor: pointer; color: var(--ink); font-weight: 600; padding: 6px 0; }
+.howto p { margin: 10px 0 0; line-height: 1.6; }
+
+/* Le sondage. */
+.poll { display: flex; flex-direction: column; gap: 1px; margin: 24px 0; max-width: var(--mesure); border: 1px solid var(--line); }
+.poll-opt {
+  position: relative; display: flex; align-items: center; gap: 12px; width: 100%; overflow: hidden;
+  padding: 12px 15px; border: 0; border-bottom: 1px solid var(--line);
+  background: var(--bg); color: var(--ink); font: inherit; font-size: 14.5px; text-align: left; cursor: pointer;
+  transition: background-color .14s;
+}
+.poll-opt:last-child { border-bottom: 0; }
+.poll-opt:hover { background: var(--surface); }
+.poll-opt.mine { font-weight: 600; }
+.poll-bar { position: absolute; inset: 0 auto 0 0; width: 0; background: color-mix(in srgb, var(--k-sondage) 15%, transparent); transition: width .45s cubic-bezier(.2,.8,.3,1); }
+.poll-opt.mine .poll-bar { background: color-mix(in srgb, var(--k-sondage) 26%, transparent); }
+.poll-text, .poll-num { position: relative; }
+.poll-text { overflow-wrap: anywhere; }
+.poll-num { margin-left: auto; font: 700 13px var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.poll-num small { font-weight: 400; color: var(--muted); margin-left: 7px; }
+.poll-foot { margin: 8px 0 0; font-size: 13.5px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .poll-bar { transition: none; } }
+
+/* Les réponses. */
+.reponses { margin: 44px 0 0; padding-top: 22px; border-top: 1px solid var(--line-strong); max-width: var(--mesure); }
+.reponses h2 { display: flex; align-items: center; gap: 8px; font: 600 11.5px var(--mono); letter-spacing: .09em; text-transform: uppercase; color: var(--muted); margin: 0 0 16px; }
+.reponses h2 .ico { width: 14px; height: 14px; }
+.fil { list-style: none; margin: 0 0 20px; padding: 0; display: flex; flex-direction: column; }
+.reponse { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.reponse:first-child { border-top: 1px solid var(--line); }
+.reponse-tete { display: flex; align-items: center; gap: 10px; font: 12.5px var(--mono); color: var(--muted); margin-bottom: 7px; }
+.reponse-tete .auteur { font: 600 13px var(--font); color: var(--ink); }
+.reponse-sup { margin-left: auto; border: 0; background: none; color: var(--muted); cursor: pointer; padding: 4px; border-radius: 3px; display: inline-flex; }
+.reponse-sup .ico { width: 14px; height: 14px; }
+.reponse-sup:hover { color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, transparent); }
+.reponse-texte { margin: 0; font-size: 15px; line-height: 1.6; white-space: pre-line; overflow-wrap: anywhere; }
+.reponse-form textarea { min-height: 88px; }
+.reponse-pied { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+.reponse-pied .muted { font-size: 13px; }
+.reponse-form .form-error { margin: 10px 0 0; }
+.reponse-invite { margin: 0; font-size: 14.5px; color: var(--muted); }
+.reponse-invite a { color: var(--accent); font-weight: 600; }
+
+.report { margin-top: 36px; font-size: 13.5px; color: var(--muted); max-width: var(--mesure); }
+.report summary { cursor: pointer; padding: 6px 0; font: 600 11.5px var(--mono); letter-spacing: .07em; text-transform: uppercase; }
+.report form { display: flex; gap: 10px; margin: 12px 0 8px; }
+.report input { flex: 1; }
+.reasons { margin: 8px 0 0; padding-left: 18px; }
+
+/* ===========================================================================
+   14. Formulaires
+   =========================================================================== */
+.page-title { font-size: 30px; letter-spacing: -.035em; margin: 0 0 8px; line-height: 1.15; max-width: 24ch; }
+.page-title .ico { width: .82em; height: .82em; vertical-align: -.08em; margin-right: 10px; color: var(--accent); }
+.page-sub { color: var(--muted); margin: 0 0 32px; font-size: 16px; max-width: var(--mesure); line-height: 1.6; }
+.field { margin-bottom: 22px; max-width: var(--mesure); }
+.field > label, .field > .lbl { display: block; font: 600 13px var(--font); color: var(--ink); margin-bottom: 6px; }
+.field small { display: block; color: var(--muted); font-size: 13px; margin-top: 7px; line-height: 1.55; }
+input[type=text], input[type=email], input[type=password], input[type=url], input[type=number], textarea, select {
+  width: 100%; padding: 9px 12px; font-size: 15px;
+  border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--surface);
+  transition: border-color .14s, box-shadow .14s;
+}
+input:hover, textarea:hover, select:hover { border-color: var(--muted); }
+input[type=text]:focus, input[type=email]:focus, input[type=password]:focus,
+input[type=url]:focus, input[type=number]:focus, textarea:focus, select:focus {
+  border-color: var(--accent); outline: none;
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+textarea { min-height: 124px; resize: vertical; line-height: 1.6; }
+textarea.code { font: 13px/1.6 var(--mono); min-height: 180px; }
+input[type=file] { font-size: 14px; }
+/* Deux champs qui n'en font qu'un : la famille du modèle, puis sa version. */
+.duo { display: flex; gap: 8px; }
+.duo select { flex: 0 0 180px; }
+.duo input { flex: 1; min-width: 0; }
+.check { display: flex; gap: 10px; align-items: flex-start; font-size: 14.5px; color: var(--ink-soft); line-height: 1.5; }
+.check input { margin-top: 4px; width: 17px; height: 17px; accent-color: var(--accent-emphasis); flex: none; }
+.form-error { color: var(--bad); font-size: 14.5px; margin: 0 0 14px; }
+.switch { font-size: 14.5px; color: var(--muted); margin-top: 22px; }
+.switch a { color: var(--accent); }
+.steps { margin: 0 0 26px; padding: 0; list-style: none; border-top: 1px solid var(--line); max-width: var(--mesure); }
+.steps li { padding: 12px 2px; border-bottom: 1px solid var(--line); font-size: 14.5px; color: var(--muted); }
+.steps b { color: var(--ink); }
+
+/* Les étapes du formulaire de partage. */
+.step {
+  display: flex; align-items: baseline; gap: 12px; margin: 40px 0 18px;
+  font-size: 17px; font-weight: 700; color: var(--ink); letter-spacing: -.02em;
+  padding-bottom: 9px; border-bottom: 1px solid var(--line-strong);
+}
+.step:first-of-type { margin-top: 0; }
+.step span {
+  font: 600 11.5px var(--mono); letter-spacing: .08em; color: var(--accent);
+  flex: none; background: none; width: auto; height: auto; display: inline;
+}
+.typecards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1px; border: 1px solid var(--line); max-width: none; }
+.typecards input { position: absolute; opacity: 0; pointer-events: none; }
+.typecards label {
+  display: block; padding: 13px 15px; cursor: pointer; background: var(--bg);
+  border-left: 2px solid transparent; box-shadow: 0 0 0 1px var(--line);
+  transition: background-color .14s, border-color .14s;
+}
+.typecards label:hover { background: var(--surface); }
+.typecards label b { display: block; font-size: 14.5px; color: var(--ink); }
+.typecards label span { display: block; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
+.typecards label em { display: block; font: 12.5px var(--mono); color: var(--muted); font-style: normal; margin-top: 6px; }
+.typecards input:checked + label { background: var(--surface); border-left-color: var(--accent); }
+.typecards input:checked + label b { color: var(--accent); }
+.typecards input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: -2px; }
+.previews { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.previews img { width: 96px; height: 72px; object-fit: cover; border-radius: var(--r-sm); }
+
+.fichiers { display: flex; flex-direction: column; gap: 10px; }
+.fichier-ligne { border: 1px solid var(--line-strong); overflow: hidden; background: var(--surface); }
+.fichier-tete { display: flex; align-items: center; gap: 9px; padding: 7px 11px; border-bottom: 1px solid var(--line); }
+.fichier-tete .ico { color: var(--muted); }
+.fichier-tete input { border: 0; background: none; font: 13px var(--mono); padding: 3px 5px; }
 .fichier-tete input:hover { border: 0; }
-.fichier-tete input:focus { outline: 2px solid var(--accent); border-radius: 6px; box-shadow: none; background: none; }
-.fichier-ligne textarea { border: 0; border-radius: 0; min-height: 120px; font: 13.5px/1.6 var(--mono); background: var(--bg-deep); }
+.fichier-tete input:focus { outline: 2px solid var(--accent); border-radius: 3px; box-shadow: none; background: none; }
+.fichier-ligne textarea { border: 0; border-radius: 0; min-height: 118px; font: 13px/1.6 var(--mono); background: var(--bg-deep); }
 .fichier-ligne textarea:hover { border: 0; }
-.fichier-sup { margin-left: auto; border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 20px; line-height: 1; padding: 2px 8px; border-radius: 6px; }
+.fichier-sup { margin-left: auto; border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 18px; line-height: 1; padding: 2px 7px; border-radius: 3px; }
 .fichier-sup:hover { color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, transparent); }
 
-@media (max-width: 640px) {
-  .depot-corps { grid-template-columns: minmax(0, 1fr); }
-  .depot-arbre { border-right: 0; border-bottom: 1px solid var(--line); flex-direction: row; overflow-x: auto; }
-  .depot-dossier { display: none; }
-  .depot-fichier { width: auto; white-space: nowrap; }
-  .depot-fichier.dedans { padding-left: 11px; }
-}
-
-/* Crédit du pied de page */
-.credit { flex-basis: 100%; margin: 14px 0 0; font-size: 14px; color: var(--muted); }
-.credit a { color: var(--ink-soft); text-decoration: none; border-bottom: 1px solid var(--line-strong); }
-.credit a:hover { color: var(--accent); border-bottom-color: currentColor; }
-
-/* PDF trop lourd : on explique quoi faire, au moment où le fichier est choisi. */
 .trop-lourd {
-  border: 1px solid var(--line-strong); border-left: 3px solid var(--warn);
-  border-radius: var(--radius); background: var(--surface);
-  padding: 16px 18px; margin-top: 12px; font-size: 15px;
+  border: 1px solid var(--line-strong); border-left: 2px solid var(--warn);
+  background: var(--surface); padding: 15px 17px; margin-top: 12px; font-size: 14.5px;
 }
 .trop-lourd > b { display: block; color: var(--ink); margin-bottom: 8px; }
 .trop-lourd p { margin: 8px 0; color: var(--muted); }
-.trop-lourd h4 { margin: 16px 0 6px; font-size: 14.5px; color: var(--ink); }
-.trop-lourd ul { margin: 6px 0; padding-left: 22px; color: var(--muted); }
+.trop-lourd h4 { margin: 16px 0 6px; font: 600 11.5px var(--mono); letter-spacing: .07em; text-transform: uppercase; color: var(--ink); }
+.trop-lourd ul { margin: 6px 0; padding-left: 20px; color: var(--muted); }
 .trop-lourd li { margin-bottom: 6px; }
 .trop-lourd b { color: var(--ink); }
 .trop-lourd a { color: var(--accent); }
-.trop-lourd .attention { border-left: 2px solid var(--bad); padding-left: 12px; color: var(--ink); }
+.trop-lourd .attention { border-left: 2px solid var(--bad); padding-left: 11px; color: var(--ink-soft); }
 
-/* Barre de chargement : apparaît dès le clic, pour que la navigation réponde tout de suite. */
+/* Champ piège : invisible pour une personne, rempli par un robot. */
+.trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+/* Les tuiles de bienvenue. */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1px; border: 1px solid var(--line); }
+.tiles.wide { grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); margin-bottom: 24px; }
+.tile {
+  display: block; padding: 15px 17px; text-decoration: none; background: var(--bg);
+  border-left: 2px solid transparent; box-shadow: 0 0 0 1px var(--line);
+  transition: background-color .14s, border-color .14s;
+}
+.tile:hover { background: var(--surface); border-left-color: var(--accent); }
+.tile b { display: block; font-size: 14.5px; color: var(--ink); margin-bottom: 3px; }
+.tile span { font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+
+/* ===========================================================================
+   15. Classement, collections, profil
+   =========================================================================== */
+.top-bloc { margin: 36px 0; }
+.top-bloc h2 { font-size: 19px; margin: 0 0 3px; letter-spacing: -.025em; display: flex; align-items: center; gap: 9px; }
+.top-bloc h2 .ico { width: .85em; height: .85em; color: var(--accent); }
+.top-bloc > .muted { margin: 0 0 14px; font-size: 14px; }
+.top-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line-strong); }
+.top-line { display: flex; align-items: center; gap: 14px; padding: 13px 4px; border-bottom: 1px solid var(--line); transition: background-color .13s; }
+.top-line:hover { background: color-mix(in srgb, var(--ink) 3%, transparent); }
+.top-rang { flex: none; width: 24px; font: 700 12px var(--mono); font-variant-numeric: tabular-nums; color: var(--muted); }
+.top-line.podium .top-rang { color: var(--rang); }
+.top-main { flex: 1; min-width: 0; }
+.top-titre { font-weight: 700; color: var(--ink); text-decoration: none; overflow-wrap: anywhere; letter-spacing: -.015em; }
+.top-titre:hover { color: var(--accent); }
+.top-main .meta { margin-top: 3px; }
+.top-pts { flex: none; text-align: right; line-height: 1.1; }
+.top-pts b { display: block; font: 700 16px var(--mono); font-variant-numeric: tabular-nums; color: var(--ink); }
+.top-pts small { font: 10.5px var(--mono); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+
+.coll-liste { display: flex; flex-direction: column; border-top: 1px solid var(--line-strong); margin-bottom: 26px; }
+.coll-carte { padding: 16px 4px; border-bottom: 1px solid var(--line); transition: background-color .13s; }
+.coll-carte:hover { background: color-mix(in srgb, var(--ink) 3%, transparent); }
+.coll-titre { font: 700 17px var(--font); color: var(--ink); text-decoration: none; letter-spacing: -.022em; display: block; margin-bottom: 4px; }
+.coll-titre:hover { color: var(--accent); }
+.coll-desc { margin: 0 0 9px; color: var(--muted); font-size: 14.5px; line-height: 1.55; max-width: var(--mesure); }
+.coll-compte { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 12.5px; }
+.coll-compte .ico { width: 13px; height: 13px; }
+
+/* Les étapes d'une collection : la suite numérotée, reliée par un filet.
+   C'est le filet qui dit que l'ordre veut dire quelque chose. */
+.coll-etapes { list-style: none; margin: 28px 0 0; padding: 0; max-width: var(--mesure); }
+.coll-etapes > li { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 16px; position: relative; padding-bottom: 24px; }
+.coll-etapes > li::before { content: ''; position: absolute; left: 11px; top: 26px; bottom: 2px; width: 1px; background: var(--line); }
+.coll-etapes > li:last-child { padding-bottom: 0; }
+.coll-etapes > li:last-child::before { display: none; }
+.coll-num {
+  width: 23px; height: 23px; display: grid; place-items: center; border-radius: 3px;
+  background: var(--surface-2); border: 1px solid var(--line); color: var(--muted);
+  font: 700 11px var(--mono); z-index: 1;
+}
+.coll-item { min-width: 0; padding-top: 1px; }
+.coll-note { margin: 6px 0 0; font-size: 14.5px; line-height: 1.6; color: var(--ink-soft); }
+
+.compo-res { margin-top: 10px; display: flex; flex-direction: column; border: 1px solid var(--line); }
+.compo-res:empty { border: 0; }
+.compo-res-ligne { display: flex; align-items: center; gap: 10px; padding: 9px 11px; border-bottom: 1px solid var(--line); background: var(--bg); }
+.compo-res-ligne:last-child { border-bottom: 0; }
+.compo-res-titre { flex: 1; min-width: 0; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.compo-res-ligne .btn { flex: none; }
+.compo-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.compo-items > li { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.compo-item { min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+.compo-item b { font-size: 14.5px; color: var(--ink); }
+.compo-boutons { display: flex; gap: 3px; }
+.compo-boutons .btn { padding: 0 9px; }
+
+/* Le profil : l'identité, quatre chiffres, puis ce qui a été publié. */
+.profil-tete { display: flex; align-items: center; gap: 15px; margin-bottom: 4px; }
+.profil-rond {
+  flex: none; width: 50px; height: 50px; border-radius: var(--radius); display: grid; place-items: center;
+  background: var(--surface-2); border: 1px solid var(--line); color: var(--ink);
+  font: 700 20px var(--mono); letter-spacing: -.02em;
+}
+.profil-nom { min-width: 0; }
+.profil-nom h1 { margin: 0; font-size: 26px; letter-spacing: -.035em; overflow-wrap: anywhere; }
+.profil-nom p { margin: 3px 0 0; font-size: 13.5px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.profil-nom .ico { width: 13px; height: 13px; }
+.profil-tete .btn { margin-left: auto; }
+/* Les chiffres : la valeur en chasse fixe, son nom dessous en petites capitales. */
+.profil-chiffres {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0;
+  border: 1px solid var(--line); margin: 24px 0 20px;
+}
+.profil-chiffres div { padding: 14px 16px; border-right: 1px solid var(--line); }
+.profil-chiffres div:last-child { border-right: 0; }
+.profil-chiffres b { display: block; font: 700 21px var(--mono); font-variant-numeric: tabular-nums; color: var(--ink); letter-spacing: -.02em; }
+.profil-chiffres span { display: block; margin-top: 3px; font: 600 10.5px var(--mono); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); line-height: 1.4; }
+.profil-tags { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-bottom: 28px; }
+.profil-titre {
+  margin: 36px 0 0; padding-bottom: 9px; border-bottom: 1px solid var(--line-strong);
+  font: 600 11.5px var(--mono); letter-spacing: .09em; text-transform: uppercase; color: var(--muted);
+  display: flex; align-items: baseline; gap: 12px;
+}
+.profil-titre small { font: 400 11.5px var(--mono); letter-spacing: .05em; text-transform: none; color: var(--muted); }
+.profil .notice { margin: 18px 0 0; }
+
+/* ===========================================================================
+   16. Administration
+   =========================================================================== */
+.admin-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 26px; flex-wrap: wrap; }
+.admin-head > div:last-child { display: flex; gap: 8px; flex-wrap: wrap; }
+.card { border: 1px solid var(--line); border-left: 2px solid var(--line-strong); background: var(--surface); padding: 18px; margin-bottom: 12px; }
+.card h3 { margin: 8px 0 6px; font-size: 17px; letter-spacing: -.022em; }
+.card p { margin: 8px 0; white-space: pre-line; font-size: 14.5px; }
+.card .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; align-items: center; }
+.card .post-meta { border: 0; padding: 0; margin: 0 0 4px; }
+.reject-form { display: flex; gap: 9px; margin-top: 12px; }
+.reject-form input { flex: 1; }
+.promo-form { flex-wrap: wrap; }
+.promo-form input[type="number"] { flex: 0 0 110px; }
+.promo-form input[type="text"] { flex: 1 1 200px; }
+.admin-sous-titre {
+  margin: 34px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line-strong);
+  font: 600 11.5px var(--mono); letter-spacing: .09em; text-transform: uppercase; color: var(--muted);
+  display: flex; align-items: baseline; gap: 12px;
+}
+.admin-sous-titre small { font: 400 11.5px var(--mono); text-transform: none; letter-spacing: .04em; }
+
+.table { width: 100%; border-collapse: collapse; font-size: 14.5px; border: 1px solid var(--line); }
+.table th, .table td { text-align: left; padding: 10px 13px; border-bottom: 1px solid var(--line); }
+.table th { font: 600 10.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--bg-deep); white-space: nowrap; }
+.table td.mono, .table .mono { font-variant-numeric: tabular-nums; }
+.table tbody tr:hover { background: color-mix(in srgb, var(--ink) 3%, transparent); }
+.table tr:last-child td { border-bottom: 0; }
+.status {
+  display: inline-flex; align-items: center; gap: 5px;
+  font: 600 10.5px var(--mono); letter-spacing: .07em; text-transform: uppercase;
+  color: var(--c, var(--muted));
+}
+.status::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.status.pending { --c: var(--warn); } .status.approved { --c: var(--ok); } .status.rejected { --c: var(--bad); }
+
+/* ===========================================================================
+   17. Aide et pages légales
+   =========================================================================== */
+.guide { margin: 0 0 26px; padding-left: 20px; font-size: 15px; max-width: var(--mesure); }
+.guide li { margin-bottom: 13px; line-height: 1.65; }
+.faq-title {
+  font-size: 19px; margin: 44px 0 14px; letter-spacing: -.025em;
+  padding-bottom: 9px; border-bottom: 1px solid var(--line-strong);
+}
+.faq { border-bottom: 1px solid var(--line); max-width: var(--mesure); }
+.faq summary { cursor: pointer; font-weight: 600; color: var(--ink); padding: 13px 0; font-size: 14.5px; }
+.faq summary::marker { color: var(--muted); }
+.faq p { margin: 0 0 14px; color: var(--muted); font-size: 14.5px; line-height: 1.65; }
+
+.legal { max-width: var(--mesure); }
+.legal h1 { font-size: 30px; letter-spacing: -.035em; margin: 0 0 6px; }
+.legal h2 { font-size: 18px; margin: 36px 0 8px; letter-spacing: -.022em; }
+.legal p, .legal li { font-size: 15.5px; line-height: 1.7; }
+.legal ul { padding-left: 20px; }
+.legal .updated { color: var(--muted); font: 12.5px var(--mono); margin: 0 0 28px; }
+.legal .draft { border-left: 2px solid var(--warn); padding: 12px 15px; background: color-mix(in srgb, var(--warn) 9%, transparent); font-size: 14.5px; margin-bottom: 26px; }
+mark.todo { background: color-mix(in srgb, var(--warn) 26%, transparent); color: inherit; padding: 0 5px; border-radius: 3px; }
+
+/* ===========================================================================
+   18. Le pied de page
+   =========================================================================== */
+.site-footer { border-top: 1px solid var(--line); margin-left: var(--rail); background: var(--bg-deep); }
+.foot {
+  padding: 28px 36px 44px; display: flex; gap: 14px 32px;
+  align-items: center; justify-content: space-between; flex-wrap: wrap;
+  font-size: 13.5px; color: var(--muted);
+}
+.foot .logo { font-size: 16px; color: var(--muted); width: auto; }
+.foot nav { display: flex; flex-wrap: wrap; gap: 6px 20px; }
+.foot a { text-decoration: none; }
+.foot a:hover { color: var(--accent); }
+.credit { flex-basis: 100%; margin: 12px 0 0; font-size: 13px; color: var(--muted); }
+.credit a { color: var(--ink-soft); text-decoration: none; border-bottom: 1px solid var(--line-strong); }
+.credit a:hover { color: var(--accent); border-bottom-color: currentColor; }
+
+/* ===========================================================================
+   19. La palette de commandes
+   Ce qui remplace le champ de recherche : elle cherche dans les partages, les
+   collections et les membres, et elle sait aussi faire des choses (partager,
+   changer de thème, aller quelque part). Tout au clavier.
+   =========================================================================== */
+.palette-fond {
+  position: fixed; inset: 0; z-index: 90; background: var(--voile);
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  display: flex; justify-content: center; align-items: flex-start;
+  padding: 10vh 20px 20px;
+  opacity: 0; transition: opacity .14s ease;
+}
+.palette-fond.on { opacity: 1; }
+.palette {
+  width: 100%; max-width: 580px; max-height: 70vh; display: flex; flex-direction: column;
+  background: var(--bg); border: 1px solid var(--line-strong); border-radius: var(--r-lg);
+  box-shadow: var(--ombre-3); overflow: hidden;
+  transform: translateY(-6px) scale(.99); transition: transform .16s cubic-bezier(.2,.8,.3,1);
+}
+.palette-fond.on .palette { transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .palette-fond, .palette { transition: none; }
+}
+.palette-haut { display: flex; align-items: center; gap: 10px; padding: 0 14px; border-bottom: 1px solid var(--line); flex: none; }
+.palette-haut .ico { width: 16px; height: 16px; color: var(--muted); flex: none; }
+.palette-haut input {
+  flex: 1; height: 50px; border: 0; background: none; padding: 0;
+  font: 16px var(--font); color: var(--ink);
+}
+.palette-haut input:hover, .palette-haut input:focus { border: 0; box-shadow: none; outline: none; }
+.palette-res { overflow-y: auto; overscroll-behavior: contain; padding: 6px; flex: 1; }
+.palette-groupe { padding: 10px 10px 4px; }
+.palette-ligne {
+  display: flex; align-items: center; gap: 11px; width: 100%; text-align: left;
+  padding: 9px 10px; border: 0; border-radius: var(--r-sm); background: none;
+  color: var(--ink-soft); font: 14.5px var(--font); cursor: pointer; text-decoration: none;
+}
+.palette-ligne .kind { flex: none; width: 66px; }
+.palette-ligne .ico { width: 15px; height: 15px; color: var(--muted); flex: none; }
+/* Les destinations portent une icône là où les partages portent leur étiquette :
+   les deux occupent la même gouttière, donc les libellés s'alignent.
+   Le sélecteur descend de `.palette-ligne`, sinon la règle `.palette-ligne span`
+   ci-dessus l'emporte et l'icône s'étale sur la moitié de la ligne. */
+.palette-ligne .ico-boite { flex: none; width: 15px; display: inline-flex; color: var(--k, var(--muted)); }
+.palette-ligne.on .ico-boite { color: var(--k, var(--accent)); }
+.palette-ligne .ico-boite .ico { width: 15px; height: 15px; }
+.palette-pied .fin { margin-left: auto; }
+.palette-ligne span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.palette-ligne kbd { flex: none; }
+.palette-ligne.on { background: var(--surface-2); color: var(--ink); }
+.palette-ligne.on .ico { color: var(--accent); }
+.palette-vide { padding: 28px 16px; color: var(--muted); font-size: 14.5px; }
+.palette-pied {
+  display: flex; align-items: center; gap: 16px; padding: 9px 14px; flex: none;
+  border-top: 1px solid var(--line); font: 11.5px var(--mono); color: var(--muted);
+}
+.palette-pied span { display: inline-flex; align-items: center; gap: 5px; }
+
+/* Le mémo des raccourcis (touche ?). */
+.memo { max-width: 420px; }
+.memo-titre { font: 700 15px var(--font); color: var(--ink); line-height: 50px; letter-spacing: -.02em; }
+.memo-liste { padding: 8px 6px; }
+.memo-liste div { display: flex; align-items: center; gap: 14px; padding: 7px 12px; font-size: 14px; }
+.memo-liste div span { flex: 1; color: var(--ink-soft); }
+.memo-liste .cote { padding: 14px 12px 6px; }
+
+/* ===========================================================================
+   20. Messages, barre de chargement
+   =========================================================================== */
+.toast {
+  position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 10px);
+  max-width: min(520px, calc(100vw - 40px)); z-index: 95;
+  background: var(--surface-3); color: var(--ink); border: 1px solid var(--line-strong);
+  box-shadow: var(--ombre-3);
+  padding: 11px 17px; border-radius: var(--radius); font-size: 14.5px;
+  opacity: 0; transition: opacity .18s, transform .18s; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
 body::before {
-  content: ''; position: fixed; inset: 0 auto auto 0; height: 3px; width: 0;
-  background: linear-gradient(90deg, var(--accent-emphasis), var(--accent));
-  z-index: 100; opacity: 0; pointer-events: none; border-radius: 0 3px 3px 0;
+  content: ''; position: fixed; inset: 0 auto auto 0; height: 2px; width: 0;
+  background: var(--accent); z-index: 100; opacity: 0; pointer-events: none;
   transition: width .5s ease, opacity .25s ease;
 }
 body.chargement::before { width: 80%; opacity: 1; transition: width 2.5s cubic-bezier(.1,.8,.3,1), opacity .1s; }
 @media (prefers-reduced-motion: reduce) { body::before { transition: opacity .2s ease; } }
 
-/* « Voir plus » : le fil n'envoie qu'une page à la fois. */
-.plus { display: flex; justify-content: center; margin: 24px 0 4px; }
-.plus .btn { min-width: 240px; justify-content: center; }
-
-/* Sondage : la barre part de zéro et glisse jusqu'au résultat une fois qu'on a voté. */
-.poll { display: grid; gap: 10px; margin: 22px 0; }
-.poll-opt {
-  position: relative; display: flex; align-items: center; gap: 12px; width: 100%; overflow: hidden;
-  padding: 13px 16px; border: 1px solid var(--line-strong); border-radius: var(--radius);
-  background: var(--surface); color: var(--ink); font: inherit; font-size: 15px; text-align: left; cursor: pointer;
-  transition: border-color .15s, background-color .15s;
+/* Le passage d'une vue à l'autre : un fondu court, rien de plus. Sans lui, le
+   remplacement du contenu donne un à-coup à chaque clic. L'animation porte sur
+   l'élément neuf, donc elle part toute seule à chaque page, sans une ligne de
+   JavaScript et sans retarder l'affichage d'une seule image. */
+@media (prefers-reduced-motion: no-preference) {
+  #view > * { animation: entree .2s ease both; }
 }
-.poll-opt:hover { border-color: var(--accent-emphasis); }
-.poll-opt:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.poll-opt.mine { border-color: var(--accent-emphasis); }
-.poll-bar { position: absolute; inset: 0 auto 0 0; width: 0; background: color-mix(in srgb, var(--accent) 14%, transparent); transition: width .4s ease; }
-.poll-opt.mine .poll-bar { background: color-mix(in srgb, var(--accent) 26%, transparent); }
-.poll-text, .poll-num { position: relative; }
-.poll-text { overflow-wrap: anywhere; }
-.poll-opt.mine .poll-text { font-weight: 600; }
-.poll-num { margin-left: auto; font: 700 14px var(--font); white-space: nowrap; }
-.poll-num small { font-weight: 400; color: var(--muted); margin-left: 7px; }
-.poll-foot { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
-@media (prefers-reduced-motion: reduce) { .poll-bar { transition: none; } }
+@keyframes entree { from { opacity: 0; transform: translateY(5px); } }
 
-/* Top 5 : la page de classement et le bloc de la colonne de droite */
-.page-title .ico, .top-bloc h2 .ico, .aside-top h3 .ico { width: 1em; height: 1em; vertical-align: -.12em; margin-right: 8px; color: var(--accent); }
-.top-bloc { margin: 32px 0; }
-.top-bloc h2 { font-size: 21px; margin: 0 0 4px; letter-spacing: -.02em; }
-.top-bloc > .muted { margin: 0 0 14px; font-size: 14.5px; }
-.top-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); overflow: hidden; }
-.top-line { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
-.top-line:last-child { border-bottom: 0; }
-.top-rang { flex: none; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; font: 700 13px var(--font); color: var(--muted); background: var(--surface-2); }
-.top-line.podium .top-rang { color: #1a1a18; background: var(--rang); }
-.top-main { flex: 1; min-width: 0; }
-.top-titre { font-weight: 600; text-decoration: none; overflow-wrap: anywhere; }
-.top-titre:hover { color: var(--accent); }
-.top-main .meta { margin-top: 4px; }
-.top-pts { flex: none; text-align: right; line-height: 1.15; }
-.top-pts b { display: block; font: 700 17px var(--font); }
-.top-pts small { font: 12px var(--font); color: var(--muted); }
-.top-list.mini { border: 0; background: none; border-radius: 0; }
-.top-list.mini .top-line { padding: 8px 0; gap: 10px; font-size: 14.5px; }
-.top-list.mini .top-rang { width: 22px; height: 22px; font-size: 12px; }
-.top-list.mini .top-titre { flex: 1; min-width: 0; font-weight: 500; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.top-list.mini .top-pts b { font-size: 14px; }
-.top-line:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
-.top-list.mini .top-line:hover { background: none; }
-.aside .top-list.mini { padding-left: 0; color: var(--ink); }
-.aside .top-list.mini li { margin-bottom: 0; }
-.aside-top p { margin-top: 10px; }
-.aside-top p a { color: var(--accent); text-decoration: none; font-weight: 600; }
-
-/* --- Les réponses sous un partage -------------------------------------------------
-   Le seul endroit du site où plusieurs personnes écrivent au même endroit : la
-   mise en page doit faire voir d'un coup combien de voix il y a, et laquelle parle. */
-.reponses { margin: 32px 0 0; padding-top: 24px; border-top: 1px solid var(--line); }
-.reponses h2 { display: flex; align-items: center; gap: 9px; font-size: 19px; letter-spacing: -.015em; margin: 0 0 16px; }
-.reponses h2 .ico { width: 18px; height: 18px; color: var(--muted); }
-.fil { list-style: none; margin: 0 0 20px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.reponse { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
-.reponse-tete { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--muted); margin-bottom: 8px; }
-.reponse-tete .auteur { font-weight: 600; color: var(--ink); }
-.reponse-sup {
-  margin-left: auto; border: 0; background: none; color: var(--muted); cursor: pointer;
-  padding: 5px; border-radius: var(--r-sm); display: inline-flex;
-}
-.reponse-sup .ico { width: 15px; height: 15px; }
-.reponse-sup:hover { color: var(--bad); background: color-mix(in srgb, var(--bad) 12%, transparent); }
-.reponse-texte { margin: 0; font-size: 15.5px; line-height: 1.6; white-space: pre-line; overflow-wrap: anywhere; }
-.reponse-form textarea { min-height: 92px; }
-.reponse-pied { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
-.reponse-pied .muted { font-size: 13.5px; }
-.reponse-form .form-error { margin: 10px 0 0; }
-.reponse-invite { margin: 0; font-size: 15px; color: var(--muted); }
-.reponse-invite a { color: var(--accent); font-weight: 600; }
-/* Le compteur dans le fil : la bulle et le nombre, rien de plus. */
-.repl { display: inline-flex; align-items: center; gap: 4px; }
-.repl .ico { width: 13px; height: 13px; }
-
-/* Gemmes, étoiles, cadenas */
-.purse { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 13px; border-radius: var(--r-pill);
-  background: var(--accent-subtle); font: 700 13.5px var(--font); color: var(--accent); }
-.purse .ico { width: 14px; height: 14px; }
-/* Dans la liste : une étoile et le chiffre, rien de plus. */
-.stars { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); }
-.stars .ico { width: 13px; height: 13px; }
-.stars i { display: inline-flex; color: var(--star); }
-.stars b { font: 700 13.5px var(--font); color: var(--ink); }
-.stars span { font: 13.5px var(--font); }
-.stars.big { gap: 2px; }
-.stars.big button {
-  background: none; border: 0; padding: 4px; cursor: pointer; color: var(--line-strong);
-  display: inline-flex; border-radius: 6px;
-}
-.stars.big .ico { width: 22px; height: 22px; }
-.stars.big button.on { color: var(--star); }
-.stars.big:hover button { color: var(--line-strong); }
-.stars.big button:hover, .stars.big button:hover ~ button { color: inherit; }
-.stars.big:hover button:hover, .stars.big button:hover { color: var(--star); }
-.post-actions .sep { width: 1px; height: 24px; background: var(--line); }
-.pin.lock { color: var(--muted); }
-.nav-premium { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 14px !important; align-items: center; gap: 8px; }
-.nav-premium .ico { width: 15px; height: 15px; flex: none; }
-.locked {
-  border: 1px solid color-mix(in srgb, var(--brand) 32%, transparent); border-radius: var(--r-lg);
-  background: var(--accent-subtle); padding: 20px; margin: 20px 0;
-}
-.locked-head { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-.locked-head .ico { width: 18px; height: 18px; color: var(--accent); }
-.locked p { margin: 8px 0 14px; font-size: 15px; color: var(--ink-soft); }
-.locked .btn { margin-top: 2px; }
-.about-type { margin: 0 0 16px; color: var(--muted); font-size: 15px; line-height: 1.6; }
-.about-type .ico { width: 15px; height: 15px; vertical-align: -2px; }
-/* Champ piège : invisible pour une personne, rempli par un robot. */
-.trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
-
-/* Recherche : suggestions */
-.suggest {
-  position: absolute; top: 50px; left: 0; right: 0; z-index: 20; margin: 0; padding: 6px; list-style: none;
-  background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius);
-  box-shadow: var(--ombre-3);
-}
-.suggest li a { display: flex; gap: 12px; align-items: center; padding: 11px 13px; border-radius: var(--r-sm); text-decoration: none; font-size: 15px; }
-.suggest li a span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.suggest li a:hover, .suggest li a:focus { background: var(--accent-emphasis); color: var(--accent-ink); outline: none; }
-.suggest li a:hover span, .suggest li a:focus span { color: inherit; }
-.suggest .none { padding: 11px 13px; color: var(--muted); font-size: 15px; }
-.suggest .all a { color: var(--muted); border-top: 1px solid var(--line); border-radius: 0 0 var(--r-sm) var(--r-sm); margin-top: 6px; font-size: 14px; }
-
-/* Commencer : le bloc d'accueil, première chose que voit quelqu'un qui arrive */
-/* Une seule ligne : ce qu'il faut savoir en arrivant, et le bouton. Pas un panneau. */
-.start {
-  display: flex; align-items: center; justify-content: space-between; gap: 20px;
-  border: 1px solid var(--line); border-radius: var(--r-lg); padding: 16px 20px; margin-bottom: 20px;
-  background: var(--surface);
-}
-.start b { display: block; font-size: 17px; letter-spacing: -.015em; line-height: 1.35; }
-.start span { color: var(--muted); font-size: 14.5px; }
-.start .btn { flex: none; }
-/* 180 px : en dessous, les quatre tuiles s'empilaient sur une colonne dès qu'on
-   réduisait la fenêtre, et le bloc d'accueil occupait tout l'écran avant le premier partage. */
-.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-.tiles.wide { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-bottom: 24px; }
-.tile {
-  display: block; border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px;
-  text-decoration: none; background: var(--bg-deep);
-  transition: border-color .15s, background-color .15s, transform .15s;
-}
-.tile:hover { border-color: var(--accent-emphasis); background: var(--surface-2); transform: translateY(-2px); }
-@media (prefers-reduced-motion: reduce) { .tile:hover { transform: none; } }
-.tile b { display: block; font-size: 15.5px; margin-bottom: 4px; }
-.tile span { font-size: 14px; color: var(--muted); line-height: 1.5; }
-.tagcloud.center { justify-content: center; margin: 16px 0; }
-
-/* Miniatures et galerie */
-.item.has-thumb { grid-template-columns: 64px minmax(0, 1fr) 128px; }
-.thumb { display: block; width: 128px; height: 92px; border-radius: var(--radius); overflow: hidden; background: var(--bg-deep); }
-.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.gallery { display: grid; gap: 14px; margin: 22px 0; }
-.gallery a { display: block; border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; background: var(--surface); }
-.gallery img { display: block; width: 100%; height: auto; }
-.howto { margin: 4px 0 20px; font-size: 15px; color: var(--muted); }
-.howto summary { cursor: pointer; color: var(--ink); font-weight: 600; padding: 6px 0; }
-.howto p { margin: 10px 0 0; line-height: 1.6; }
-
-/* Partager */
-.step { display: flex; align-items: center; gap: 12px; font-size: 18px; font-weight: 600; margin: 32px 0 16px; }
-.step:first-of-type { margin-top: 0; }
-.step span { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--accent-emphasis); color: var(--accent-ink); font: 700 13px var(--font); flex: none; }
-.typecards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
-.typecards input { position: absolute; opacity: 0; pointer-events: none; }
-.typecards label { display: block; border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 14px 16px; cursor: pointer; background: var(--surface); transition: border-color .15s, background-color .15s; }
-.typecards label:hover { border-color: var(--accent); }
-.typecards label b { display: block; font-size: 15.5px; }
-.typecards label span { display: block; font-size: 14px; color: var(--muted); line-height: 1.45; }
-.typecards label em { display: block; font-size: 13px; color: var(--muted); font-style: normal; margin-top: 6px; }
-.typecards input:checked + label { border-color: var(--accent-emphasis); background: var(--accent-subtle); box-shadow: inset 0 0 0 1px var(--accent-emphasis); }
-.typecards input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 2px; }
-.previews { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-.previews img { width: 104px; height: 78px; object-fit: cover; border-radius: var(--r-sm); }
-
-/* Aide */
-.guide { margin: 0 0 26px; padding-left: 24px; font-size: 15.5px; }
-.guide li { margin-bottom: 14px; line-height: 1.6; }
-.faq-title { font-size: 21px; margin: 40px 0 12px; letter-spacing: -.02em; }
-.faq { border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); padding: 2px 18px; margin-bottom: 8px; }
-.faq summary { cursor: pointer; font-weight: 600; padding: 14px 0; font-size: 15.5px; }
-.faq p { margin: 0 0 14px; color: var(--muted); font-size: 15px; line-height: 1.65; }
-
-/* Pied de page, pages légales, signalement */
-.site-footer { border-top: 1px solid var(--line); margin-top: 48px; background: var(--bg-deep); }
-.foot { max-width: 1160px; margin: 0 auto; padding: 32px 24px 52px; display: flex; gap: 16px 32px; align-items: center; justify-content: space-between; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
-.foot .logo { font-size: 18px; color: var(--muted); }
-.foot nav { display: flex; flex-wrap: wrap; gap: 8px 22px; }
-.foot a { text-decoration: none; }
-.foot a:hover { color: var(--accent); }
-.legal h1 { font-size: 30px; letter-spacing: -.025em; margin: 0 0 6px; }
-.legal h2 { font-size: 19px; margin: 34px 0 8px; letter-spacing: -.01em; }
-.legal p, .legal li { font-size: 16px; line-height: 1.7; }
-.legal ul { padding-left: 22px; }
-.legal .updated { color: var(--muted); font-size: 14px; margin: 0 0 26px; }
-.legal .draft { border: 1px solid color-mix(in srgb, var(--warn) 35%, transparent); border-radius: var(--radius); padding: 13px 16px; background: color-mix(in srgb, var(--warn) 11%, transparent); font-size: 15px; margin-bottom: 26px; }
-mark.todo { background: color-mix(in srgb, var(--warn) 26%, transparent); color: inherit; padding: 0 5px; border-radius: 4px; }
-.report { margin-top: 32px; font-size: 14px; color: var(--muted); }
-.report summary { cursor: pointer; padding: 6px 0; }
-.report form { display: flex; gap: 10px; margin: 12px 0 8px; }
-.report input { flex: 1; }
-.reasons { margin: 8px 0 0; padding-left: 20px; }
-
-.toast {
-  position: fixed; left: 24px; bottom: 24px; max-width: calc(100vw - 48px);
-  background: var(--surface-3); color: var(--ink); border: 1px solid var(--line-strong);
-  box-shadow: var(--ombre-3);
-  padding: 13px 18px; border-radius: var(--radius); font-size: 15px; opacity: 0; transform: translateY(10px);
-  transition: opacity .18s, transform .18s; pointer-events: none;
-}
-.toast.show { opacity: 1; transform: none; }
-
-/* --- Collections ------------------------------------------------------------------
-   Un parcours : une suite numérotée, où le chiffre compte autant que le titre. On lit
-   « 1, puis 2, puis 3 », pas « voici quatre liens ». D'où la colonne de numéros, et le
-   filet qui les relie : c'est lui qui dit que l'ordre veut dire quelque chose. */
-.coll-liste { display: flex; flex-direction: column; gap: 12px; margin-bottom: 26px; }
-.coll-carte {
-  border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface);
-  padding: 18px 20px; box-shadow: var(--ombre-1);
-}
-.coll-carte:hover { border-color: var(--line-strong); }
-.coll-titre { font: 700 18px var(--font); text-decoration: none; letter-spacing: -.01em; display: block; margin-bottom: 5px; }
-.coll-titre:hover { color: var(--accent); }
-.coll-desc { margin: 0 0 10px; color: var(--muted); font-size: 15px; line-height: 1.55; }
-.coll-compte { display: inline-flex; align-items: center; gap: 6px; }
-.coll-compte .ico { width: 14px; height: 14px; }
-.nav-collections { margin-top: 7px; border-top: 1px solid var(--line); padding-top: 14px !important; }
-.nav-collections .ico { width: 15px; height: 15px; }
-.aside-coll .aside-liste { margin: 0 0 10px; padding: 0; list-style: none; font-size: 14.5px; }
-.aside-coll .aside-liste li { display: flex; gap: 10px; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
-.aside-coll .aside-liste a { text-decoration: none; }
-.aside-coll .aside-liste span { font-size: 13px; white-space: nowrap; }
-
-/* Les étapes d'une collection. */
-.coll-etapes { list-style: none; margin: 24px 0 0; padding: 0; }
-.coll-etapes > li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 16px; position: relative; padding-bottom: 22px; }
-/* Le filet vertical qui relie les numéros, sauf après le dernier. */
-.coll-etapes > li::before {
-  content: ''; position: absolute; left: 17px; top: 34px; bottom: 0; width: 1px; background: var(--line);
-}
-.coll-etapes > li:last-child { padding-bottom: 0; }
-.coll-etapes > li:last-child::before { display: none; }
-.coll-num {
-  width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
-  background: var(--surface-2); border: 1px solid var(--line); color: var(--muted);
-  font: 700 14px var(--font); z-index: 1;
-}
-.coll-item { min-width: 0; padding-top: 5px; }
-.coll-note { margin: 7px 0 0; font-size: 15px; line-height: 1.6; color: var(--ink-soft); }
-
-/* Le composeur : chercher, ajouter, ranger. */
-.compo-res { margin-top: 10px; display: flex; flex-direction: column; gap: 1px; }
-.compo-res-ligne {
-  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm);
-}
-.compo-res-titre { flex: 1; min-width: 0; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.compo-res-ligne .btn { flex: none; }
-.compo-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
-.compo-items > li { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 12px; align-items: start; }
-.compo-item { min-width: 0; display: flex; flex-direction: column; gap: 7px; }
-.compo-item b { font-size: 15px; }
-.compo-boutons { display: flex; gap: 4px; }
-.compo-boutons .btn { padding: 0 10px; }
-@media (max-width: 640px) {
-  .compo-items > li { grid-template-columns: 28px minmax(0, 1fr); }
-  .compo-boutons { grid-column: 2; }
-  .coll-etapes > li { grid-template-columns: 28px minmax(0, 1fr); gap: 12px; }
-  .coll-etapes > li::before { left: 14px; top: 30px; }
-  .coll-num { width: 28px; height: 28px; font-size: 13px; }
+/* ===========================================================================
+   21. Écrans moyens : le rail se replie
+   =========================================================================== */
+@media (max-width: 1080px) {
+  :root { --rail: 0px; }
+  .logo { width: auto; }
+  .menu-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; flex: none; padding: 0;
+    border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--surface); color: var(--ink-soft); cursor: pointer;
+  }
+  .menu-btn .ico { width: 16px; height: 16px; }
+  .rail {
+    width: 272px; left: 0; top: 0; bottom: 0;
+    transform: translateX(-100%); transition: transform .2s cubic-bezier(.2,.8,.3,1);
+    z-index: 31;
+    /* Le tiroir part du haut de l'écran mais la barre du haut passe devant :
+       son contenu commence donc sous elle, sinon la première rubrique est cachée. */
+    padding-top: calc(var(--barre-h) + 16px);
+    box-shadow: var(--ombre-3);
+  }
+  body.rail-ouvert .rail { transform: none; }
+  @media (prefers-reduced-motion: reduce) { .rail { transition: none; } }
+  .wrap { margin-left: 0; padding: 26px 24px 96px; max-width: none; }
+  .site-footer { margin-left: 0; }
+  .foot { padding: 26px 24px 40px; }
+  .etagere-liste { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .etagere-item:last-child { display: none; }
 }
 
-/* --- Profil public d'un membre ---------------------------------------------------
-   Une page sobre : l'identité en haut, les quatre chiffres qui résument une réputation,
-   puis les partages. Le pseudo est cliquable partout où il s'affiche, et c'est tout :
-   ni abonnés, ni mur, ni fil d'activité. */
-.auteur { color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
-.auteur:hover { color: var(--accent); }
-/* La pastille à initiale, version réduite de celle du profil : c'est ce qui fait voir,
-   en parcourant le fil, que derrière chaque partage il y a quelqu'un. */
-.rond {
-  flex: none; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center;
-  background: var(--accent-subtle); color: var(--accent); font: 700 10.5px var(--font); letter-spacing: 0;
-}
-/* Sur la page d'un partage, l'auteur n'est pas une métadonnée parmi d'autres. */
-.post-meta .auteur { font-weight: 600; color: var(--ink); }
-.post-meta .rond { width: 26px; height: 26px; font-size: 13px; }
-.profil-tete { display: flex; align-items: center; gap: 16px; margin-bottom: 4px; }
-/* Pas de photo de profil à envoyer, donc pas d'image à modérer : l'initiale suffit. */
-.profil-rond {
-  flex: none; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center;
-  background: var(--accent-subtle); color: var(--accent); font: 700 24px var(--font); letter-spacing: -.02em;
-}
-.profil-nom { min-width: 0; }
-.profil-nom h1 { margin: 0; font-size: 27px; letter-spacing: -.025em; overflow-wrap: anywhere; }
-.profil-nom p { margin: 4px 0 0; font-size: 14.5px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.profil-nom .ico { width: 14px; height: 14px; }
-.profil-tete .btn { margin-left: auto; }
-/* Les quatre chiffres : la valeur d'abord, son nom dessous en petit. Un seul filet
-   les sépare (le fond de la grille traverse les interstices). */
-.profil-chiffres {
-  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px;
-  background: var(--line); border: 1px solid var(--line); border-radius: var(--r-lg);
-  overflow: hidden; margin: 22px 0 18px;
-}
-.profil-chiffres div { background: var(--surface); padding: 15px 16px; }
-.profil-chiffres b { display: block; font: 700 22px var(--font); letter-spacing: -.02em; }
-.profil-chiffres span { display: block; margin-top: 2px; font-size: 13px; color: var(--muted); line-height: 1.35; }
-.profil-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 26px; }
-.profil-titre { margin: 0 0 14px; font-size: 19px; letter-spacing: -.015em; }
-.profil-titre small { font: 14px var(--font); color: var(--muted); margin-left: 10px; font-weight: 400; }
-.profil .notice { margin: 18px 0 0; }
-@media (max-width: 640px) {
-  .profil-tete { gap: 13px; flex-wrap: wrap; }
-  .profil-rond { width: 46px; height: 46px; font-size: 20px; }
-  .profil-nom h1 { font-size: 22px; }
+/* ===========================================================================
+   22. Téléphones
+   La barre du bas prend le relais : quatre destinations au doigt, et
+   « Partager » au centre.
+   =========================================================================== */
+@media (max-width: 700px) {
+  .bar { padding: 0 14px; gap: 10px; }
+  .logo { font-size: 17px; }
+  /* Le déclencheur de la palette se réduit à son icône : le reste de la barre
+     sert au logo et au compte. */
+  .cmd { max-width: none; flex: 1; }
+  .cmd span, .cmd kbd { display: none; }
+  .cmd { justify-content: center; max-width: 40px; padding: 0; flex: none; width: 36px; }
+  /* La barre du haut n'a pas la place de trois boutons de thème. On n'affiche
+     que celui qui mène ailleurs : en nuit, « papier » ; en papier, « nuit ».
+     Le réglage « auto » reste accessible par la palette. Tout en CSS, à partir
+     du thème posé sur <html> : aucun code à exécuter au redimensionnement. */
+  .theme [data-theme="auto"] { display: none; }
+  :root[data-theme="nuit"] .theme [data-theme="nuit"] { display: none; }
+  :root[data-theme="papier"] .theme [data-theme="papier"] { display: none; }
+  .who, .hide-sm { display: none; }
+  .wrap { padding: 20px 16px 104px; }
+  .narrow { max-width: none; }
+  /* Le tiroir s'arrête au-dessus de la barre du bas, sinon son pied passe dessous. */
+  .rail { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+
+  .barre-bas {
+    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 35;
+    background: color-mix(in srgb, var(--bar) 94%, transparent);
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  .barre-bas a {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 9px 2px 8px; text-decoration: none; color: var(--muted);
+    font: 600 10px var(--mono); letter-spacing: .05em; text-transform: uppercase;
+  }
+  .barre-bas a .ico { width: 19px; height: 19px; }
+  .barre-bas a.on { color: var(--accent); }
+  .barre-bas a.appoint { color: var(--accent); }
+
+  .item {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 14px 12px 14px 15px; gap: 4px 12px;
+  }
+  /* Sur un téléphone, l'étiquette passe au-dessus du titre et les faits
+     dessous : trois colonnes de 90 px ne tiennent pas dans 360 px de large. */
+  .item .kind { grid-column: 1; grid-row: 1; margin: 0 0 3px; }
+  .item-corps { grid-column: 1 / -1; grid-row: 2; }
+  .item .faits { grid-column: 1 / -1; grid-row: 3; padding-top: 8px; gap: 12px; flex-wrap: wrap; }
+  .item .vote-col { grid-column: 2; grid-row: 1; justify-self: end; }
+  .item .thumb { grid-column: 2; grid-row: 2; width: 72px; height: 52px; }
+  .item.has-thumb { grid-template-columns: minmax(0, 1fr) auto; }
+  .item.has-thumb .item-corps { grid-column: 1; }
+  .item.has-thumb .faits { grid-column: 1 / -1; }
+  .item-title { font-size: 16px; }
+  .item-desc { font-size: 14px; -webkit-line-clamp: 2; }
+
+  .grille { grid-template-columns: minmax(0, 1fr); }
+  .toolbar { gap: 10px 14px; align-items: baseline; }
+  .toolbar h1 { font-size: 19px; width: 100%; }
+  .tabs a, .vues button { padding: 4px 9px; font-size: 13px; }
+
+  .etagere-liste { grid-template-columns: minmax(0, 1fr); }
+  .etagere-item:last-child { display: flex; }
+  .etagere-item { flex-direction: row; align-items: baseline; gap: 12px; }
+  .etagere-titre { flex: 1; -webkit-line-clamp: 2; }
+  .etagere-pts { margin: 0; }
+
+  .start { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .post h1 { font-size: 26px; max-width: none; }
+  .page-title { font-size: 24px; max-width: none; }
+  .profil-chiffres { grid-template-columns: 1fr 1fr; }
+  .profil-chiffres div:nth-child(2) { border-right: 0; }
+  .profil-chiffres div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+  .profil-tete { gap: 12px; flex-wrap: wrap; }
+  .profil-rond { width: 42px; height: 42px; font-size: 17px; }
+  .profil-nom h1 { font-size: 21px; }
   .profil-tete .btn { flex: 1 1 100%; margin-left: 0; }
-  .profil-chiffres { grid-template-columns: 1fr 1fr; margin: 18px 0 14px; }
-}
-
-@media (max-width: 1000px) {
-  .layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
-  .nav { position: static; flex-direction: row; overflow-x: auto; gap: 8px; padding-bottom: 6px; scrollbar-width: none; }
-  .nav::-webkit-scrollbar { display: none; }
-  .nav h3 { display: none; }
-  .nav a { white-space: nowrap; gap: 8px; background: var(--surface); border: 1px solid var(--line); }
-  .nav a.on { border-color: var(--accent-emphasis); background: var(--accent-subtle); }
-  .nav-premium { margin-top: 0; border-top: 0; padding-top: 7px !important; }
-  .aside { position: static; }
-}
-/* Sur un téléphone, l'écran est la ressource rare : on resserre les marges, mais
-   jamais la taille du texte ni celle des zones qu'on touche avec le doigt. */
-@media (max-width: 640px) {
-  .bar { gap: 10px; padding: 10px 16px; height: auto; flex-wrap: wrap; }
-  .logo { font-size: 20px; }
-  .search { order: 3; flex: 1 1 100%; max-width: none; }
-  .search input { height: 44px; }
-  .suggest { top: 52px; }
-  /* « Aide » reste dans le pied de page : sa place en haut revient au Top 5. */
-  .search kbd, .who, .hide-sm { display: none; }
-  .btn { height: 42px; padding: 0 15px; }
-  .btn.small { height: 36px; }
-  .wrap { padding: 20px 16px 72px; }
-
-  /* Bloc d'accueil : la phrase au-dessus, le bouton en dessous, aligné à gauche. */
-  .start { flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; margin-bottom: 16px; }
-  .start b { font-size: 16.5px; }
-  .tiles { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .tile { padding: 13px 14px; }
-  .tile b { font-size: 14.5px; line-height: 1.3; margin: 0; }
-  .tile span { display: none; }
-  .tiles.wide { grid-template-columns: 1fr; }
-  .tiles.wide .tile span { display: block; font-size: 13.5px; }
-
-  .nav a { padding: 8px 13px; font-size: 14.5px; }
-  /* Titre et tris sur une seule ligne tant que la largeur le permet ;
-     ils passent à la ligne d'eux-mêmes sur les écrans les plus étroits. */
-  .toolbar { margin-bottom: 12px; gap: 8px 12px; }
-  .toolbar h1 { font-size: 19px; white-space: nowrap; }
-  .toolbar h1 small { margin-left: 7px; font-size: 14px; }
-  .tabs a { white-space: nowrap; padding: 6px 11px; font-size: 13.5px; }
-  .vues button { padding: 6px 11px; font-size: 13.5px; }
-
-  /* Lignes de partage : les mêmes informations, un peu plus serrées. */
-  .item { grid-template-columns: 54px minmax(0, 1fr); gap: 12px; padding: 16px; }
-  .item.has-thumb { grid-template-columns: 54px minmax(0, 1fr) 76px; }
-  .thumb { width: 76px; height: 62px; }
-  .item-title { font-size: 16.5px; }
-  .item-desc { font-size: 14.5px; margin: 5px 0 8px; }
-  .meta { font-size: 13px; gap: 5px 10px; }
-
-  /* Une carte par ligne : deux de front, les titres se coupaient au deuxième mot. */
-  .grille { grid-template-columns: minmax(0, 1fr); gap: 12px; }
-
-  .aside { gap: 12px; }
-  .post h1 { font-size: 26px; }
-  .page-title { font-size: 25px; }
-  .etapes li { grid-template-columns: 26px minmax(0, 1fr); gap: 12px; padding: 13px 15px; }
-  .etapes li::before { width: 26px; height: 26px; font-size: 13px; }
+  .depot-corps { grid-template-columns: minmax(0, 1fr); }
+  .depot-arbre { border-right: 0; border-bottom: 1px solid var(--line); flex-direction: row; overflow-x: auto; }
+  .depot-dossier { display: none; }
+  .depot-fichier { width: auto; white-space: nowrap; }
+  .depot-fichier.dedans { padding-left: 9px; }
   .reject-form { flex-direction: column; }
-  .toast { left: 16px; right: 16px; bottom: 16px; max-width: none; }
+  .table { font-size: 13.5px; }
+  .table th, .table td { padding: 9px 10px; }
+  /* Sur un téléphone, un en-tête qui refuse de passer à la ligne pousse le
+     tableau au-delà de l'écran. Ici il se replie. */
+  .table th { white-space: normal; }
+  /* La famille et la version du modèle s'empilent : côte à côte, il reste
+     quarante pixels pour écrire « Opus 5 ». */
+  .duo { flex-direction: column; }
+  .duo select { flex: none; }
+  .colophon { grid-template-columns: minmax(0, 1fr); gap: 24px; margin-top: 44px; }
+  .palette-fond { padding: 0; align-items: stretch; }
+  .palette { max-width: none; max-height: none; border: 0; border-radius: 0; }
+  .toast { left: 16px; right: 16px; bottom: 76px; max-width: none; transform: translateY(10px); }
+  .toast.show { transform: none; }
+  .coll-etapes > li { grid-template-columns: 26px minmax(0, 1fr); gap: 12px; }
+  .coll-etapes > li::before { left: 9px; top: 24px; }
+  .compo-items > li { grid-template-columns: 26px minmax(0, 1fr); }
+  .compo-boutons { grid-column: 2; }
+  .foot { padding: 24px 16px 36px; }
 }
 
-/* Petits écrans (iPhone SE, anciens Android) : le haut de page tient encore sur une ligne. */
 @media (max-width: 374px) {
-  .bar { gap: 8px; padding: 8px 13px; }
-  .logo { font-size: 18px; }
-  .btn { padding: 0 12px; font-size: 14px; }
-  .bar-end { gap: 7px; }
-  .wrap { padding: 16px 13px 64px; }
-  .start { padding: 14px; }
-  .tile { padding: 11px 12px; }
-  .tile b { font-size: 13.5px; }
+  .bar { gap: 8px; padding: 0 11px; }
+  .logo { font-size: 16px; }
+  .btn { padding: 0 11px; font-size: 13.5px; }
+  .bar-end { gap: 6px; }
+  .wrap { padding: 16px 13px 100px; }
+}
+
+/* Impression : le rail, la barre et les boutons n'ont rien à faire sur papier. */
+@media print {
+  .site-header, .rail, .barre-bas, .voile, .palette-fond, .toast, .post-actions, .plus, .report { display: none !important; }
+  .wrap, .site-footer { margin-left: 0; padding: 0; }
+  body { background: #fff; color: #000; }
 }
