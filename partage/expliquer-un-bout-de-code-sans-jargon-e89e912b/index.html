@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Expliquer un bout de code sans jargon – makers.si</title>
+  <meta name="description" content="Tu tombes sur du code que tu ne comprends pas. Ce skill demande à Claude de l’expliquer comme à quelqu’un qui débute : ce que ça fait, pourquoi c’est…">
+  <meta name="theme-color" content="#010409">
+  <link rel="canonical" href="https://aimadbouzid.github.io/makers/partage/expliquer-un-bout-de-code-sans-jargon-e89e912b/">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="../../fonts/ibm-plex-sans-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../../fonts/ibm-plex-mono-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../../style.css">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="makers.si">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:title" content="Expliquer un bout de code sans jargon">
+  <meta property="og:description" content="Tu tombes sur du code que tu ne comprends pas. Ce skill demande à Claude de l’expliquer comme à quelqu’un qui débute : ce que ça fait, pourquoi c’est…">
+  <meta property="og:url" content="https://aimadbouzid.github.io/makers/partage/expliquer-un-bout-de-code-sans-jargon-e89e912b/">
+  <meta property="og:image" content="https://aimadbouzid.github.io/makers/icons/icone-512.png">
+  <meta name="twitter:card" content="summary">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Expliquer un bout de code sans jargon","description":"Tu tombes sur du code que tu ne comprends pas. Ce skill demande à Claude de l’expliquer comme à quelqu’un qui débute : ce que ça fait, pourquoi c’est écrit comme ça, et ce qui casserait si on y touchait.","datePublished":"2026-10-25T14:33:24.014Z","author":{"@type":"Person","name":"makers.si"},"publisher":{"@type":"Organization","name":"makers.si"},"mainEntityOfPage":"https://aimadbouzid.github.io/makers/partage/expliquer-un-bout-de-code-sans-jargon-e89e912b/","image":"https://aimadbouzid.github.io/makers/icons/icone-512.png"}</script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="bar">
+      <a class="logo" href="../../" aria-label="makers.si, accueil">makers<i>.</i>si</a>
+      <div class="bar-end">
+        <a class="btn ghost" href="../../#/top">Top 5</a>
+        <a class="btn primary" href="../../#/p/e89e912b0192138c">Ouvrir dans la bibliothèque</a>
+      </div>
+    </div>
+  </header>
+  <div class="wrap">
+    <div class="narrow post">
+      <a class="back" href="../../">← Tous les partages</a>
+      <div><span class="kind k-skill">Skill Claude</span></div>
+      <h1>Expliquer un bout de code sans jargon</h1>
+      <div class="post-meta">
+        <a class="auteur" href="../../#/membre/makers.si">@makers.si</a>
+        <span>25 octobre 2026</span>
+        <a class="tag" href="../../#/?tag=claude-code">#claude-code</a><a class="tag" href="../../#/?tag=apprendre">#apprendre</a><a class="tag" href="../../#/?tag=code">#code</a>
+      </div>
+      <p class="lead">Tu tombes sur du code que tu ne comprends pas. Ce skill demande à Claude de l’expliquer comme à quelqu’un qui débute : ce que ça fait, pourquoi c’est écrit comme ça, et ce qui casserait si on y touchait.</p>
+      <div class="block"><div class="block-head"><span>Le dossier du skill · 2 fichiers</span></div>
+      <div class="block-head"><span>SKILL.md</span></div><pre class="code">---
+name: explique-ce-code
+description: Explique un fichier ou une fonction en français simple, sans jargon. À utiliser quand on demande « explique-moi ce code », « qu&#39;est-ce que ça fait », ou face à du code inconnu.
+---
+
+# Explique ce code
+
+Tu expliques, tu ne réécris pas.
+
+## Marche à suivre
+
+1. Lis le code en entier avant de commencer.
+2. Repère ce qui l&#39;appelle et ce qu&#39;il appelle : un bout de code isolé
+   ne s&#39;explique pas sans savoir d&#39;où il vient.
+3. Écris l&#39;explication dans le format ci-dessous.
+
+## Le format
+
+**En une phrase** — ce que fait ce code, comme à quelqu&#39;un qui ne code pas.
+
+**Comment ça marche** — 5 points maximum, dans l&#39;ordre d&#39;exécution.
+Un point = une étape, pas une ligne.
+
+**Pourquoi c&#39;est écrit comme ça** — les choix qui surprennent.
+S&#39;il y a un contournement bizarre, dis pourquoi il est probablement là.
+
+**Ce qui casserait** — 2 ou 3 choses qui tombent en panne si on y touche.
+C&#39;est la partie la plus utile, et celle qu&#39;on oublie toujours.
+
+**Le mot à retenir** — s&#39;il y a un terme technique indispensable,
+définis-le en une ligne. Sinon, saute cette partie.
+
+## Les règles
+
+- Pas de jargon non défini. Si tu écris « idempotent », explique-le sur la même ligne.
+- Pas de paraphrase ligne par ligne : on sait lire, on veut comprendre.
+- Si quelque chose te semble être un bug, dis-le à la fin, séparément.
+- Si tu n&#39;es pas sûr de ce que fait un bout de code, dis-le. N&#39;invente pas.
+</pre><div class="block-head"><span>references/anti-exemples.md</span></div><pre class="code"># Ce qu&#39;il ne faut pas faire
+
+## Paraphraser ligne par ligne
+
+Mauvais :
+&gt; La ligne 12 déclare une constante nommée `total`.
+&gt; La ligne 13 fait une boucle sur `items`.
+
+On voit le code, on veut ce qu&#39;il fait et pourquoi.
+
+## Le jargon non défini
+
+Mauvais :
+&gt; Cette fonction est idempotente et utilise un pattern de memoization.
+
+Bon :
+&gt; On peut l&#39;appeler dix fois d&#39;affilée sans problème : à partir de la deuxième,
+&gt; elle ressort le résultat déjà calculé au lieu de refaire le travail.
+
+## Faire semblant de savoir
+
+Si un bout de code appelle une fonction que tu n&#39;as pas lue, dis-le :
+&gt; `validerPanier()` est appelé ici, mais je ne l&#39;ai pas sous les yeux.
+&gt; Ouvre-le si tu veux que j&#39;explique ce qu&#39;il vérifie.
+
+C&#39;est plus utile qu&#39;une explication inventée qui sonne bien.
+</pre></div>
+      <div class="post-actions">
+        <a class="btn primary" href="../../#/p/e89e912b0192138c">Ouvrir dans la bibliothèque</a>
+        <a class="btn" href="../../">Voir les autres partages</a>
+      </div>
+      <p class="muted">Publié sur <a href="../../">makers.si</a>, la bibliothèque de la communauté : des skills Claude, des prompts testés, des idées et des PDF. Chaque partage est relu avant publication.</p>
+    </div>
+  </div>
+  <footer class="site-footer">
+    <div class="foot">
+      <span class="logo">makers<i>.</i>si</span>
+      <nav aria-label="Informations légales">
+        <a href="../../#/aide">Aide</a>
+        <a href="../../#/charte">Charte</a>
+        <a href="../../#/conditions">Conditions</a>
+        <a href="../../#/confidentialite">Confidentialité</a>
+        <a href="../../#/mentions-legales">Mentions légales</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

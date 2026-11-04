@@ -372,6 +372,19 @@ input[type=file] { font-size: 15px; }
 .card .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; align-items: center; }
 .reject-form { display: flex; gap: 10px; margin-top: 12px; }
 .reject-form input { flex: 1; }
+/* Une place payée porte une couleur à elle, jamais celle de l'accent du site :
+   il ne faut pas la confondre avec une épingle de l'équipe. */
+.pin.sponso { color: var(--warn); }
+/* Un prix se lit comme une étiquette, pas comme une alerte : il informe, il n'avertit pas. */
+.pin.vente {
+  color: var(--ok); background: color-mix(in srgb, var(--ok) 13%, transparent);
+  padding: 1px 9px; border-radius: var(--r-pill); font-weight: 600;
+}
+.promo-form { flex-wrap: wrap; }
+.promo-form input[type="number"] { flex: 0 0 120px; }
+.promo-form input[type="text"] { flex: 1 1 220px; }
+.admin-sous-titre { margin: 30px 0 12px; font-size: 17px; letter-spacing: -.01em; }
+.admin-sous-titre small { font: 14px var(--font); color: var(--muted); margin-left: 10px; font-weight: 400; }
 .table { width: 100%; border-collapse: collapse; font-size: 15px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
 .table th, .table td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 .table th { font: 600 13px var(--font); color: var(--muted); background: var(--bg-deep); text-transform: uppercase; letter-spacing: .03em; }

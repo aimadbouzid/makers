@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Relecture automatique avant chaque commit – makers.si</title>
+  <meta name="description" content="Claude relit ce que tu t’apprêtes à commiter et signale les oublis classiques : console.log oubliés, TODO, clés en clair, test manquant. Il ne corrige…">
+  <meta name="theme-color" content="#010409">
+  <link rel="canonical" href="https://aimadbouzid.github.io/makers/partage/relecture-automatique-avant-chaque-commit-14703732/">
+  <link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="../../fonts/ibm-plex-sans-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="../../fonts/ibm-plex-mono-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="../../style.css">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="makers.si">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:title" content="Relecture automatique avant chaque commit">
+  <meta property="og:description" content="Claude relit ce que tu t’apprêtes à commiter et signale les oublis classiques : console.log oubliés, TODO, clés en clair, test manquant. Il ne corrige…">
+  <meta property="og:url" content="https://aimadbouzid.github.io/makers/partage/relecture-automatique-avant-chaque-commit-14703732/">
+  <meta property="og:image" content="https://aimadbouzid.github.io/makers/icons/icone-512.png">
+  <meta name="twitter:card" content="summary">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Relecture automatique avant chaque commit","description":"Claude relit ce que tu t’apprêtes à commiter et signale les oublis classiques : console.log oubliés, TODO, clés en clair, test manquant. Il ne corrige rien tout seul, il te dit quoi regarder.","datePublished":"2026-10-26T15:33:24.014Z","author":{"@type":"Person","name":"makers.si"},"publisher":{"@type":"Organization","name":"makers.si"},"mainEntityOfPage":"https://aimadbouzid.github.io/makers/partage/relecture-automatique-avant-chaque-commit-14703732/","image":"https://aimadbouzid.github.io/makers/icons/icone-512.png"}</script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="bar">
+      <a class="logo" href="../../" aria-label="makers.si, accueil">makers<i>.</i>si</a>
+      <div class="bar-end">
+        <a class="btn ghost" href="../../#/top">Top 5</a>
+        <a class="btn primary" href="../../#/p/1470373233bbf114">Ouvrir dans la bibliothèque</a>
+      </div>
+    </div>
+  </header>
+  <div class="wrap">
+    <div class="narrow post">
+      <a class="back" href="../../">← Tous les partages</a>
+      <div><span class="kind k-skill">Skill Claude</span></div>
+      <h1>Relecture automatique avant chaque commit</h1>
+      <div class="post-meta">
+        <a class="auteur" href="../../#/membre/makers.si">@makers.si</a>
+        <span>26 octobre 2026</span>
+        <a class="tag" href="../../#/?tag=claude-code">#claude-code</a><a class="tag" href="../../#/?tag=git">#git</a><a class="tag" href="../../#/?tag=relecture">#relecture</a>
+      </div>
+      <p class="lead">Claude relit ce que tu t’apprêtes à commiter et signale les oublis classiques : console.log oubliés, TODO, clés en clair, test manquant. Il ne corrige rien tout seul, il te dit quoi regarder.</p>
+      <div class="block"><div class="block-head"><span>Le dossier du skill · 3 fichiers</span></div>
+      <div class="block-head"><span>SKILL.md</span></div><pre class="code">---
+name: relecture-avant-commit
+description: Relit le diff indexé et signale les oublis avant un commit. À utiliser avant chaque commit, ou quand on demande une relecture du travail en cours.
+---
+
+# Relecture avant commit
+
+Tu relis le travail indexé, tu ne le modifies pas.
+
+## Marche à suivre
+
+1. Lance `git diff --staged` pour voir ce qui part.
+   Si rien n&#39;est indexé, dis-le et arrête-toi là.
+2. Lis le diff en entier avant de commenter quoi que ce soit.
+3. Cherche les points de la checklist ci-dessous.
+4. Réponds dans le format imposé plus bas.
+
+## Checklist
+
+Voir `references/checklist.md` pour le détail et les exemples.
+
+- Traces de débogage : `console.log`, `print`, `debugger`, `dd()`
+- Marqueurs laissés : TODO, FIXME, XXX, HACK
+- Secrets en clair : clé d&#39;API, mot de passe, jeton, URL de base de données
+- Code commenté qui aurait dû être supprimé
+- Changement de comportement sans test qui le couvre
+- Nom de variable ou de fonction qui ne dit pas ce qu&#39;il fait
+
+## Format de réponse
+
+Trois listes, dans cet ordre, et rien d&#39;autre :
+
+**Bloquant** — ce qui ne doit pas partir (secret, bug évident).
+**À corriger** — ce qui devrait être réglé maintenant.
+**Pour plus tard** — ce qui peut attendre.
+
+Si une liste est vide, écris « rien ».
+Termine par une ligne : `Prêt à commiter : oui / non`.
+
+## Ce que tu ne fais pas
+
+- Tu ne modifies aucun fichier.
+- Tu ne lances pas `git commit`.
+- Tu ne commentes pas le style si le projet a déjà un formateur.
+</pre><div class="block-head"><span>references/checklist.md</span></div><pre class="code"># La checklist, en détail
+
+## Traces de débogage
+
+```
+console.log, console.debug, print(), debugger, dd(), var_dump()
+```
+
+Un `console.error` dans un bloc catch est souvent légitime : ne le signale pas
+automatiquement, demande-toi s&#39;il sert à informer ou s&#39;il a été oublié.
+
+## Secrets en clair
+
+Les formes les plus fréquentes :
+
+```
+sk-...            clé d&#39;API
+ghp_...           jeton GitHub
+postgres://user:motdepasse@...
+AKIA...           clé AWS
+```
+
+**Si tu en trouves un, c&#39;est bloquant.** Dis-le en premier, et rappelle que
+retirer le secret du fichier ne suffit pas : il reste dans l&#39;historique de Git,
+et il faut le considérer comme compromis et le révoquer.
+
+## Test manquant
+
+Un changement de comportement sans test est à signaler, pas à refuser.
+Formule-le comme une question : « ce cas est-il couvert quelque part ? »
+
+Un changement de mise en forme, de commentaire ou de documentation n&#39;a pas
+besoin de test.
+
+## Ce qui ne mérite pas d&#39;être signalé
+
+- Le style, si le projet a un formateur automatique
+- Les préférences personnelles (guillemets simples ou doubles)
+- Un code qui marche mais que tu aurais écrit autrement
+</pre><div class="block-head"><span>references/exemple.md</span></div><pre class="code"># Exemple de réponse
+
+&gt; Relecture de 3 fichiers, 84 lignes ajoutées, 12 supprimées.
+
+**Bloquant**
+- `src/config.js:12` — une clé d&#39;API est écrite en clair. Mets-la dans une
+  variable d&#39;environnement. Elle est déjà dans l&#39;historique : révoque-la.
+
+**À corriger**
+- `src/panier.js:48` — `console.log(utilisateur)` oublié, et il affiche un email.
+- `src/panier.js:77` — le nouveau calcul de remise n&#39;est couvert par aucun test.
+
+**Pour plus tard**
+- `src/panier.js:23` — `function f(a, b)` : des noms parlants aideraient.
+
+Prêt à commiter : non
+</pre></div>
+      <div class="post-actions">
+        <a class="btn primary" href="../../#/p/1470373233bbf114">Ouvrir dans la bibliothèque</a>
+        <a class="btn" href="../../">Voir les autres partages</a>
+      </div>
+      <p class="muted">Publié sur <a href="../../">makers.si</a>, la bibliothèque de la communauté : des skills Claude, des prompts testés, des idées et des PDF. Chaque partage est relu avant publication.</p>
+    </div>
+  </div>
+  <footer class="site-footer">
+    <div class="foot">
+      <span class="logo">makers<i>.</i>si</span>
+      <nav aria-label="Informations légales">
+        <a href="../../#/aide">Aide</a>
+        <a href="../../#/charte">Charte</a>
+        <a href="../../#/conditions">Conditions</a>
+        <a href="../../#/confidentialite">Confidentialité</a>
+        <a href="../../#/mentions-legales">Mentions légales</a>
+      </nav>
+    </div>
+  </footer>
+</body>
+</html>

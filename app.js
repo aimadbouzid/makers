@@ -111,7 +111,7 @@ const ICON = {
 // --- Utilitaires ------------------------------------------------------------
 // `limits` est renseigné par /api/me : le formulaire prévient avant l'envoi plutôt que
 // de laisser partir 5 Mo pour un refus. Valeurs de repli si l'appel échoue.
-const S = { me: null, admin: false, pending: 0, limits: { pdfKb: 200, fileMb: 15, imageMb: 10, images: 3 } };
+const S = { me: null, admin: false, pending: 0, promo: null, marche: null, limits: { pdfKb: 200, fileMb: 15, imageMb: 10, images: 3 } };
 
 // Une barre fine en haut de page dès le clic : la navigation demande un aller-retour
 // réseau, et sans ce signal on a l'impression que le clic n'a rien fait.
@@ -156,11 +156,13 @@ async function apiStatique(chemin, method) {
   if (method !== 'GET') {
     throw Object.assign(new Error('Cette copie du site est en lecture seule. Elle sert à consulter la bibliothèque ; pour partager, voter ou créer un compte, il faut la version complète.'), { status: 403 });
   }
-  const { posts, stats, limits } = await chargeStatique();
+  const { posts, stats, limits, promo } = await chargeStatique();
   const [base, qs] = chemin.split('?');
   const q = new URLSearchParams(qs || '');
 
-  if (base === '/me') return { member: null, admin: false, pending: 0, limits };
+  // `promo` décrit l'offre (places, durée, tarif), pas son état : une copie de fichiers
+  // n'a pas d'horloge, donc elle ne sait pas combien de places sont libres à cet instant.
+  if (base === '/me') return { member: null, admin: false, pending: 0, limits, promo };
   if (base === '/stats') return stats;
 
   const points = p => p.points;
@@ -337,6 +339,16 @@ const tagLink = t => html`<a class="tag" href="#/?tag=${encodeURIComponent(t)}">
 // qu'un pseudo en gris clair. Même pastille que sur la page de profil, en plus petit.
 const rond = nom => html`<span class="rond" aria-hidden="true">${(nom || '?').slice(0, 1).toUpperCase()}</span>`;
 
+// Une place payée se signale, partout où le partage apparaît. Sans cette mention,
+// ce serait de la publicité déguisée — et le fil ne vaudrait plus rien.
+const sponsoBadge = p => (p.promo
+  ? html`<span class="pin sponso" title="Place payée par son auteur. Le contenu a passé la même relecture que les autres.">${ICON.megaphone}sponsorisé</span>`
+  : '');
+// Un partage en vente le dit partout où il apparaît : le prix fait partie de ce qu'on
+// regarde pour décider d'ouvrir, au même titre que le titre.
+const prixBadge = p => (p.prix
+  ? html`<span class="pin vente" title="Le contenu de ce partage s’achète">${p.prix} ${p.devise || ''}</span>`
+  : '');
 const auteurLien = p => p.authorLink
   ? html`<a class="auteur" href="#/membre/${encodeURIComponent(p.authorLink)}">${rond(p.author)}@${p.author}</a>`
   : html`<span class="auteur">${rond(p.author)}@${p.author}</span>`;
@@ -541,7 +553,9 @@ function ligne(p, rang = null) {
         <div class="item-top">
           ${kind(p.type)}
           <a class="item-title" href="#/p/${p.id}">${fr(p.title)}</a>
-          ${p.locked ? html`<span class="pin lock">${ICON.lock}privé</span>` : ''}
+          ${p.locked && !p.prix ? html`<span class="pin lock">${ICON.lock}privé</span>` : ''}
+          ${prixBadge(p)}
+          ${sponsoBadge(p)}
           ${p.pinned ? html`<span class="pin">${ICON.pin}épinglé</span>` : ''}
         </div>
         <p class="item-desc">${fr(p.description)}</p>
@@ -584,7 +598,9 @@ function carte(p, rang = null) {
           ${!thumb && podium ? html`<span class="medaille plate">${rang}</span>` : ''}
           ${kind(p.type)}
           ${detail ? html`<span class="carte-detail">${detail}</span>` : ''}
-          ${p.locked ? html`<span class="pin lock">${ICON.lock}privé</span>` : ''}
+          ${p.locked && !p.prix ? html`<span class="pin lock">${ICON.lock}privé</span>` : ''}
+          ${prixBadge(p)}
+          ${sponsoBadge(p)}
           ${p.pinned ? html`<span class="pin">${ICON.pin}épinglé</span>` : ''}
         </div>
         <a class="carte-titre" href="#/p/${p.id}">${fr(p.title)}</a>
@@ -653,10 +669,26 @@ function lockedBox(p) {
   if (p.has?.file) bits.push('un fichier');
   if (p.has?.url) bits.push('un lien');
   if (p.has?.images) bits.push(`${p.has.images} photo${p.has.images > 1 ? 's' : ''}`);
+  const dedans = bits.length ? bits.join(', ') : 'du contenu';
+  // Deux verrous différents, deux explications différentes : un abonnement d'un côté,
+  // un achat de l'autre. Les confondre ferait croire qu'on paie deux fois.
+  if (p.prix) {
+    return html`
+      <div class="locked">
+        <div class="locked-head">${ICON.lock}<b>En vente · ${p.prix} ${p.devise || ''}</b></div>
+        <p>Ce partage contient ${dedans}. Le contenu s’ouvre une fois l’achat confirmé ; le titre, la description et les tags restent publics.</p>
+        ${STATIQUE
+          ? html`<p class="muted">Cette copie du site se lit seulement : l’achat se fait sur le site complet.</p>`
+          : S.me
+            ? html`<button class="btn primary" data-action="acheter" data-id="${p.id}" data-prix="${p.prix} ${p.devise || ''}">Acheter pour ${p.prix} ${p.devise || ''}</button>
+              <p class="muted">Le paiement se règle avec nous, hors du site. Ta commande nous prévient, et l’accès s’ouvre dès qu’elle est confirmée.</p>`
+            : html`<a class="btn primary" href="#/rejoindre">Créer mon compte pour acheter</a>`}
+      </div>`;
+  }
   return html`
     <div class="locked">
       <div class="locked-head">${ICON.lock}<b>Contenu réservé à l’espace privé</b></div>
-      <p>Ce partage contient ${bits.length ? bits.join(', ') : 'du contenu'}, visible seulement avec l’accès à l’espace privé.</p>
+      <p>Ce partage contient ${dedans}, visible seulement avec l’accès à l’espace privé.</p>
       ${S.me
         ? html`<p class="muted">Ton compte n’a pas encore cet accès. Écris-nous pour le demander.</p>`
         : html`<a class="btn primary" href="#/rejoindre">Créer mon compte</a>`}
@@ -747,11 +779,13 @@ async function feedView(q) {
           : t && !query && !tag ? html`<p class="about-type">${TYPES[t].about}</p>` : ''}
         <div class="${vueFil === 'cartes' ? 'grille' : 'list'}">
           ${posts.length ? (() => {
-            // Le classement ne numérote que le tri « Top », et saute les partages épinglés,
-            // qui sont en tête pour une autre raison.
+            // Le classement ne numérote que le tri « Top », et saute les partages épinglés
+            // comme les places payées : ils sont en tête pour une autre raison que leurs points.
+            // Sans ça une place achetée porterait la médaille du premier, et payer ressemblerait
+            // à gagner — exactement ce que la charte promet qui n'arrive pas.
             const classe = sort === 'top' && !query && !tag;
             let rang = 0;
-            return posts.map(p => item(p, classe && !p.pinned ? ++rang : null));
+            return posts.map(p => item(p, classe && !p.pinned && !p.promo ? ++rang : null));
           })() : html`
             <div class="empty">
               ${query ? html`Aucun résultat pour « ${query} ».<br>Essaie un mot plus court, ou parcours les catégories.<br>` : html`Rien ici pour l’instant.<br>`}
@@ -788,7 +822,7 @@ async function feedView(q) {
             <li>Les réponses, elles, paraissent tout de suite, signées.</li>
             <li>Pas de vidéo importée : colle le lien.</li>
             <li>Cite ta source si ce n’est pas toi.</li>
-            <li>Pas de pub ni de vente.</li>
+            <li>Pas de pub déguisée : une <a href="#/mise-en-avant">place payée</a> est toujours signalée.</li>
           </ol>
           <p><a href="#/aide">Besoin d’aide ?</a></p>
         </section>
@@ -924,7 +958,7 @@ async function postView(id) {
       <a class="back" href="#/">← Tous les partages</a>
       ${p.status === 'pending' ? html`<div class="notice">En attente de validation. Toi seul(e) vois ce partage pour l’instant.</div>` : ''}
       ${p.status === 'rejected' ? html`<div class="notice bad">Refusé${p.rejectReason ? ' : ' + p.rejectReason : '.'}</div>` : ''}
-      <div>${kind(p.type)}${p.premium ? html` <span class="pin lock">${ICON.lock}espace privé</span>` : ''}</div>
+      <div>${kind(p.type)}${p.premium ? html` <span class="pin lock">${ICON.lock}espace privé</span>` : ''}${p.prix ? html` ${prixBadge(p)}` : ''}${p.promo ? html` ${sponsoBadge(p)}` : ''}</div>
       <h1>${fr(p.title)}</h1>
       <div class="post-meta">${auteurLien(p)}<span>${ago(p.approvedAt || p.createdAt)}</span>${p.tags.map(tagLink)}</div>
       ${postBody(p, { howto: true })}
@@ -1083,6 +1117,12 @@ function shareView(q) {
           <div class="previews" id="previews"></div></div>
         <div class="field" data-field="tags"><label for="s-tags">Tags <span class="muted">(facultatif)</span></label><input id="s-tags" type="text" name="tags" placeholder="claude-code, sous-titres">
           <small>5 maximum, séparés par des virgules. Ils aident à retrouver ton partage.</small></div>
+        <div class="field" data-field="prix"><label for="s-prix">Prix <span class="muted">(facultatif — laisse vide pour offrir)</span></label>
+          <input id="s-prix" type="number" name="prix" min="0" step="1" placeholder="0" inputmode="numeric">
+          <small>Si tu mets un prix, le <b>contenu</b> ne s’ouvre qu’après l’achat ; le titre, la description et les tags restent publics, sinon personne ne saurait ce qu’il achète.
+            De ${S.marche?.prixMin ?? 100} à ${S.marche?.prixMax ?? 100000} ${S.marche?.devise || 'DA'}.
+            La plateforme retient <b>${S.marche?.commission ?? 5} %</b> sur chaque vente ; le reste te revient.
+            Le prix passe la relecture comme le reste : l’équipe peut refuser une vente.</small></div>
         <p class="form-error" role="alert"></p>
         <button class="btn primary" type="submit">Envoyer pour validation</button>
       </form>
@@ -1094,7 +1134,9 @@ function shareView(q) {
 function applyType(type) {
   const t = TYPES[type];
   $$('[data-field]').forEach(row => {
-    const on = t.fields.includes(row.dataset.field);
+    // Tout type peut être vendu, sauf un sondage : il n'a rien à livrer, seulement des
+    // voix à compter. Le champ prix n'est donc pas listé type par type.
+    const on = row.dataset.field === 'prix' ? type !== 'sondage' : t.fields.includes(row.dataset.field);
     row.classList.toggle('hidden', !on);
     $$('input, textarea', row).forEach(i => { i.disabled = !on; });
   });
@@ -1222,6 +1264,52 @@ function welcomeView() {
     </div>`);
 }
 
+// --- Mise en avant payée ---------------------------------------------------------
+// La page qui rend l'offre trouvable. Elle dit le prix quand il est fixé (PROMO_PRIX),
+// et sinon invite simplement à écrire : mieux vaut pas de chiffre qu'un faux chiffre.
+function promoView() {
+  const o = S.promo;
+  const prix = o?.prix
+    ? html`<b>${o.prix} ${o.devise}</b> pour ${o.jours} jours`
+    : html`<b>Écris-nous pour le tarif</b>`;
+  document.title = 'Mise en avant – makers.si';
+  render(html`
+    <div class="narrow">
+      <a class="back" href="#/">← Tous les partages</a>
+      <h1 class="page-title">${ICON.megaphone}Mettre un partage en avant</h1>
+      <p class="page-sub">Une place en haut du fil, pour quelques jours. ${prix}.</p>
+
+      <div class="notice">
+        <b>Ce qui s’achète est la place, jamais la publication.</b> Un partage sponsorisé passe
+        exactement la même relecture que les autres, et il est refusé s’il ne respecte pas
+        la <a href="#/charte">charte</a>. Payer n’achète ni gemme, ni étoile, ni point :
+        le <a href="#/top">Top 5</a> reste décidé par la communauté seule.
+      </div>
+
+      <ol class="steps">
+        <li><b>Publie ton partage normalement.</b> Il est relu comme les autres. Un partage
+          refusé ne peut pas être mis en avant, et l’argent n’y change rien.</li>
+        <li><b>Écris-nous</b> avec l’adresse du partage et le nombre de jours voulus.</li>
+        <li><b>Tu paies</b> (virement ou lien de paiement), puis la place est posée à la main.</li>
+        <li><b>Elle s’arrête toute seule</b> à la date prévue. Rien à résilier.</li>
+      </ol>
+
+      <h2 class="faq-title">Les règles, en clair</h2>
+      <ul class="guide">
+        <li>Le partage porte la mention <span class="pin sponso">${ICON.megaphone}sponsorisé</span> tant que la place dure. Elle n’est jamais cachée.</li>
+        <li>Il y a <b>${o?.places ?? 2} places</b> au maximum en même temps${o && typeof o.libres === 'number' ? html` (${o.libres} libre${o.libres > 1 ? 's' : ''} en ce moment)` : ''}, pour que le haut du fil reste lisible.</li>
+        <li>Les épingles de l’équipe passent devant : ce que le site tient à montrer ne se fait pas doubler.</li>
+        <li>Un partage de l’espace privé ne peut pas être mis en avant : il n’est pas dans le fil.</li>
+        <li>Si un partage est retiré après un signalement, sa place s’arrête. On en reparle au cas par cas.</li>
+      </ul>
+
+      <div class="post-actions">
+        <a class="btn primary" href="#/aide">Comment ça marche</a>
+        <a class="btn" href="#/conditions">Les conditions</a>
+      </div>
+    </div>`);
+}
+
 function helpView() {
   render(html`
     <div class="narrow">
@@ -1242,6 +1330,9 @@ function helpView() {
       <details class="faq"><summary>Comment marche le Top 5 ?</summary><p>Chaque partage a des points : une gemme vaut 10 points, et chaque étoile reçue en vaut 2 (cinq étoiles d’une personne = 10 points). Le <a href="#/top">Top 5</a> existe en trois versions : la semaine et le mois comptent les partages publiés sur cette période, « depuis le début » compte tout.</p></details>
       <details class="faq"><summary>Comment marche un sondage ?</summary><p>Celui qui le crée écrit la question en titre et 2 à 6 réponses. Chaque membre vote une fois et peut changer d’avis ; cliquer de nouveau sa réponse retire le vote. Les résultats s’affichent une fois qu’on a voté.</p></details>
       <details class="faq"><summary>C’est quoi l’espace privé ?</summary><p>Une section à part, marquée d’un cadenas, qui contient des partages réservés. Tout le monde voit le sujet, mais le contenu demande un accès. Aujourd’hui il se donne à la main : écris-nous pour le demander.</p></details>
+      <details class="faq"><summary>On peut payer pour être en haut ?</summary><p>Oui, et c’est écrit dessus : un partage dont la place a été payée porte la mention « sponsorisé » tant qu’elle dure. Ce qui s’achète est la place, jamais la publication — le partage passe la même relecture que les autres, et payer ne donne ni gemme, ni étoile, ni point. <a href="#/mise-en-avant">Voir comment ça marche</a>.</p></details>
+      <details class="faq"><summary>Je peux vendre un skill que j’ai écrit ?</summary><p>Oui. Mets un prix dans le formulaire de partage : le <b>contenu</b> ne s’ouvre alors qu’après l’achat, mais le titre, la description et les tags restent publics — sinon personne ne saurait ce qu’il achète. Ton partage passe la même relecture que les autres, et l’équipe peut refuser une vente comme elle refuse un contenu. La plateforme retient ${S.marche?.commission ?? 5} % sur chaque vente, le reste te revient. Tu suis tout dans <a href="#/mes-ventes">Mes ventes</a>.</p></details>
+      <details class="faq"><summary>Comment se passe un achat ?</summary><p>Tu cliques « Acheter » : ça enregistre une commande, ça ne prend pas d’argent. Le paiement se règle avec nous hors du site (il n’y a pas encore de paiement en ligne), et le contenu s’ouvre dès que la commande est confirmée. Tu retrouves tes commandes dans <a href="#/mes-achats">Mes achats</a>.</p></details>
       <details class="faq"><summary>Pourquoi une vérification à l’inscription ?</summary><p>Pour bloquer les robots qui créent des comptes en masse. Elle se fait toute seule en une seconde, il n’y a pas d’image à déchiffrer, et aucun service extérieur n’est appelé.</p></details>
       <details class="faq"><summary>Comment partager une vidéo ?</summary><p>On n’héberge pas de vidéo : la bibliothèque garde les skills, les prompts, les idées et les PDF. Mets ta vidéo sur YouTube, Drive ou Vimeo, puis fais un partage de type « Lien » : le nom de la vidéo en titre, son adresse dans le lien.</p></details>
       <details class="faq"><summary>Comment utiliser un skill ?</summary><p>${HOWTO}</p></details>
@@ -1252,6 +1343,64 @@ function helpView() {
     </div>`);
 }
 
+// --- Mes ventes, mes achats ------------------------------------------------------
+// Deux pages qui disent la même chose des deux côtés d'une vente : ce qui est commandé,
+// ce qui est encaissé, ce qui reste dû. Rien n'est calculé ici — les chiffres viennent
+// du serveur, pour qu'un vendeur et l'administrateur lisent toujours le même nombre.
+const ETAT_VENTE = { 'en-attente': 'En attente de paiement', paye: 'Payé' };
+
+async function ventesView() {
+  if (!S.me) { go('#/connexion'); return; }
+  const d = await api('/me/ventes');
+  document.title = 'Mes ventes – makers.si';
+  render(html`
+    <div class="narrow">
+      <div class="admin-head"><h1 class="page-title">Mes ventes</h1>
+        <div><a class="btn ghost" href="#/mes-partages">Mes partages</a> <a class="btn ghost" href="#/mes-achats">Mes achats</a></div></div>
+      <p class="page-sub">La plateforme retient ${d.taux} % sur chaque vente. Le reste t’est reversé à la main : ce tableau dit ce qui t’est dû.</p>
+      <div class="profil-chiffres">
+        <div><b>${d.ventes.filter(v => v.status === 'paye').length}</b><span>vendus</span></div>
+        <div><b>${d.total} ${d.devise}</b><span>encaissés en tout</span></div>
+        <div><b>${d.commission} ${d.devise}</b><span>retenus par la plateforme</span></div>
+        <div><b>${d.du} ${d.devise}</b><span>à te reverser</span></div>
+      </div>
+      ${d.ventes.length
+        ? html`<table class="table"><thead><tr><th>Partage</th><th>Acheteur</th><th>Prix</th><th>Pour toi</th><th>État</th></tr></thead><tbody>
+            ${d.ventes.map(v => html`<tr>
+              <td><a href="#/p/${v.postId}">${v.titre}</a></td>
+              <td class="muted">@${v.acheteur}</td>
+              <td class="mono">${v.prix} ${v.devise}</td>
+              <td class="mono">${v.net} ${v.devise}<br><small class="muted">− ${v.commission} (${v.taux} %)</small></td>
+              <td><span class="status ${v.status === 'paye' ? 'approved' : 'pending'}">${ETAT_VENTE[v.status] || v.status}</span>
+                ${v.regleAt ? html`<br><small class="muted">reversé le ${new Date(v.regleAt).toLocaleDateString('fr-FR')}</small>` : ''}</td></tr>`)}
+          </tbody></table>`
+        : html`<div class="empty">Tu n’as encore rien vendu.<br>Mets un prix sur un partage pour commencer.<br><a class="btn primary" href="#/partager">${ICON.plus}Partager</a></div>`}
+    </div>`);
+}
+
+async function achatsView() {
+  if (!S.me) { go('#/connexion'); return; }
+  const { achats } = await api('/me/achats');
+  document.title = 'Mes achats – makers.si';
+  render(html`
+    <div class="narrow">
+      <div class="admin-head"><h1 class="page-title">Mes achats</h1>
+        <div><a class="btn ghost" href="#/mes-ventes">Mes ventes</a> <a class="btn ghost" href="#/mes-partages">Mes partages</a></div></div>
+      ${achats.some(a => a.status === 'en-attente')
+        ? html`<div class="notice">Une commande attend son paiement. Il se règle avec nous, hors du site : le contenu s’ouvre dès qu’elle est confirmée.</div>`
+        : ''}
+      ${achats.length
+        ? html`<table class="table"><thead><tr><th>Partage</th><th>Vendeur</th><th>Prix</th><th>État</th></tr></thead><tbody>
+            ${achats.map(a => html`<tr>
+              <td><a href="#/p/${a.postId}">${a.titre}</a></td>
+              <td class="muted">@${a.vendeur}</td>
+              <td class="mono">${a.prix} ${a.devise}</td>
+              <td><span class="status ${a.status === 'paye' ? 'approved' : 'pending'}">${ETAT_VENTE[a.status] || a.status}</span></td></tr>`)}
+          </tbody></table>`
+        : html`<div class="empty">Tu n’as encore rien acheté.<br><a class="btn" href="#/">Voir la bibliothèque</a></div>`}
+    </div>`);
+}
+
 async function mineView() {
   if (!S.me) { go('#/connexion'); return; }
   const { posts } = await api('/me/posts');
@@ -1259,7 +1408,7 @@ async function mineView() {
   render(html`
     <div class="narrow">
       <div class="admin-head"><h1 class="page-title">Mes partages</h1>
-        <div><a class="btn primary" href="#/partager">${ICON.plus}Partager</a> <a class="btn ghost" href="#/membre/${encodeURIComponent(S.me.pseudo)}">Mon profil public</a> <a class="btn ghost" href="#/compte">Mon compte</a> <button class="btn ghost" data-action="logout">Déconnexion</button></div></div>
+        <div><a class="btn primary" href="#/partager">${ICON.plus}Partager</a> <a class="btn ghost" href="#/mes-ventes">Mes ventes</a> <a class="btn ghost" href="#/membre/${encodeURIComponent(S.me.pseudo)}">Mon profil public</a> <a class="btn ghost" href="#/compte">Mon compte</a> <button class="btn ghost" data-action="logout">Déconnexion</button></div></div>
       ${posts.length ? html`<table class="table"><thead><tr><th>Titre</th><th>Statut</th><th>Gemmes</th><th>Étoiles</th><th></th></tr></thead><tbody>
         ${posts.map(p => html`<tr><td><a href="#/p/${p.id}">${p.title}</a>${p.status === 'rejected' && p.rejectReason ? html`<br><small class="muted">${p.rejectReason}</small>` : ''}</td>
           <td><span class="status ${p.status}">${label[p.status]}</span></td><td class="mono">${p.gems}</td>
@@ -1286,19 +1435,25 @@ async function adminView(q) {
   const tab = q.get('s') || 'pending';
   const [counts, data] = await Promise.all([
     api('/admin/stats'),
-    tab === 'members' ? api('/admin/members') : tab === 'reports' ? api('/admin/reports') : api('/admin/posts?status=' + tab),
+    tab === 'members' ? api('/admin/members')
+      : tab === 'promos' ? api('/admin/promos')
+        : tab === 'marche' ? api('/admin/marche')
+          : tab === 'reports' ? api('/admin/reports') : api('/admin/posts?status=' + tab),
   ]);
   S.pending = counts.pending; header();
-  const tabs = [['pending', 'À valider', counts.pending], ['reports', 'Signalés', counts.reported], ['approved', 'Publiés', counts.approved], ['rejected', 'Refusés', counts.rejected], ['members', 'Membres', counts.members]];
+  const tabs = [['pending', 'À valider', counts.pending], ['reports', 'Signalés', counts.reported], ['approved', 'Publiés', counts.approved], ['rejected', 'Refusés', counts.rejected], ['promos', 'Mises en avant', counts.promos], ['marche', 'Marché', counts.marche], ['members', 'Membres', counts.members]];
   const privateNote = tab === 'members'
     ? html`<p class="about-type">L’accès à l’espace privé se donne à la main, un membre à la fois. Il n’y a pas encore de paiement : c’est toi qui décides qui entre.</p>`
-    : '';
+    : tab === 'promos'
+      ? html`<p class="about-type">Le paiement se fait hors du site. Ici tu enregistres la vente et tu poses la durée : la place s’arrête toute seule à la date prévue, il n’y a rien à retirer à la main. ${data.libres} place${data.libres > 1 ? 's' : ''} libre${data.libres > 1 ? 's' : ''} sur ${data.places}.</p>`
+      : '';
 
   const card = p => html`
     <div class="card" data-card="${p.id}">
       <div class="post-meta">${kind(p.type)}<span>@${p.author}</span><span class="muted">${p.authorEmail}</span><span>${ago(p.createdAt)}</span>
         ${p.premium ? html`<span class="pin lock">${ICON.lock}privé</span>` : ''}
         ${p.pinned ? html`<span class="pin">${ICON.pin}épinglé</span>` : ''}
+        ${p.promo ? html`<span class="pin sponso">${ICON.megaphone}en avant jusqu’au ${new Date(p.promoUntil).toLocaleDateString('fr-FR')}</span>` : ''}
         ${p.status === 'approved' ? html`<span class="muted">${ICON.gem}${p.gems}${p.starsCount ? ` · ★ ${String(p.stars).replace('.', ',')}` : ''}</span>` : ''}</div>
       <h3>${fr(p.title)}</h3>
       ${p.tags.length ? html`<div class="meta">${p.tags.map(t => html`<span class="tag">#${t}</span>`)}</div>` : ''}
@@ -1310,12 +1465,21 @@ async function adminView(q) {
         ${p.status !== 'approved' ? html`<button class="btn ok" data-action="approve" data-id="${p.id}">Approuver</button>` : ''}
         ${p.status === 'approved' ? html`<button class="btn" data-action="pin" data-id="${p.id}">${p.pinned ? 'Désépingler' : 'Épingler'}</button>
           <button class="btn" data-action="post-premium" data-id="${p.id}">${p.premium ? 'Rendre public' : 'Mettre en privé'}</button>` : ''}
+        ${p.prix ? html`<button class="btn" data-action="post-gratuit" data-id="${p.id}" data-prix="${p.prix} ${p.devise || ''}">Rendre gratuit</button>` : ''}
+        ${p.status === 'approved' && !p.premium ? html`<button class="btn" data-action="promo-open" data-id="${p.id}">${p.promo ? 'Prolonger la place' : 'Mettre en avant'}</button>
+          ${p.promo ? html`<button class="btn ghost" data-action="promo-stop" data-id="${p.id}">Arrêter la place</button>` : ''}` : ''}
         ${p.status !== 'rejected' ? html`<button class="btn bad" data-action="reject-open" data-id="${p.id}">${p.status === 'approved' ? 'Retirer' : 'Refuser'}</button>` : ''}
         <button class="btn ghost" data-action="delete" data-id="${p.id}">Supprimer</button>
       </div>
       <form class="reject-form hidden" data-form="reject" data-id="${p.id}">
         <input type="text" name="reason" maxlength="200" placeholder="Motif (visible par l’auteur), facultatif" aria-label="Motif du refus">
         <button class="btn bad" type="submit">Confirmer</button>
+      </form>
+      <form class="reject-form promo-form hidden" data-form="promo" data-id="${p.id}">
+        <input type="number" name="jours" min="1" max="${S.promo?.joursMax || 30}" value="${S.promo?.jours || 7}" required aria-label="Nombre de jours">
+        <input type="number" name="montant" min="0" step="1" placeholder="Montant encaissé (${S.promo?.devise || 'DA'})" aria-label="Montant encaissé">
+        <input type="text" name="note" maxlength="140" placeholder="Note : qui a payé, comment" aria-label="Note">
+        <button class="btn primary" type="submit">Enregistrer</button>
       </form>
     </div>`;
 
@@ -1330,7 +1494,68 @@ async function adminView(q) {
               <td class="muted">${m.email}</td><td>${ago(m.createdAt)}</td><td class="mono">${m.posts}</td>
               <td><button class="btn small ${m.premium ? 'ok' : ''}" data-action="member-premium" data-id="${m.id}">${m.premium ? 'Accès accordé' : 'Donner l’accès'}</button></td>
               <td>${m.locked ? html`<button class="btn small" data-action="member-unlock" data-id="${m.id}">Débloquer</button> ` : ''}<button class="btn ghost small" data-action="member-delete" data-id="${m.id}" data-pseudo="${m.pseudo}">Supprimer</button></td></tr>`)}</tbody></table>`
-        : data.posts.length ? data.posts.map(card) : html`<div class="empty">${tab === 'pending' ? 'Rien à valider. Tout est à jour.' : 'Aucun partage ici.'}</div>`}
+        : tab === 'marche'
+          ? html`
+            <p class="about-type">Le paiement se règle hors du site. Ici tu confirmes avoir reçu l’argent — le contenu s’ouvre alors pour l’acheteur — puis tu reverses leur part aux vendeurs. La plateforme retient ${data.taux} %.</p>
+            <div class="profil-chiffres">
+              <div><b>${data.totalVentes} ${data.devise}</b><span>encaissés en tout</span></div>
+              <div><b>${data.totalCommission} ${data.devise}</b><span>ta part (${data.taux} %)</span></div>
+              <div><b>${data.totalDu} ${data.devise}</b><span>à reverser aux vendeurs</span></div>
+              <div><b>${data.attente.length}</b><span>commande${data.attente.length > 1 ? 's' : ''} en attente</span></div>
+            </div>
+
+            <h3 class="admin-sous-titre">Commandes à confirmer</h3>
+            ${data.attente.length
+              ? html`<table class="table"><thead><tr><th>Date</th><th>Partage</th><th>Acheteur</th><th>Prix</th><th></th></tr></thead><tbody>
+                  ${data.attente.map(a => html`<tr>
+                    <td>${new Date(a.at).toLocaleDateString('fr-FR')}</td>
+                    <td><a href="#/p/${a.postId}">${a.titre}</a><br><small class="muted">vendu par @${a.sellerPseudo}</small></td>
+                    <td class="muted">@${a.buyerPseudo}</td>
+                    <td class="mono">${a.prix} ${a.devise}</td>
+                    <td><button class="btn small ok" data-action="achat-confirmer" data-id="${a.id}">Paiement reçu</button>
+                      <button class="btn ghost small" data-action="achat-annuler" data-id="${a.id}">Annuler</button></td></tr>`)}
+                </tbody></table>`
+              : html`<div class="empty">Aucune commande en attente.</div>`}
+
+            <h3 class="admin-sous-titre">Ce que tu dois aux vendeurs</h3>
+            ${data.vendeurs.length
+              ? html`<table class="table"><thead><tr><th>Vendeur</th><th>Ventes</th><th>Encaissé</th><th>À reverser</th><th></th></tr></thead><tbody>
+                  ${data.vendeurs.map(v => html`<tr>
+                    <td>@${v.pseudo}</td><td class="mono">${v.ventes}</td>
+                    <td class="mono">${v.brut} ${data.devise}</td>
+                    <td class="mono">${v.du} ${data.devise}${v.regle ? html`<br><small class="muted">${v.regle} déjà reversés</small>` : ''}</td>
+                    <td>${v.du && v.id ? html`<button class="btn small" data-action="vendeur-regler" data-id="${v.id}" data-pseudo="${v.pseudo}" data-du="${v.du} ${data.devise}">Marquer reversé</button>` : ''}</td></tr>`)}
+                </tbody></table>`
+              : html`<div class="empty">Aucune vente encaissée pour l’instant.</div>`}
+
+            <h3 class="admin-sous-titre">Ventes encaissées<small>${data.payes.length} au total</small></h3>
+            ${data.payes.length
+              ? html`<table class="table"><thead><tr><th>Date</th><th>Partage</th><th>Vendeur</th><th>Prix</th><th>Ta part</th></tr></thead><tbody>
+                  ${data.payes.map(a => html`<tr>
+                    <td>${new Date(a.payeAt).toLocaleDateString('fr-FR')}</td>
+                    <td><a href="#/p/${a.postId}">${a.titre}</a><br><small class="muted">acheté par @${a.buyerPseudo}</small></td>
+                    <td class="muted">@${a.sellerPseudo}</td>
+                    <td class="mono">${a.prix} ${a.devise}</td>
+                    <td class="mono">${a.commission} ${a.devise}</td></tr>`)}
+                </tbody></table>`
+              : ''}`
+        : tab === 'promos'
+          ? html`
+            ${data.actives.length
+              ? html`<h3 class="admin-sous-titre">En cours</h3>${data.actives.map(card)}`
+              : html`<div class="empty">Aucune place occupée en ce moment. Les places se posent depuis l’onglet « Publiés ».</div>`}
+            <h3 class="admin-sous-titre">Registre des ventes<small>${data.total} ${data.devise} encaissés au total</small></h3>
+            ${data.registre.length
+              ? html`<table class="table"><thead><tr><th>Date</th><th>Partage</th><th>Jours</th><th>Montant</th><th>Note</th></tr></thead><tbody>
+                  ${data.registre.map(v => html`<tr>
+                    <td>${new Date(v.at).toLocaleDateString('fr-FR')}</td>
+                    <td><a href="#/p/${v.postId}">${v.titre}</a><br><small class="muted">@${v.auteur} · jusqu’au ${new Date(v.jusqua).toLocaleDateString('fr-FR')}</small></td>
+                    <td class="mono">${v.jours}</td>
+                    <td class="mono">${v.montant ? `${v.montant} ${v.devise}` : '—'}</td>
+                    <td class="muted">${v.note}</td></tr>`)}
+                </tbody></table>`
+              : html`<div class="empty">Rien de vendu pour l’instant.</div>`}`
+          : data.posts.length ? data.posts.map(card) : html`<div class="empty">${tab === 'pending' ? 'Rien à valider. Tout est à jour.' : 'Aucun partage ici.'}</div>`}
     </div>`);
 }
 
@@ -1343,7 +1568,7 @@ async function route() {
   const q = new URLSearchParams(qs || '');
   header();
   // Dans une copie en lecture seule, les pages qui écrivent n'ont nulle part où écrire.
-  if (STATIQUE && ['/rejoindre', '/connexion', '/partager', '/compte', '/mes-partages', '/admin'].includes(path)) {
+  if (STATIQUE && ['/rejoindre', '/connexion', '/partager', '/compte', '/mes-partages', '/mes-ventes', '/mes-achats', '/admin'].includes(path)) {
     toast('Cette copie du site est en lecture seule.');
     return go('#/');
   }
@@ -1357,10 +1582,13 @@ async function route() {
     else if (path === '/partager') shareView(q);
     else if (path === '/top') await topView();
     else if (path === '/aide') helpView();
+    else if (path === '/mise-en-avant') promoView();
     else if (path === '/compte') accountView();
     else if (LEGAL.includes(path.slice(1))) await legalView(path.slice(1));
     else if (path === '/bienvenue') welcomeView();
     else if (path === '/mes-partages') await mineView();
+    else if (path === '/mes-ventes') await ventesView();
+    else if (path === '/mes-achats') await achatsView();
     else if (path === '/admin') await adminView(q);
     else go('#/');
   } catch (e) {
@@ -1373,6 +1601,8 @@ async function refreshMe() {
     const r = await api('/me');
     Object.assign(S, { me: r.member, admin: r.admin, pending: r.pending });
     if (r.limits) S.limits = r.limits;
+    if (r.promo) S.promo = r.promo;
+    if (r.marche) S.marche = r.marche;
   } catch { /* hors ligne : on reste visiteur */ }
 }
 
@@ -1437,8 +1667,10 @@ document.addEventListener('click', async (e) => {
         const liste = $('.grille, .list');
         // La numérotation du classement reprend là où la page précédente s'est arrêtée.
         const classe = !!$('.rang, .rang-n, .medaille');
-        let rang = $$('.item, .carte').length;
-        liste.insertAdjacentHTML('beforeend', posts.map(p => item(p, classe && !p.pinned ? ++rang : null).s).join(''));
+        // On repart du nombre de rangs déjà affichés, pas du nombre de partages : les épingles
+        // et les places payées n'en portent pas, et décaleraient toute la numérotation.
+        let rang = $$('.rang, .rang-n, .medaille').length;
+        liste.insertAdjacentHTML('beforeend', posts.map(p => item(p, classe && !p.pinned && !p.promo ? ++rang : null).s).join(''));
         applyBars(liste);
         if (suite) {
           el.dataset.suite = suite;
@@ -1516,6 +1748,36 @@ document.addEventListener('click', async (e) => {
     } else if (action === 'dismiss') {
       await api(`/admin/posts/${id}/dismiss`, { method: 'POST' });
       toast('Signalements ignorés.'); route();
+    } else if (action === 'post-gratuit') {
+      if (!confirm(`Retirer le prix de ${el.dataset.prix} et rendre ce partage gratuit ?\n\nLes ventes déjà faites restent au registre, et ceux qui ont payé gardent leur accès.`)) return;
+      await api(`/admin/posts/${id}/gratuit`, { method: 'POST' });
+      toast('Partage rendu gratuit.'); route();
+    } else if (action === 'achat-confirmer') {
+      await api(`/admin/achats/${id}/confirmer`, { method: 'POST' });
+      toast('Vente confirmée. L’acheteur a maintenant accès au contenu.'); route();
+    } else if (action === 'achat-annuler') {
+      if (!confirm('Annuler cette commande ? Elle disparaît du registre.')) return;
+      await api(`/admin/achats/${id}/annuler`, { method: 'POST' });
+      toast('Commande annulée.'); route();
+    } else if (action === 'vendeur-regler') {
+      // Le virement se fait ailleurs : ici on ne fait que noter qu'il a été fait.
+      if (!confirm(`Marquer ${el.dataset.du} comme reversés à @${el.dataset.pseudo} ?\n\nÀ faire une fois le virement parti : le site ne fait que tenir le compte.`)) return;
+      const bilan = await api(`/admin/vendeurs/${id}/regler`, { method: 'POST' });
+      toast(`${bilan.total} notés comme reversés (${bilan.nombre} vente${bilan.nombre > 1 ? 's' : ''}).`); route();
+    } else if (action === 'acheter') {
+      // On ne prend pas d'argent ici : on enregistre une commande. Le dire clairement
+      // avant de cliquer évite que quelqu'un attende un formulaire de carte bancaire.
+      if (!confirm(`Commander ce partage pour ${el.dataset.prix} ?\n\nLe paiement se règle avec nous, hors du site. Ta commande nous prévient, et l’accès s’ouvre dès qu’elle est confirmée.`)) return;
+      await api(`/posts/${id}/acheter`, { method: 'POST' });
+      toast('Commande enregistrée. On te recontacte pour le paiement.');
+      route();
+    } else if (action === 'promo-open') {
+      $(`[data-card="${id}"] .promo-form`).classList.toggle('hidden');
+      $(`[data-card="${id}"] .promo-form input`).focus();
+    } else if (action === 'promo-stop') {
+      if (!confirm('Arrêter la mise en avant maintenant ? La vente reste au registre.')) return;
+      await api(`/admin/posts/${id}/promo-stop`, { method: 'POST' });
+      toast('Place arrêtée.'); route();
     } else if (action === 'reject-open') {
       $(`[data-card="${id}"] .reject-form`).classList.toggle('hidden');
       $(`[data-card="${id}"] .reject-form input`).focus();
@@ -1627,6 +1889,12 @@ document.addEventListener('submit', async (e) => {
       await api('/me/delete', { method: 'POST', body: { password: fd.get('password'), deletePosts: !!fd.get('deletePosts') } });
       Object.assign(S, { me: null, admin: false, pending: 0 });
       go('#/'); route(); toast('Compte supprimé.');
+    } else if (kindOf === 'promo') {
+      await api(`/admin/posts/${form.dataset.id}/promo`, {
+        method: 'POST',
+        body: { jours: Number(fd.get('jours')), montant: Number(fd.get('montant')) || 0, note: fd.get('note') },
+      });
+      toast('Mise en avant enregistrée.'); route();
     } else if (kindOf === 'reject') {
       await api(`/admin/posts/${form.dataset.id}/reject`, { method: 'POST', body: { reason: fd.get('reason') } });
       toast('Refusé.'); route();

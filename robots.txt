@@ -16,3 +16,5 @@ Disallow: /
 
 User-agent: ClaudeBot
 Disallow: /
+
+Sitemap: https://aimadbouzid.github.io/makers/sitemap.xml
