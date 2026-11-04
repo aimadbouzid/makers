@@ -806,6 +806,67 @@ mark.todo { background: color-mix(in srgb, var(--warn) 26%, transparent); color:
 }
 .toast.show { opacity: 1; transform: none; }
 
+/* --- Collections ------------------------------------------------------------------
+   Un parcours : une suite numérotée, où le chiffre compte autant que le titre. On lit
+   « 1, puis 2, puis 3 », pas « voici quatre liens ». D'où la colonne de numéros, et le
+   filet qui les relie : c'est lui qui dit que l'ordre veut dire quelque chose. */
+.coll-liste { display: flex; flex-direction: column; gap: 12px; margin-bottom: 26px; }
+.coll-carte {
+  border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface);
+  padding: 18px 20px; box-shadow: var(--ombre-1);
+}
+.coll-carte:hover { border-color: var(--line-strong); }
+.coll-titre { font: 700 18px var(--font); text-decoration: none; letter-spacing: -.01em; display: block; margin-bottom: 5px; }
+.coll-titre:hover { color: var(--accent); }
+.coll-desc { margin: 0 0 10px; color: var(--muted); font-size: 15px; line-height: 1.55; }
+.coll-compte { display: inline-flex; align-items: center; gap: 6px; }
+.coll-compte .ico { width: 14px; height: 14px; }
+.nav-collections { margin-top: 7px; border-top: 1px solid var(--line); padding-top: 14px !important; }
+.nav-collections .ico { width: 15px; height: 15px; }
+.aside-coll .aside-liste { margin: 0 0 10px; padding: 0; list-style: none; font-size: 14.5px; }
+.aside-coll .aside-liste li { display: flex; gap: 10px; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.aside-coll .aside-liste a { text-decoration: none; }
+.aside-coll .aside-liste span { font-size: 13px; white-space: nowrap; }
+
+/* Les étapes d'une collection. */
+.coll-etapes { list-style: none; margin: 24px 0 0; padding: 0; }
+.coll-etapes > li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 16px; position: relative; padding-bottom: 22px; }
+/* Le filet vertical qui relie les numéros, sauf après le dernier. */
+.coll-etapes > li::before {
+  content: ''; position: absolute; left: 17px; top: 34px; bottom: 0; width: 1px; background: var(--line);
+}
+.coll-etapes > li:last-child { padding-bottom: 0; }
+.coll-etapes > li:last-child::before { display: none; }
+.coll-num {
+  width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--surface-2); border: 1px solid var(--line); color: var(--muted);
+  font: 700 14px var(--font); z-index: 1;
+}
+.coll-item { min-width: 0; padding-top: 5px; }
+.coll-note { margin: 7px 0 0; font-size: 15px; line-height: 1.6; color: var(--ink-soft); }
+
+/* Le composeur : chercher, ajouter, ranger. */
+.compo-res { margin-top: 10px; display: flex; flex-direction: column; gap: 1px; }
+.compo-res-ligne {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm);
+}
+.compo-res-titre { flex: 1; min-width: 0; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.compo-res-ligne .btn { flex: none; }
+.compo-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.compo-items > li { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 12px; align-items: start; }
+.compo-item { min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+.compo-item b { font-size: 15px; }
+.compo-boutons { display: flex; gap: 4px; }
+.compo-boutons .btn { padding: 0 10px; }
+@media (max-width: 640px) {
+  .compo-items > li { grid-template-columns: 28px minmax(0, 1fr); }
+  .compo-boutons { grid-column: 2; }
+  .coll-etapes > li { grid-template-columns: 28px minmax(0, 1fr); gap: 12px; }
+  .coll-etapes > li::before { left: 14px; top: 30px; }
+  .coll-num { width: 28px; height: 28px; font-size: 13px; }
+}
+
 /* --- Profil public d'un membre ---------------------------------------------------
    Une page sobre : l'identité en haut, les quatre chiffres qui résument une réputation,
    puis les partages. Le pseudo est cliquable partout où il s'affiche, et c'est tout :

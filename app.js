@@ -156,7 +156,7 @@ async function apiStatique(chemin, method) {
   if (method !== 'GET') {
     throw Object.assign(new Error('Cette copie du site est en lecture seule. Elle sert à consulter la bibliothèque ; pour partager, voter ou créer un compte, il faut la version complète.'), { status: 403 });
   }
-  const { posts, stats, limits, promo } = await chargeStatique();
+  const { posts, stats, limits, promo, collections = [] } = await chargeStatique();
   const [base, qs] = chemin.split('?');
   const q = new URLSearchParams(qs || '');
 
@@ -191,6 +191,23 @@ async function apiStatique(chemin, method) {
     return { comments: post.comments || [] };
   }
 
+  // Les collections de la copie consultable : elles portent déjà leurs partages, il
+  // suffit de les habiller comme le ferait le serveur.
+  const habille = c => ({
+    ...c, count: c.items.length, manquants: 0,
+    items: c.items.map(it => ({ note: it.note, post: posts.find(p => p.id === it.postId) })).filter(x => x.post),
+  });
+  if (base === '/collections') {
+    const n = Math.min(100, Math.max(1, Number(q.get('limit')) || 100));
+    return { collections: collections.slice(0, n).map(habille), total: collections.length };
+  }
+  const uneColl = base.match(/^\/collections\/([a-f0-9]+)$/);
+  if (uneColl) {
+    const c = collections.find(x => x.id === uneColl[1]);
+    if (!c) throw Object.assign(new Error('Collection introuvable.'), { status: 404 });
+    return { collection: habille(c) };
+  }
+
   // Le profil est recalculé à partir des partages : la copie consultable ne contient
   // aucune fiche de membre (ni email, ni date d'inscription), seulement des pseudos
   // déjà publics parce qu'ils sont signés au bas de chaque partage.
@@ -221,6 +238,7 @@ async function apiStatique(chemin, method) {
       posts: siens.slice()
         .sort((a, b) => points(b) - points(a) || (b.approvedAt || 0) - (a.approvedAt || 0))
         .map(p => { const o = { ...p }; delete o.content; return o; }),
+      collections: collections.filter(c => (c.authorLink || '').toLowerCase() === cherche).map(habille),
     };
   }
 
@@ -731,10 +749,10 @@ async function feedView(q) {
   const params = new URLSearchParams({ t, tag, q: query, s: sort, p: prem });
   const cle = 'fil:' + params;
   const vu = duCache(cle);
-  const frais = Promise.all([api('/posts?' + params), api('/stats'), api('/top?periode=semaine')])
+  const frais = Promise.all([api('/posts?' + params), api('/stats'), api('/top?periode=semaine'), api('/collections?limit=3')])
     .then(r => { enCache(cle, r); return r; });
   // Déjà vu : on réaffiche immédiatement et on rafraîchit derrière.
-  const [liste, stats, top] = vu || await frais;
+  const [liste, stats, top, colls] = vu || await frais;
   const { posts, total: combien, suite } = liste;
   const link = (over) => {
     const n = new URLSearchParams();
@@ -754,6 +772,7 @@ async function feedView(q) {
         <a href="#/" class="${!t && !tag && !query && !prem ? 'on' : ''}">Tout <span>${total}</span></a>
         ${Object.entries(TYPES).map(([k, v]) => html`<a href="${link({ t: k, tag: '', q: '', p: '' })}" class="${!prem && t === k ? 'on' : ''}">${v.plural} <span>${stats.byType[k]}</span></a>`)}
         ${stats.premium ? html`<a class="nav-premium ${prem ? 'on' : ''}" href="${link({ p: '1', t: '', tag: '', q: '' })}">${ICON.lock}Espace privé <span>${stats.premium}</span></a>` : ''}
+        <a class="nav-collections" href="#/collections">${ICON.lignes}Collections <span>${stats.collections ?? 0}</span></a>
       </nav>
 
       <main>
@@ -806,6 +825,14 @@ async function feedView(q) {
                 <span class="top-pts"><b>${p.points}</b></span>
               </li>`)}</ol>
             <p><a href="#/top">Voir le classement complet →</a></p>
+          </section>` : ''}
+        ${colls?.collections?.length ? html`
+          <section class="aside-coll">
+            <h3>${ICON.lignes}Collections</h3>
+            <p>Des parcours composés par des membres : par où commencer, dans quel ordre.</p>
+            <ul class="aside-liste">${colls.collections.map(c => html`
+              <li><a href="#/c/${c.id}">${fr(c.title)}</a><span class="muted">${c.count} partages</span></li>`)}</ul>
+            <p><a href="#/collections">Toutes les collections →</a></p>
           </section>` : ''}
         <section>
           <h3>À propos</h3>
@@ -935,6 +962,10 @@ async function profilView(pseudo) {
       </div>
 
       ${profil.tags.length ? html`<div class="profil-tags">${profil.tags.map(x => tagLink(x.tag))}</div>` : ''}
+
+      ${data.collections?.length ? html`
+        <h2 class="profil-titre">${profil.collectionsCount > 1 ? 'Ses collections' : 'Sa collection'}<small>des parcours qu’${moi ? 'tu as' : 'il ou elle a'} composés</small></h2>
+        <div class="coll-liste">${data.collections.map(collCarte)}</div>` : ''}
 
       ${posts.length ? html`
         <h2 class="profil-titre">${profil.posts > 1 ? 'Ses partages' : 'Son partage'}<small>le mieux élu d’abord</small></h2>
@@ -1331,6 +1362,7 @@ function helpView() {
       <details class="faq"><summary>Comment marche un sondage ?</summary><p>Celui qui le crée écrit la question en titre et 2 à 6 réponses. Chaque membre vote une fois et peut changer d’avis ; cliquer de nouveau sa réponse retire le vote. Les résultats s’affichent une fois qu’on a voté.</p></details>
       <details class="faq"><summary>C’est quoi l’espace privé ?</summary><p>Une section à part, marquée d’un cadenas, qui contient des partages réservés. Tout le monde voit le sujet, mais le contenu demande un accès. Aujourd’hui il se donne à la main : écris-nous pour le demander.</p></details>
       <details class="faq"><summary>On peut payer pour être en haut ?</summary><p>Oui, et c’est écrit dessus : un partage dont la place a été payée porte la mention « sponsorisé » tant qu’elle dure. Ce qui s’achète est la place, jamais la publication — le partage passe la même relecture que les autres, et payer ne donne ni gemme, ni étoile, ni point. <a href="#/mise-en-avant">Voir comment ça marche</a>.</p></details>
+      <details class="faq"><summary>C’est quoi une collection ?</summary><p>Un parcours : des partages déjà publiés, remis dans l’ordre où on devrait les lire, avec un mot sur chacun. « Démarrer avec Claude Code en une soirée », par exemple. Tu n’écris rien de neuf — tu ranges, et ranger demande du jugement. Clique « Composer » depuis <a href="#/collections">les collections</a>, choisis au moins deux partages, et envoie : elle est relue comme un partage. La modifier la renvoie en relecture, sauf si tu ne touches qu’aux notes.</p></details>
       <details class="faq"><summary>Je peux vendre un skill que j’ai écrit ?</summary><p>Oui. Mets un prix dans le formulaire de partage : le <b>contenu</b> ne s’ouvre alors qu’après l’achat, mais le titre, la description et les tags restent publics — sinon personne ne saurait ce qu’il achète. Ton partage passe la même relecture que les autres, et l’équipe peut refuser une vente comme elle refuse un contenu. La plateforme retient ${S.marche?.commission ?? 5} % sur chaque vente, le reste te revient. Tu suis tout dans <a href="#/mes-ventes">Mes ventes</a>.</p></details>
       <details class="faq"><summary>Comment se passe un achat ?</summary><p>Tu cliques « Acheter » : ça enregistre une commande, ça ne prend pas d’argent. Le paiement se règle avec nous hors du site (il n’y a pas encore de paiement en ligne), et le contenu s’ouvre dès que la commande est confirmée. Tu retrouves tes commandes dans <a href="#/mes-achats">Mes achats</a>.</p></details>
       <details class="faq"><summary>Pourquoi une vérification à l’inscription ?</summary><p>Pour bloquer les robots qui créent des comptes en masse. Elle se fait toute seule en une seconde, il n’y a pas d’image à déchiffrer, et aucun service extérieur n’est appelé.</p></details>
@@ -1341,6 +1373,157 @@ function helpView() {
       <details class="faq"><summary>Quelles photos puis-je ajouter ?</summary><p>JPG, PNG ou WebP, trois par partage, 10 Mo chacune. Elles sont réduites automatiquement et la position GPS est effacée.</p></details>
       <details class="faq"><summary>Je peux supprimer un de mes partages ?</summary><p>Oui, depuis « Mes partages », bouton « Supprimer ».</p></details>
     </div>`);
+}
+
+// --- Collections -----------------------------------------------------------------
+// Un parcours composé à partir de partages déjà publiés : « Démarrer avec Claude Code »,
+// « Monter un Reel de A à Z ». Rien de neuf n'est écrit — c'est du rangement, et le
+// rangement est précisément ce qu'un membre expérimenté peut offrir en dix minutes.
+// Une collection ne copie rien : elle pointe. Un partage retiré en sort tout seul.
+
+const collCarte = c => html`
+  <article class="coll-carte">
+    <a class="coll-titre" href="#/c/${c.id}">${fr(c.title)}</a>
+    <p class="coll-desc">${fr(c.description)}</p>
+    <div class="meta">
+      <span class="coll-compte">${ICON.lignes}${c.count} partage${c.count > 1 ? 's' : ''}</span>
+      ${auteurLien(c)}
+      ${c.pinned ? html`<span class="pin">${ICON.pin}épinglée</span>` : ''}
+      ${c.status && c.status !== 'approved' ? html`<span class="status ${c.status}">${c.status === 'pending' ? 'En attente' : 'Refusée'}</span>` : ''}
+    </div>
+  </article>`;
+
+async function collectionsView() {
+  const { collections } = await api('/collections');
+  document.title = 'Collections – makers.si';
+  render(html`
+    <div class="narrow">
+      <a class="back" href="#/">← Tous les partages</a>
+      <div class="admin-head">
+        <div><h1 class="page-title">${ICON.lignes}Les collections</h1>
+          <p class="page-sub">Des parcours composés par des membres à partir de ce qui existe déjà. Par où commencer, dans quel ordre, et pourquoi.</p></div>
+        ${STATIQUE ? '' : html`<a class="btn primary" href="#/collection">${ICON.plus}Composer</a>`}
+      </div>
+      ${collections.length
+        ? html`<div class="coll-liste">${collections.map(collCarte)}</div>`
+        : html`<div class="empty">Aucune collection pour l’instant.<br>La première est à composer : choisis cinq partages qui vont ensemble et dis pourquoi.<br>
+            ${STATIQUE ? '' : html`<a class="btn primary" href="${S.me ? '#/collection' : '#/rejoindre'}">${S.me ? 'Composer la première' : 'Créer mon compte'}</a>`}</div>`}
+    </div>`);
+}
+
+async function collectionView(id) {
+  let c;
+  try { c = (await api('/collections/' + id)).collection; }
+  catch {
+    return render(html`<div class="narrow"><a class="back" href="#/collections">← Les collections</a>
+      <div class="empty">Cette collection n’existe pas ou n’est pas encore publiée.</div></div>`);
+  }
+  document.title = c.title + ' – makers.si';
+  const sienne = !!S.me && S.me.pseudo === c.author;
+  render(html`
+    <div class="narrow post">
+      <a class="back" href="#/collections">← Les collections</a>
+      ${c.status === 'pending' ? html`<div class="notice">En attente de validation. Toi seul(e) vois cette collection pour l’instant.</div>` : ''}
+      ${c.status === 'rejected' ? html`<div class="notice bad">Refusée${c.rejectReason ? ' : ' + c.rejectReason : '.'}</div>` : ''}
+      <div><span class="kind k-idee">${ICON.lignes}Collection</span></div>
+      <h1>${fr(c.title)}</h1>
+      <div class="post-meta">${auteurLien(c)}<span>${ago(c.approvedAt || c.createdAt)}</span><span>${c.count} partage${c.count > 1 ? 's' : ''}</span></div>
+      <p class="lead">${fr(c.description)}</p>
+      ${c.manquants ? html`<p class="muted">${c.manquants} partage${c.manquants > 1 ? 's ont' : ' a'} été retiré${c.manquants > 1 ? 's' : ''} de la bibliothèque depuis.</p>` : ''}
+
+      <ol class="coll-etapes">
+        ${c.items.map(({ post, note }, i) => html`
+          <li>
+            <span class="coll-num">${i + 1}</span>
+            <div class="coll-item">
+              <div class="item-top">${kind(post.type)}<a class="item-title" href="#/p/${post.id}">${fr(post.title)}</a>
+                ${post.prix ? prixBadge(post) : ''}${post.locked && !post.prix ? html`<span class="pin lock">${ICON.lock}privé</span>` : ''}</div>
+              ${note ? html`<p class="coll-note">${fr(note)}</p>` : html`<p class="item-desc">${fr(post.description)}</p>`}
+            </div>
+          </li>`)}
+      </ol>
+
+      <div class="post-actions">
+        ${sienne && !STATIQUE ? html`<a class="btn" href="#/collection/${c.id}">Modifier</a>
+          <button class="btn ghost" data-action="coll-delete" data-id="${c.id}">Supprimer</button>` : ''}
+        <a class="btn" href="#/collections">Les autres collections</a>
+      </div>
+    </div>`);
+}
+
+// --- Composer une collection -------------------------------------------------------
+// L'état vit ici le temps de la page : on cherche des partages, on les range, on écrit
+// un mot sur chacun. Rien n'est envoyé avant le bouton final.
+let compo = null;
+
+function compoListe() {
+  const boite = $('#compo-liste');
+  if (!boite) return;
+  boite.innerHTML = (compo.items.length
+    ? html`<ol class="compo-items">${compo.items.map((it, i) => html`
+        <li>
+          <span class="coll-num">${i + 1}</span>
+          <div class="compo-item">
+            <b>${it.title}</b>
+            <input type="text" maxlength="200" placeholder="Pourquoi celui-là, en une phrase (facultatif)"
+              aria-label="Note sur ${it.title}" data-compo-note="${i}" value="${it.note}">
+          </div>
+          <div class="compo-boutons">
+            <button type="button" class="btn ghost small" data-action="compo-up" data-i="${i}" ${i === 0 ? 'disabled' : ''} aria-label="Monter">↑</button>
+            <button type="button" class="btn ghost small" data-action="compo-down" data-i="${i}" ${i === compo.items.length - 1 ? 'disabled' : ''} aria-label="Descendre">↓</button>
+            <button type="button" class="btn ghost small" data-action="compo-del" data-i="${i}" aria-label="Retirer">✕</button>
+          </div>
+        </li>`)}</ol>`
+    : html`<p class="muted">Rien de choisi pour l’instant. Cherche un partage ci-dessus et ajoute-le.</p>`).s;
+  const n = $('#compo-compte');
+  if (n) n.textContent = `${compo.items.length} choisi${compo.items.length > 1 ? 's' : ''}`;
+}
+
+function composerView(id) {
+  if (!S.me) { go('#/connexion'); return; }
+  const neuve = !id;
+  document.title = (neuve ? 'Composer une collection' : 'Modifier ma collection') + ' – makers.si';
+  const dessine = () => {
+    render(html`
+      <div class="narrow">
+        <a class="back" href="#/collections">← Les collections</a>
+        <h1 class="page-title">${neuve ? 'Composer une collection' : 'Modifier ma collection'}</h1>
+        <p class="page-sub">Choisis des partages déjà publiés, range-les dans l’ordre où on devrait les lire, et dis en un mot pourquoi chacun est là. ${neuve ? 'Elle est relue avant publication.' : 'Changer les partages ou le texte la renvoie en relecture.'}</p>
+        <form data-form="collection" data-id="${id || ''}" novalidate>
+          <div class="field"><label for="c-titre">Titre</label>
+            <input id="c-titre" type="text" name="title" maxlength="80" required placeholder="Démarrer avec Claude Code en une soirée" value="${compo.title}">
+            <small>Ce qu’on obtient en suivant le parcours, pas son thème.</small></div>
+          <div class="field"><label for="c-desc">À qui ça sert</label>
+            <textarea id="c-desc" name="description" rows="3" maxlength="500" required placeholder="Pour qui débute et ne sait pas par quel bout prendre les skills. À lire dans l’ordre.">${compo.description}</textarea></div>
+
+          <div class="field"><label for="compo-q">Ajouter des partages</label>
+            <input id="compo-q" type="text" autocomplete="off" placeholder="Cherche un titre, un tag…">
+            <small>De 2 à 30 partages. Seuls les partages publiés peuvent être ajoutés.</small>
+            <div class="compo-res" id="compo-res"></div></div>
+
+          <div class="field"><div class="lbl">Ta collection <span class="muted" id="compo-compte"></span></div>
+            <div id="compo-liste"></div></div>
+
+          <p class="form-error" role="alert"></p>
+          <button class="btn primary" type="submit">${neuve ? 'Envoyer pour validation' : 'Enregistrer'}</button>
+        </form>
+      </div>`);
+    compoListe();
+  };
+
+  if (neuve) {
+    compo = { title: '', description: '', items: [] };
+    dessine();
+    return;
+  }
+  api('/collections/' + id).then(({ collection }) => {
+    compo = {
+      title: collection.title,
+      description: collection.description,
+      items: collection.items.map(({ post, note }) => ({ postId: post.id, title: post.title, note })),
+    };
+    dessine();
+  }).catch(() => render(html`<div class="narrow"><div class="empty">Cette collection n’existe pas.</div></div>`));
 }
 
 // --- Mes ventes, mes achats ------------------------------------------------------
@@ -1403,12 +1586,16 @@ async function achatsView() {
 
 async function mineView() {
   if (!S.me) { go('#/connexion'); return; }
-  const { posts } = await api('/me/posts');
+  const [{ posts }, mesColls] = await Promise.all([api('/me/posts'), api('/me/collections')]);
   const label = { pending: 'En attente', approved: 'Publié', rejected: 'Refusé' };
   render(html`
     <div class="narrow">
       <div class="admin-head"><h1 class="page-title">Mes partages</h1>
-        <div><a class="btn primary" href="#/partager">${ICON.plus}Partager</a> <a class="btn ghost" href="#/mes-ventes">Mes ventes</a> <a class="btn ghost" href="#/membre/${encodeURIComponent(S.me.pseudo)}">Mon profil public</a> <a class="btn ghost" href="#/compte">Mon compte</a> <button class="btn ghost" data-action="logout">Déconnexion</button></div></div>
+        <div><a class="btn primary" href="#/partager">${ICON.plus}Partager</a> <a class="btn ghost" href="#/collection">Composer</a> <a class="btn ghost" href="#/mes-ventes">Mes ventes</a> <a class="btn ghost" href="#/membre/${encodeURIComponent(S.me.pseudo)}">Mon profil public</a> <a class="btn ghost" href="#/compte">Mon compte</a> <button class="btn ghost" data-action="logout">Déconnexion</button></div></div>
+      ${mesColls.collections.length ? html`
+        <h2 class="profil-titre">Mes collections</h2>
+        <div class="coll-liste">${mesColls.collections.map(collCarte)}</div>
+        <h2 class="profil-titre">Mes partages</h2>` : ''}
       ${posts.length ? html`<table class="table"><thead><tr><th>Titre</th><th>Statut</th><th>Gemmes</th><th>Étoiles</th><th></th></tr></thead><tbody>
         ${posts.map(p => html`<tr><td><a href="#/p/${p.id}">${p.title}</a>${p.status === 'rejected' && p.rejectReason ? html`<br><small class="muted">${p.rejectReason}</small>` : ''}</td>
           <td><span class="status ${p.status}">${label[p.status]}</span></td><td class="mono">${p.gems}</td>
@@ -1437,11 +1624,12 @@ async function adminView(q) {
     api('/admin/stats'),
     tab === 'members' ? api('/admin/members')
       : tab === 'promos' ? api('/admin/promos')
+        : tab === 'collections' ? api('/admin/collections?status=pending')
         : tab === 'marche' ? api('/admin/marche')
           : tab === 'reports' ? api('/admin/reports') : api('/admin/posts?status=' + tab),
   ]);
   S.pending = counts.pending; header();
-  const tabs = [['pending', 'À valider', counts.pending], ['reports', 'Signalés', counts.reported], ['approved', 'Publiés', counts.approved], ['rejected', 'Refusés', counts.rejected], ['promos', 'Mises en avant', counts.promos], ['marche', 'Marché', counts.marche], ['members', 'Membres', counts.members]];
+  const tabs = [['pending', 'À valider', counts.pending], ['reports', 'Signalés', counts.reported], ['approved', 'Publiés', counts.approved], ['rejected', 'Refusés', counts.rejected], ['promos', 'Mises en avant', counts.promos], ['collections', 'Collections', counts.collections], ['marche', 'Marché', counts.marche], ['members', 'Membres', counts.members]];
   const privateNote = tab === 'members'
     ? html`<p class="about-type">L’accès à l’espace privé se donne à la main, un membre à la fois. Il n’y a pas encore de paiement : c’est toi qui décides qui entre.</p>`
     : tab === 'promos'
@@ -1494,6 +1682,24 @@ async function adminView(q) {
               <td class="muted">${m.email}</td><td>${ago(m.createdAt)}</td><td class="mono">${m.posts}</td>
               <td><button class="btn small ${m.premium ? 'ok' : ''}" data-action="member-premium" data-id="${m.id}">${m.premium ? 'Accès accordé' : 'Donner l’accès'}</button></td>
               <td>${m.locked ? html`<button class="btn small" data-action="member-unlock" data-id="${m.id}">Débloquer</button> ` : ''}<button class="btn ghost small" data-action="member-delete" data-id="${m.id}" data-pseudo="${m.pseudo}">Supprimer</button></td></tr>`)}</tbody></table>`
+        : tab === 'collections'
+          ? html`
+            <p class="about-type">Une collection est une recommandation signée : elle range des partages déjà publiés et dit pourquoi. On relit l’ordre et les mots, pas le contenu — il a déjà été validé.</p>
+            ${data.collections.length
+              ? data.collections.map(c => html`
+                <div class="card">
+                  <div class="post-meta">${auteurLien(c)}<span>${ago(c.createdAt)}</span><span>${c.count} partage${c.count > 1 ? 's' : ''}</span></div>
+                  <h3><a href="#/c/${c.id}">${fr(c.title)}</a></h3>
+                  <p>${fr(c.description)}</p>
+                  <ol class="reasons">${c.items.map(({ post, note }) => html`<li>${post.title}${note ? html` — <span class="muted">${note}</span>` : ''}</li>`)}</ol>
+                  <div class="actions">
+                    <button class="btn ok" data-action="coll-approve" data-id="${c.id}">Publier</button>
+                    <button class="btn" data-action="coll-pin" data-id="${c.id}">${c.pinned ? 'Désépingler' : 'Épingler'}</button>
+                    <button class="btn bad" data-action="coll-reject" data-id="${c.id}">Refuser</button>
+                    <button class="btn ghost" data-action="coll-admin-delete" data-id="${c.id}">Supprimer</button>
+                  </div>
+                </div>`)
+              : html`<div class="empty">Aucune collection à relire.</div>`}`
         : tab === 'marche'
           ? html`
             <p class="about-type">Le paiement se règle hors du site. Ici tu confirmes avoir reçu l’argent — le contenu s’ouvre alors pour l’acheteur — puis tu reverses leur part aux vendeurs. La plateforme retient ${data.taux} %.</p>
@@ -1568,7 +1774,8 @@ async function route() {
   const q = new URLSearchParams(qs || '');
   header();
   // Dans une copie en lecture seule, les pages qui écrivent n'ont nulle part où écrire.
-  if (STATIQUE && ['/rejoindre', '/connexion', '/partager', '/compte', '/mes-partages', '/mes-ventes', '/mes-achats', '/admin'].includes(path)) {
+  if (STATIQUE && (['/rejoindre', '/connexion', '/partager', '/compte', '/mes-partages', '/mes-ventes', '/mes-achats', '/admin'].includes(path)
+    || path === '/collection' || path.startsWith('/collection/'))) {
     toast('Cette copie du site est en lecture seule.');
     return go('#/');
   }
@@ -1586,6 +1793,10 @@ async function route() {
     else if (path === '/compte') accountView();
     else if (LEGAL.includes(path.slice(1))) await legalView(path.slice(1));
     else if (path === '/bienvenue') welcomeView();
+    else if (path === '/collections') await collectionsView();
+    else if (path.startsWith('/c/')) await collectionView(path.slice(3));
+    else if (path === '/collection') composerView(null);
+    else if (path.startsWith('/collection/')) composerView(path.slice(12));
     else if (path === '/mes-partages') await mineView();
     else if (path === '/mes-ventes') await ventesView();
     else if (path === '/mes-achats') await achatsView();
@@ -1748,6 +1959,41 @@ document.addEventListener('click', async (e) => {
     } else if (action === 'dismiss') {
       await api(`/admin/posts/${id}/dismiss`, { method: 'POST' });
       toast('Signalements ignorés.'); route();
+    } else if (action === 'compo-add') {
+      if (compo.items.some(x => x.postId === id)) return toast('Ce partage est déjà dans ta collection.');
+      if (compo.items.length >= 30) return toast('Trente partages au maximum.');
+      compo.items.push({ postId: id, title: el.dataset.titre, note: '' });
+      compoListe();
+      toast('Ajouté.');
+    } else if (action === 'compo-del') {
+      compo.items.splice(Number(el.dataset.i), 1);
+      compoListe();
+    } else if (action === 'compo-up' || action === 'compo-down') {
+      const i = Number(el.dataset.i);
+      const j = action === 'compo-up' ? i - 1 : i + 1;
+      if (j < 0 || j >= compo.items.length) return;
+      [compo.items[i], compo.items[j]] = [compo.items[j], compo.items[i]];
+      compoListe();
+    } else if (action === 'coll-delete') {
+      if (!confirm('Supprimer cette collection ? Les partages qu’elle cite ne sont pas touchés.')) return;
+      await api(`/collections/${id}/delete`, { method: 'POST' });
+      toast('Collection supprimée.');
+      go('#/collections');
+    } else if (action === 'coll-approve') {
+      await api(`/admin/collections/${id}/approve`, { method: 'POST' });
+      toast('Collection publiée.'); route();
+    } else if (action === 'coll-reject') {
+      const reason = prompt('Motif du refus (visible par l’auteur), facultatif :') ?? null;
+      if (reason === null) return;
+      await api(`/admin/collections/${id}/reject`, { method: 'POST', body: { reason } });
+      toast('Collection refusée.'); route();
+    } else if (action === 'coll-pin') {
+      await api(`/admin/collections/${id}/pin`, { method: 'POST' });
+      route();
+    } else if (action === 'coll-admin-delete') {
+      if (!confirm('Supprimer définitivement cette collection ?')) return;
+      await api(`/admin/collections/${id}/delete`, { method: 'POST' });
+      toast('Supprimée.'); route();
     } else if (action === 'post-gratuit') {
       if (!confirm(`Retirer le prix de ${el.dataset.prix} et rendre ce partage gratuit ?\n\nLes ventes déjà faites restent au registre, et ceux qui ont payé gardent leur accès.`)) return;
       await api(`/admin/posts/${id}/gratuit`, { method: 'POST' });
@@ -1889,6 +2135,12 @@ document.addEventListener('submit', async (e) => {
       await api('/me/delete', { method: 'POST', body: { password: fd.get('password'), deletePosts: !!fd.get('deletePosts') } });
       Object.assign(S, { me: null, admin: false, pending: 0 });
       go('#/'); route(); toast('Compte supprimé.');
+    } else if (kindOf === 'collection') {
+      const corps = { title: fd.get('title'), description: fd.get('description'), items: compo.items.map(({ postId, note }) => ({ postId, note })) };
+      const id = form.dataset.id;
+      const r = await api(id ? `/collections/${id}/update` : '/collections', { method: 'POST', body: corps });
+      toast(id ? 'Collection enregistrée. Elle repasse en relecture si tu l’as changée.' : 'Collection envoyée. Elle paraîtra une fois relue.');
+      go('#/c/' + (id || r.collection.id));
     } else if (kindOf === 'promo') {
       await api(`/admin/posts/${form.dataset.id}/promo`, {
         method: 'POST',
@@ -1922,6 +2174,39 @@ function closeSuggest() {
   box.innerHTML = '';
   $('.search input')?.setAttribute('aria-expanded', 'false');
 }
+// Les notes du composeur : on les garde en mémoire au fil de la frappe, sinon elles
+// disparaîtraient au premier réordonnancement.
+document.addEventListener('input', (e) => {
+  const i = e.target.dataset?.compoNote;
+  if (i !== undefined && compo?.items[Number(i)]) compo.items[Number(i)].note = e.target.value;
+});
+
+// La recherche du composeur : mêmes résultats que la recherche du site, mais chaque
+// ligne porte un bouton qui l'ajoute au parcours.
+let compoTimer, compoSeq = 0;
+document.addEventListener('input', (e) => {
+  if (e.target.id !== 'compo-q') return;
+  clearTimeout(compoTimer);
+  const q = e.target.value.trim();
+  const boite = $('#compo-res');
+  if (!boite) return;
+  if (q.length < 2) { boite.innerHTML = ''; return; }
+  compoTimer = setTimeout(async () => {
+    const seq = ++compoSeq;
+    try {
+      const { posts } = await api('/posts?' + new URLSearchParams({ q, limit: '8' }));
+      if (seq !== compoSeq) return;
+      boite.innerHTML = (posts.length
+        ? posts.map(p => html`
+            <div class="compo-res-ligne">
+              ${kind(p.type)}<span class="compo-res-titre">${p.title}</span>
+              <button type="button" class="btn small" data-action="compo-add" data-id="${p.id}" data-titre="${p.title}">${ICON.plus}Ajouter</button>
+            </div>`)
+        : [html`<p class="muted">Aucun partage publié ne correspond à « ${q} ».</p>`]).map(x => x.s).join('');
+    } catch { boite.innerHTML = ''; }
+  }, 200);
+});
+
 document.addEventListener('input', (e) => {
   if (!e.target.matches('.search input')) return;
   clearTimeout(suggestTimer);
