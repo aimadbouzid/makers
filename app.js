@@ -4,8 +4,8 @@
 const TYPES = {
   skill: {
     label: 'Skill Claude', short: 'Skill', plural: 'Skills Claude',
-    about: 'Des skills Claude prêts à installer, avec leur documentation.',
-    hint: 'Un dossier : SKILL.md et sa doc.', example: 'Ex. : « Relecture avant commit »',
+    about: 'Un skill, c’est un mode d’emploi que Claude lit tout seul quand ta demande correspond. Ceux-ci sont prêts à installer, en trois étapes.',
+    hint: 'Le mode d’emploi que Claude lit, et ses fichiers.', example: 'Ex. : « Relecture avant commit »',
     fields: ['tree', 'url', 'images', 'tags'],
     titleEx: 'Relecture automatique avant chaque commit', descEx: 'À quoi il sert, ce qu’il fait, dans quel cas tu l’utilises.',
   },
@@ -103,6 +103,9 @@ const ICON = {
   grille: svg('<rect x="2.2" y="2.2" width="5" height="5" rx="1"/><rect x="8.8" y="2.2" width="5" height="5" rx="1"/><rect x="2.2" y="8.8" width="5" height="5" rx="1"/><rect x="8.8" y="8.8" width="5" height="5" rx="1"/>'),
   doc: svg('<path d="M3.5 1.5h6L13 5v9.5H3.5z"/><path d="M9.5 1.5V5H13M5.8 8h4.4M5.8 10.5h4.4"/>'),
   code: svg('<path d="M5.8 5.8 3 8l2.8 2.2M10.2 5.8 13 8l-2.8 2.2M9 4l-2 8"/>'),
+  alerte: svg('<path d="M8 2.3 14.6 13.7H1.4z"/><path d="M8 6.4v3.3"/><path d="M8 11.7h.01"/>'),
+  bulle: svg('<path d="M13.5 9.5a1.5 1.5 0 0 1-1.5 1.5H6l-3.5 2.5V4a1.5 1.5 0 0 1 1.5-1.5h8A1.5 1.5 0 0 1 13.5 4z"/>'),
+  poubelle: svg('<path d="M2.8 4.3h10.4M6.3 4.3V2.8h3.4v1.5M4.3 4.3l.6 8.4a1 1 0 0 0 1 .9h4.2a1 1 0 0 0 1-.9l.6-8.4"/>'),
 };
 
 // --- Utilitaires ------------------------------------------------------------
@@ -175,6 +178,48 @@ async function apiStatique(chemin, method) {
     const periode = q.get('periode');
     if (periode) return { periode, posts: top(periode) };
     return Object.fromEntries(Object.keys(fenetres).map(k => [k, top(k)]));
+  }
+
+  // Les réponses voyagent avec leur partage dans le fichier de données : la copie
+  // consultable les affiche, sans pouvoir en ajouter ni en retirer.
+  const sesReponses = base.match(/^\/posts\/([a-f0-9]+)\/comments$/);
+  if (sesReponses) {
+    const post = posts.find(p => p.id === sesReponses[1]);
+    if (!post) throw Object.assign(new Error('Partage introuvable.'), { status: 404 });
+    return { comments: post.comments || [] };
+  }
+
+  // Le profil est recalculé à partir des partages : la copie consultable ne contient
+  // aucune fiche de membre (ni email, ni date d'inscription), seulement des pseudos
+  // déjà publics parce qu'ils sont signés au bas de chaque partage.
+  const unMembre = base.match(/^\/membres\/(.+)$/);
+  if (unMembre) {
+    const cherche = decodeURIComponent(unMembre[1]).toLowerCase();
+    const siens = ouverts.filter(p => (p.authorLink || '').toLowerCase() === cherche);
+    if (!siens.length) throw Object.assign(new Error('Ce membre n’existe pas.'), { status: 404 });
+    const starsCount = siens.reduce((a, p) => a + p.starsCount, 0);
+    const tagCount = {};
+    for (const p of siens) for (const t of p.tags) tagCount[t] = (tagCount[t] || 0) + 1;
+    return {
+      profil: {
+        pseudo: siens[0].authorLink,
+        depuis: null,
+        posts: siens.length,
+        premium: 0,
+        gems: siens.reduce((a, p) => a + p.gems, 0),
+        stars: starsCount
+          ? Math.round((siens.reduce((a, p) => a + p.stars * p.starsCount, 0) / starsCount) * 10) / 10
+          : 0,
+        starsCount,
+        points: siens.reduce((a, p) => a + points(p), 0),
+        byType: {},
+        tags: Object.entries(tagCount).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+          .slice(0, 10).map(([tag, count]) => ({ tag, count })),
+      },
+      posts: siens.slice()
+        .sort((a, b) => points(b) - points(a) || (b.approvedAt || 0) - (a.approvedAt || 0))
+        .map(p => { const o = { ...p }; delete o.content; return o; }),
+    };
   }
 
   const unPost = base.match(/^\/posts\/([a-f0-9]+)$/);
@@ -266,7 +311,7 @@ function header() {
     <div class="bar">
       <a class="logo" href="#/" aria-label="makers.si, accueil">makers<i>.</i>si</a>
       <form class="search" data-form="search" role="search">
-        <input type="text" name="q" value="${q}" placeholder="Chercher un skill, un PDF, un tag…" aria-label="Rechercher" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="suggest">
+        <input type="text" name="q" value="${q}" placeholder="Chercher une idée, un skill, un PDF…" aria-label="Rechercher" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="suggest">
         <kbd>/</kbd>
         <ul class="suggest hidden" id="suggest" role="listbox"></ul>
       </form>
@@ -284,25 +329,31 @@ function header() {
     </div>`.s;
 }
 
-// Chaque type a son signe, posé sur un aplat de sa couleur : c'est ce qui remplace
-// l'image quand il n'y en a pas, et ce qui rend le fil lisible au survol plutôt qu'à la lecture.
-const GLYPHE = {
-  skill: 'dossier', prompt: 'copy', idee: 'ampoule', sondage: 'sondage',
-  pdf: 'file', montage: 'play', lien: 'out', info: 'megaphone',
-};
-
 const kind = t => html`<span class="kind k-${t}">${TYPES[t]?.short || t}</span>`;
 const tagLink = t => html`<a class="tag" href="#/?tag=${encodeURIComponent(t)}">#${t}</a>`;
+// Le pseudo mène au profil. Quand le compte a été supprimé le partage reste, mais son
+// auteur n'existe plus (« ancien·ne membre ») : il n'y a rien à ouvrir, donc pas de lien.
+// Un visage, même réduit à une initiale, dit « quelqu'un a partagé ça » bien plus vite
+// qu'un pseudo en gris clair. Même pastille que sur la page de profil, en plus petit.
+const rond = nom => html`<span class="rond" aria-hidden="true">${(nom || '?').slice(0, 1).toUpperCase()}</span>`;
+
+const auteurLien = p => p.authorLink
+  ? html`<a class="auteur" href="#/membre/${encodeURIComponent(p.authorLink)}">${rond(p.author)}@${p.author}</a>`
+  : html`<span class="auteur">${rond(p.author)}@${p.author}</span>`;
 
 // Une gemme = le signal fort. Chaque membre n'en a que quelques-unes par semaine,
 // c'est ce qui fait que le classement « Top » veut dire quelque chose.
 // En liste, le bouton tient dans une colonne étroite : icône et chiffre, comme à l'origine.
 // Ailleurs, le mot « gemme » est écrit à côté, parce qu'un losange et un nombre tout seuls
 // ne disent pas qu'on peut cliquer ni ce que ça fait.
-function gemButton(p, { compact = false } = {}) {
+// Trois tailles : la colonne étroite de la liste (compacte), la pastille courte du pied
+// d'une carte (court), et la version en toutes lettres partout où il y a la place.
+// Le mot disparaît de l'affichage, jamais de l'étiquette lue à voix haute.
+function gemButton(p, { compact = false, court = false } = {}) {
   const title = p.gemmed ? 'Reprendre ma gemme' : 'Donner une gemme';
-  return html`<button class="vote ${compact ? 'compacte' : ''} ${p.gemmed ? 'on' : ''}" data-action="gem" data-id="${p.id}"
-    aria-pressed="${String(p.gemmed)}" aria-label="${title}" title="${title}">${ICON.gem}<b>${p.gems}</b>${compact ? '' : html`<span class="vote-mot">gemme${p.gems > 1 ? 's' : ''}</span>`}</button>`;
+  const mot = !compact && !court;
+  return html`<button class="vote ${compact ? 'compacte' : ''} ${court ? 'court' : ''} ${p.gemmed ? 'on' : ''}" data-action="gem" data-id="${p.id}"
+    aria-pressed="${String(p.gemmed)}" aria-label="${title}" title="${title}">${ICON.gem}<b>${p.gems}</b>${mot ? html`<span class="vote-mot">gemme${p.gems > 1 ? 's' : ''}</span>`: ''}</button>`;
 }
 
 // Note : dans la liste, une étoile et le chiffre ; sur la page d'un partage, cinq étoiles cliquables.
@@ -371,23 +422,60 @@ function enDossiers(tree) {
 // déjà chargé, donc passer d'un fichier à l'autre ne demande aucun aller-retour réseau.
 const depots = new Map();
 
+// Un nom de dossier valable, tiré du titre : « Expliquer un bout de code » devient
+// « expliquer-un-bout-de-code ».
+const slugDe = (titre) => (titre || 'skill').toLowerCase()
+  .normalize('NFD').replace(/[̀-ͯ]/g, '')
+  .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'mon-skill';
+
+// La première question en arrivant sur un skill n'est pas « quels fichiers ? » mais
+// « qu'est-ce que j'en fais ? ». Trois étapes numérotées, visibles sans rien déplier :
+// c'est ce qui remplace l'arborescence de dépôt comme premier contact.
+function etapesSkill(racine, multi) {
+  return html`
+    <section class="mode-emploi">
+      <h2>Comment s’en servir</h2>
+      <ol class="etapes">
+        <li><div><b>Copie ${multi ? 'les fichiers' : 'le contenu'}</b>
+          <span>Le bouton de copie ci-dessous te donne tout en une fois.</span></div></li>
+        <li><div><b>Crée le dossier sur ton ordinateur</b>
+          <span>Un dossier nommé <code>${racine}</code>, à mettre dans <code>.claude/skills/</code> de ton projet — ou dans <code>~/.claude/skills/</code> pour l’avoir partout. Colle ${multi ? 'chaque fichier avec le nom indiqué' : 'le texte dans un fichier nommé SKILL.md'}.</span></div></li>
+        <li><div><b>Redémarre Claude et demande-lui</b>
+          <span>Il s’en sert tout seul quand ta demande correspond. Il n’y a aucun réglage à faire.</span></div></li>
+      </ol>
+      <p class="prudence">${ICON.alerte}<span>Lis ce que fait un skill avant de l’installer : il peut lancer des actions sur ton ordinateur, et personne ne garantit à ta place qu’il est sans danger.</span></p>
+    </section>`;
+}
+
+// Un prompt, c'est deux gestes : copier, coller. Dire le reste serait du bruit.
+function etapesPrompt() {
+  return html`
+    <section class="mode-emploi">
+      <h2>Comment s’en servir</h2>
+      <ol class="etapes">
+        <li><div><b>Copie le texte</b>
+          <span>Le bouton « Copier » en haut du bloc.</span></div></li>
+        <li><div><b>Colle-le dans ta conversation</b>
+          <span>Dans Claude, ChatGPT ou l’outil que tu utilises, puis remplace ce qui est entre crochets par ta situation.</span></div></li>
+      </ol>
+    </section>`;
+}
+
 function treeView(p) {
   const tree = p.tree;
   if (!tree?.length) return '';
   depots.set(p.id, tree);
   // SKILL.md d'abord : c'est le fichier que Claude lit, et celui qu'on veut voir en arrivant.
   const premier = tree.find(f => f.path.toLowerCase() === 'skill.md') || tree[0];
-  const racine = (p.title || 'skill').toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'mon-skill';
-
-  const total = tree.reduce((a, f) => a + f.content.length, 0);
+  const racine = slugDe(p.title);
+  const multi = tree.length > 1;
   return html`
+    ${etapesSkill(racine, multi)}
     <div class="depot" data-depot="${p.id}">
       <div class="depot-head">
-        ${ICON.dossier}<b>${racine}/</b>
-        <span class="muted">${tree.length} fichier${tree.length > 1 ? 's' : ''} · ${Math.max(1, Math.round(total / 1024))} Ko</span>
-        <button class="btn small" data-action="tout-copier" data-id="${p.id}">${ICON.copy}Tout copier</button>
+        ${ICON.dossier}<b>Ce qu’il y a dedans</b>
+        <span class="muted">${tree.length} fichier${multi ? 's' : ''}</span>
+        <button class="btn small" data-action="tout-copier" data-id="${p.id}">${ICON.copy}Copier tout le skill</button>
       </div>
       <div class="depot-corps">
         <nav class="depot-arbre" aria-label="Fichiers du skill">
@@ -407,11 +495,7 @@ function treeView(p) {
           <pre class="code" data-depot-contenu="${p.id}">${premier.content}</pre>
         </div>
       </div>
-    </div>
-    <details class="howto"><summary>Comment installer ce skill ?</summary>
-      <p>Crée le dossier <code>.claude/skills/${racine}/</code> à la racine de ton projet (ou <code>~/.claude/skills/${racine}/</code> pour qu’il serve dans tous tes projets), puis recrée les fichiers ci-dessus avec le même nom et la même place. « Tout copier » te donne l’ensemble en une fois, chaque fichier précédé de son chemin.</p>
-      <p>${HOWTO}</p>
-    </details>`;
+    </div>`;
 }
 
 function attachments(p) {
@@ -463,8 +547,9 @@ function ligne(p, rang = null) {
         <p class="item-desc">${fr(p.description)}</p>
         <div class="meta">
           ${starsView(p)}
+          ${p.commentsCount ? html`<span class="repl" title="${p.commentsCount} réponse${p.commentsCount > 1 ? 's' : ''}">${ICON.bulle}${p.commentsCount}</span>` : ''}
           ${p.tags.map(tagLink)}
-          <span>@${p.author}</span>
+          ${auteurLien(p)}
           <span>${ago(p.approvedAt || p.createdAt)}</span>
           ${attachments(p)}
           ${p.treeCount ? html`<span>${p.treeCount} fichier${p.treeCount > 1 ? 's' : ''}</span>` : ''}
@@ -480,34 +565,85 @@ function ligne(p, rang = null) {
 function carte(p, rang = null) {
   const thumb = p.images?.[0]?.thumb;
   const podium = rang && rang <= 3 ? rang : 0;
-  const detail = apercu(p);
+  // « PDF » écrit sous une pastille qui dit déjà « PDF » n'apprend rien à personne,
+  // et c'est ce mot en trop qui faisait passer le pied de la carte à la ligne.
+  const vu = apercu(p);
+  const detail = vu.toLowerCase() === (TYPES[p.type]?.short || '').toLowerCase() ? '' : vu;
   return html`
-    <article class="carte k-${p.type} ${p.pinned ? 'pinned' : ''} ${podium ? 'podium rang-' + podium : ''}">
-      <a class="carte-visuel" href="#/p/${p.id}" tabindex="-1" aria-hidden="true">
-        ${thumb ? html`<img src="${thumb}" alt="" loading="lazy">` : html`<span class="carte-glyphe">${ICON[GLYPHE[p.type]] || ICON.doc}</span>`}
-        ${podium ? html`<span class="medaille">${rang}</span>` : ''}
-      </a>
+    <!-- Pas de photo, pas de bande : un aplat de couleur vide avec une icône au milieu
+         occupait un quart de la carte pour ne rien dire. La pastille du type porte déjà
+         sa couleur, et le rang passe sur la même ligne. -->
+    <article class="carte k-${p.type} ${thumb ? '' : 'sans-visuel'} ${p.pinned ? 'pinned' : ''} ${podium ? 'podium rang-' + podium : ''}">
+      ${thumb ? html`
+        <a class="carte-visuel" href="#/p/${p.id}" tabindex="-1" aria-hidden="true">
+          <img src="${thumb}" alt="" loading="lazy">
+          ${podium ? html`<span class="medaille">${rang}</span>` : ''}
+        </a>` : ''}
       <div class="carte-corps">
         <div class="carte-haut">
+          ${!thumb && podium ? html`<span class="medaille plate">${rang}</span>` : ''}
           ${kind(p.type)}
+          ${detail ? html`<span class="carte-detail">${detail}</span>` : ''}
           ${p.locked ? html`<span class="pin lock">${ICON.lock}privé</span>` : ''}
           ${p.pinned ? html`<span class="pin">${ICON.pin}épinglé</span>` : ''}
         </div>
         <a class="carte-titre" href="#/p/${p.id}">${fr(p.title)}</a>
-        <p class="carte-desc">${fr(p.description)}</p>
         <div class="carte-bas">
-          ${gemButton(p)}
+          ${gemButton(p, { court: true })}
           ${starsView(p)}
-          <span class="carte-auteur">@${p.author}</span>
-          ${detail ? html`<span class="carte-detail">${detail}</span>` : ''}
+          ${p.commentsCount ? html`<span class="repl" title="${p.commentsCount} réponse${p.commentsCount > 1 ? 's' : ''}">${ICON.bulle}${p.commentsCount}</span>` : ''}
+          <span class="carte-auteur">${auteurLien(p)}</span>
         </div>
       </div>
     </article>`;
 }
 
-const BLOCK_LABEL = { skill: 'à copier', prompt: 'à copier', idee: 'l’idée', montage: 'étapes' };
+const BLOCK_LABEL = { skill: 'Le contenu du skill', prompt: 'Le prompt', idee: 'L’idée en détail', montage: 'Les étapes' };
 
-const HOWTO = 'Relis toujours un skill avant de l’utiliser : il peut faire exécuter des actions sur ton ordinateur, et personne ne garantit qu’il fait ce qu’il annonce. Copie ensuite le contenu avec le bouton ci-dessus. Pour un skill Claude Code : crée un dossier .claude/skills/nom-du-skill/ dans ton projet (ou ~/.claude/skills/nom-du-skill/ pour tous tes projets) et colle le texte dans un fichier SKILL.md à l’intérieur. Pour un simple prompt, colle-le directement dans la conversation.';
+const HOWTO = 'Un skill, c’est un mode d’emploi écrit pour Claude : tu le poses une fois dans un dossier, et il s’en sert tout seul quand ta demande correspond. Sur la page d’un skill, les trois étapes sont écrites en haut : copier, créer le dossier .claude/skills/nom-du-skill/ dans ton projet (ou ~/.claude/skills/nom-du-skill/ pour l’avoir partout), redémarrer Claude. Lis toujours ce que fait un skill avant de l’installer : il peut lancer des actions sur ton ordinateur, et personne ne garantit à ta place qu’il est sans danger. Un prompt, lui, se colle directement dans la conversation.';
+
+// --- Les réponses sous un partage ---------------------------------------------
+// C'est ici que le site cesse d'être une étagère. Une réponse paraît tout de suite,
+// signée du pseudo de qui l'écrit, et son auteur (comme l'admin) peut la retirer.
+function reponseLi(c) {
+  const nom = c.authorLink
+    ? html`<a class="auteur" href="#/membre/${encodeURIComponent(c.authorLink)}">${rond(c.author)}@${c.author}</a>`
+    : html`<span class="auteur">${rond(c.author)}@${c.author}</span>`;
+  return html`
+    <li class="reponse" data-comment="${c.id}">
+      <div class="reponse-tete">
+        ${nom}
+        <span class="muted">${ago(c.createdAt)}</span>
+        ${c.canDelete ? html`<button class="reponse-sup" data-action="comment-delete" data-id="${c.id}"
+          title="Supprimer ce commentaire" aria-label="Supprimer ce commentaire">${ICON.poubelle}</button>` : ''}
+      </div>
+      <p class="reponse-texte">${c.body}</p>
+    </li>`;
+}
+
+const titreFil = n => (n ? `${n} réponse${n > 1 ? 's' : ''}` : 'Aucune réponse pour l’instant');
+
+function reponsesView(p, liste) {
+  // Un partage réservé ne montre pas ses réponses : elles parlent de son contenu.
+  if (p.locked) return '';
+  return html`
+    <section class="reponses">
+      <h2>${ICON.bulle}${titreFil(liste.length)}</h2>
+      ${liste.length ? html`<ol class="fil">${liste.map(reponseLi)}</ol>` : ''}
+      ${STATIQUE ? html`<p class="reponse-invite">Cette copie du site se lit seulement : pour répondre, passe par le site complet.</p>`
+        : S.me ? html`
+        <form class="reponse-form" data-form="comment" data-id="${p.id}">
+          <textarea name="body" rows="3" maxlength="1200" required
+            placeholder="Ce qui a marché, ce que tu as changé, ce qui coince…" aria-label="Ta réponse"></textarea>
+          <div class="reponse-pied">
+            <span class="muted">Publiée tout de suite, signée @${S.me.pseudo}. Tu peux la supprimer ensuite.</span>
+            <button class="btn primary" type="submit">Répondre</button>
+          </div>
+          <p class="form-error" role="alert"></p>
+        </form>`
+        : html`<p class="reponse-invite">Tu as un retour sur ce partage ? <a href="#/rejoindre">Crée un compte</a> pour répondre.</p>`}
+    </section>`;
+}
 
 function lockedBox(p) {
   const bits = [];
@@ -536,11 +672,12 @@ function postBody(p, { howto = false } = {}) {
     ${p.images?.length ? html`<div class="gallery">${p.images.map(i => html`<a href="${i.src}" target="_blank" rel="noopener"><img src="${i.src}" width="${i.w}" height="${i.h}" alt="Photo du partage : ${p.title}" loading="lazy"></a>`)}</div>` : ''}
     ${p.imagesProcessing ? html`<div class="notice">${p.imagesProcessing} photo${p.imagesProcessing > 1 ? 's' : ''} en cours de compression. Recharge la page dans quelques secondes.</div>` : ''}
     ${p.content ? html`
+      ${howto && p.type === 'skill' ? etapesSkill(slugDe(p.title), false) : ''}
+      ${howto && p.type === 'prompt' ? etapesPrompt() : ''}
       <div class="block">
         <div class="block-head"><span>${BLOCK_LABEL[p.type] || 'contenu'}</span><button class="btn small" data-action="copy" data-id="${p.id}">${ICON.copy}Copier</button></div>
         <pre class="code" data-copy="${p.id}">${p.content}</pre>
-      </div>
-      ${howto && (p.type === 'skill' || p.type === 'prompt') ? html`<details class="howto"><summary>Comment l’utiliser ?</summary><p>${HOWTO}</p></details>` : ''}` : ''}
+      </div>` : ''}
     ${p.file ? html`
       <div class="block"><a class="attach" href="${p.file.href}" target="_blank" rel="noopener">
         ${ICON.file}<div><b>${p.file.name}</b><small>${p.file.ext.toUpperCase()} · ${size(p.file.size)}</small></div>
@@ -589,18 +726,12 @@ async function feedView(q) {
 
       <main>
         ${S.me || t || tag || query ? '' : html`
-          <section class="start" aria-label="Commencer">
-            <div class="start-head">
-              <div><b>Bienvenue. Tu peux tout lire sans compte.</b>
-              <span>Par où commencer ?</span></div>
-              ${STATIQUE ? '' : html`<a class="btn primary" href="#/rejoindre">Créer mon compte</a>`}
-            </div>
-            <div class="tiles">
-              <a class="tile" href="#/?t=skill"><b>Installer un skill Claude</b><span>Avec sa doc, prêt à copier</span></a>
-              <a class="tile" href="#/?t=prompt"><b>Prendre un prompt</b><span>Testés, prêts à coller</span></a>
-              <a class="tile" href="#/?t=pdf"><b>Lire un PDF</b><span>Guides et papiers de recherche</span></a>
-              <a class="tile" href="#/top"><b>Voir le Top 5</b><span>Ce que la communauté a élu</span></a>
-            </div>
+          <!-- Une ligne, pas un panneau. Les quatre raccourcis qui étaient ici répétaient
+               la colonne de gauche et repoussaient les partages de 300 pixels. -->
+          <section class="start" aria-label="Bienvenue">
+            <div><b>Bienvenue. Tu peux tout lire sans compte.</b>
+            <span>Un compte sert à partager, noter et voter.</span></div>
+            ${STATIQUE ? '' : html`<a class="btn primary" href="#/rejoindre">Créer mon compte</a>`}
           </section>`}
         <div class="toolbar">
           <h1>${title}<small>${combien}</small></h1>
@@ -648,12 +779,13 @@ async function feedView(q) {
         </section>
         <section>
           <h3>Le classement</h3>
-          <p>Une gemme vaut dix points, une étoile en vaut deux. Chaque membre reçoit quelques gemmes par semaine et en donne au maximum une par partage : c’est ce qui fait tenir le <a href="#/top">Top 5</a>.</p>
+          <p>Tu reçois quelques gemmes par semaine. Donne-les à ce qui t’a vraiment servi : une gemme pèse lourd, une étoile un peu. C’est ce qui fait monter un partage dans le <a href="#/top">Top 5</a>.</p>
         </section>
         <section>
           <h3>Règles</h3>
           <ol>
             <li>Chaque partage est validé avant publication.</li>
+            <li>Les réponses, elles, paraissent tout de suite, signées.</li>
             <li>Pas de vidéo importée : colle le lien.</li>
             <li>Cite ta source si ce n’est pas toi.</li>
             <li>Pas de pub ni de vente.</li>
@@ -692,7 +824,7 @@ function topLine(p, rang) {
       <span class="top-rang">${rang}</span>
       <div class="top-main">
         <a class="top-titre" href="#/p/${p.id}">${fr(p.title)}</a>
-        <div class="meta">${kind(p.type)}<span>@${p.author}</span>${starsView(p)}</div>
+        <div class="meta">${kind(p.type)}${auteurLien(p)}${starsView(p)}</div>
       </div>
       <div class="top-pts" title="${p.gems} gemme${p.gems > 1 ? 's' : ''} et ${p.starsCount} note${p.starsCount > 1 ? 's' : ''}">
         <b>${p.points}</b><small>points</small>
@@ -725,10 +857,68 @@ async function topView() {
     </div>`);
 }
 
+// --- Profil public d'un membre -------------------------------------------------
+// Ce que la communauté peut savoir de quelqu'un : ce qu'il a publié, et ce que les autres
+// en ont pensé. Rien d'autre. C'est la page qui donne une réputation à un pseudo, donc
+// une raison de partager, et c'est elle qu'on pourra brancher plus tard sur une vitrine.
+async function profilView(pseudo) {
+  let data;
+  try { data = await api('/membres/' + encodeURIComponent(pseudo)); }
+  catch {
+    return render(html`
+      <div class="narrow"><a class="back" href="#/">← Tous les partages</a>
+        <div class="empty">Ce membre n’existe pas.<br><a class="btn" href="#/">Voir la bibliothèque</a></div></div>`);
+  }
+  const { profil, posts } = data;
+  const moi = !!S.me && S.me.pseudo.toLowerCase() === profil.pseudo.toLowerCase();
+  document.title = `@${profil.pseudo} – makers.si`;
+  // La copie consultable n'embarque aucune fiche de membre : elle n'a donc pas de date
+  // d'arrivée à donner, et la ligne s'adapte au lieu d'afficher un trou.
+  const mois = profil.depuis
+    ? new Date(profil.depuis).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+    : '';
+  const pluriel = (n, un, suffixe = 's') => `${n} ${un}${n > 1 ? suffixe : ''}`;
+  render(html`
+    <div class="narrow profil">
+      <a class="back" href="#/">← Tous les partages</a>
+      <header class="profil-tete">
+        <span class="profil-rond" aria-hidden="true">${profil.pseudo.slice(0, 1).toUpperCase()}</span>
+        <div class="profil-nom">
+          <h1>@${profil.pseudo}</h1>
+          <p class="muted">${mois ? `Membre depuis ${mois}` : 'Membre de la communauté'}${
+            profil.premium ? html` · ${ICON.lock}${pluriel(profil.premium, 'partage')} dans l’espace privé` : ''}</p>
+        </div>
+        ${moi && !STATIQUE ? html`<a class="btn ghost" href="#/mes-partages">Gérer mes partages</a>` : ''}
+      </header>
+      ${moi ? html`<div class="notice">C’est ce que les autres membres voient de toi. Ton email n’y est jamais.</div>` : ''}
+
+      <div class="profil-chiffres">
+        <div><b>${profil.posts}</b><span>${profil.posts > 1 ? 'partages' : 'partage'}</span></div>
+        <div><b>${profil.gems}</b><span>${profil.gems > 1 ? 'gemmes reçues' : 'gemme reçue'}</span></div>
+        <div><b>${profil.starsCount ? String(profil.stars).replace('.', ',') : '—'}</b>
+          <span>${profil.starsCount ? `sur 5 · ${pluriel(profil.starsCount, 'note')}` : 'pas encore noté'}</span></div>
+        <div><b>${profil.points}</b><span>points</span></div>
+      </div>
+
+      ${profil.tags.length ? html`<div class="profil-tags">${profil.tags.map(x => tagLink(x.tag))}</div>` : ''}
+
+      ${posts.length ? html`
+        <h2 class="profil-titre">${profil.posts > 1 ? 'Ses partages' : 'Son partage'}<small>le mieux élu d’abord</small></h2>
+        <div class="${vueFil === 'cartes' ? 'grille' : 'list'}">${posts.map(p => item(p))}</div>`
+        : html`<div class="empty">${moi
+            ? html`Tu n’as encore rien de publié.<br><a class="btn primary" href="#/partager">Partager quelque chose</a>`
+            : 'Rien de publié pour l’instant.'}</div>`}
+    </div>`);
+}
+
 async function postView(id) {
   let p;
   try { p = (await api('/posts/' + id)).post; } catch { return render(html`<div class="narrow"><a class="back" href="#/">← Retour</a><div class="empty">Ce partage n’existe pas ou n’est pas encore publié.</div></div>`); }
   document.title = p.title + ' – makers.si';
+  // Les réponses ne doivent pas empêcher le partage de s'afficher : si elles ne
+  // viennent pas (copie consultable, partage réservé), la page se contente du reste.
+  let reponses = [];
+  try { reponses = (await api(`/posts/${id}/comments`)).comments || []; } catch { reponses = []; }
   render(html`
     <div class="narrow post">
       <a class="back" href="#/">← Tous les partages</a>
@@ -736,7 +926,7 @@ async function postView(id) {
       ${p.status === 'rejected' ? html`<div class="notice bad">Refusé${p.rejectReason ? ' : ' + p.rejectReason : '.'}</div>` : ''}
       <div>${kind(p.type)}${p.premium ? html` <span class="pin lock">${ICON.lock}espace privé</span>` : ''}</div>
       <h1>${fr(p.title)}</h1>
-      <div class="post-meta"><span>@${p.author}</span><span>${ago(p.approvedAt || p.createdAt)}</span>${p.tags.map(tagLink)}</div>
+      <div class="post-meta">${auteurLien(p)}<span>${ago(p.approvedAt || p.createdAt)}</span>${p.tags.map(tagLink)}</div>
       ${postBody(p, { howto: true })}
       ${p.status === 'approved' || !p.status ? html`<div class="post-actions">
           ${gemButton(p)}
@@ -747,6 +937,7 @@ async function postView(id) {
             ? `${String(p.stars).replace('.', ',')} sur 5 · ${p.starsCount} note${p.starsCount > 1 ? 's' : ''}`
             : 'Pas encore noté'}</span>
         </div>
+        ${reponsesView(p, reponses)}
         <details class="report"><summary>Signaler ce partage</summary>
           <form data-form="report" data-id="${p.id}">
             <input type="text" name="reason" maxlength="300" placeholder="Qu’est-ce qui ne va pas ? (contenu copié, dangereux, publicité…)" aria-label="Motif du signalement" required>
@@ -1046,6 +1237,7 @@ function helpView() {
 
       <h2 class="faq-title">Questions fréquentes</h2>
       <details class="faq"><summary>Je dois créer un compte pour lire ?</summary><p>Non. Tout le contenu public est lisible sans compte. Le compte sert à partager, à donner des gemmes et des étoiles, et à demander l’accès à l’espace privé.</p></details>
+      <details class="faq"><summary>Qui peut répondre sous un partage ?</summary><p>N’importe quel membre connecté. Contrairement aux partages, une réponse n’est pas relue avant d’apparaître : elle s’affiche tout de suite, signée de ton pseudo. Tu peux supprimer les tiennes à tout moment, et l’admin peut supprimer n’importe laquelle. Si une réponse pose problème, signale le partage : le fil est relu avec lui.</p></details>
       <details class="faq"><summary>C’est quoi les gemmes et les étoiles ?</summary><p>Les étoiles notent la qualité, de 1 à 5, et ne coûtent rien. Les gemmes sont rares : tu en reçois quelques-unes par semaine et tu en donnes au maximum une par partage. On ne peut ni gemmer ni noter son propre partage.</p></details>
       <details class="faq"><summary>Comment marche le Top 5 ?</summary><p>Chaque partage a des points : une gemme vaut 10 points, et chaque étoile reçue en vaut 2 (cinq étoiles d’une personne = 10 points). Le <a href="#/top">Top 5</a> existe en trois versions : la semaine et le mois comptent les partages publiés sur cette période, « depuis le début » compte tout.</p></details>
       <details class="faq"><summary>Comment marche un sondage ?</summary><p>Celui qui le crée écrit la question en titre et 2 à 6 réponses. Chaque membre vote une fois et peut changer d’avis ; cliquer de nouveau sa réponse retire le vote. Les résultats s’affichent une fois qu’on a voté.</p></details>
@@ -1067,7 +1259,7 @@ async function mineView() {
   render(html`
     <div class="narrow">
       <div class="admin-head"><h1 class="page-title">Mes partages</h1>
-        <div><a class="btn primary" href="#/partager">${ICON.plus}Partager</a> <a class="btn ghost" href="#/compte">Mon compte</a> <button class="btn ghost" data-action="logout">Déconnexion</button></div></div>
+        <div><a class="btn primary" href="#/partager">${ICON.plus}Partager</a> <a class="btn ghost" href="#/membre/${encodeURIComponent(S.me.pseudo)}">Mon profil public</a> <a class="btn ghost" href="#/compte">Mon compte</a> <button class="btn ghost" data-action="logout">Déconnexion</button></div></div>
       ${posts.length ? html`<table class="table"><thead><tr><th>Titre</th><th>Statut</th><th>Gemmes</th><th>Étoiles</th><th></th></tr></thead><tbody>
         ${posts.map(p => html`<tr><td><a href="#/p/${p.id}">${p.title}</a>${p.status === 'rejected' && p.rejectReason ? html`<br><small class="muted">${p.rejectReason}</small>` : ''}</td>
           <td><span class="status ${p.status}">${label[p.status]}</span></td><td class="mono">${p.gems}</td>
@@ -1158,6 +1350,8 @@ async function route() {
   try {
     if (path === '/') await feedView(q);
     else if (path.startsWith('/p/')) await postView(path.slice(3));
+    // Un pseudo ne contient que des lettres, des chiffres et . _ - : rien à décoder ici.
+    else if (path.startsWith('/membre/')) await profilView(path.slice(8));
     else if (path === '/rejoindre') authView('join');
     else if (path === '/connexion') authView('login');
     else if (path === '/partager') shareView(q);
@@ -1188,7 +1382,17 @@ document.addEventListener('click', async (e) => {
   if (!el) return;
   const { action, id } = el.dataset;
   try {
-    if (action === 'gem') {
+    if (action === 'comment-delete') {
+      if (!confirm('Supprimer ce commentaire ? C’est définitif.')) return;
+      await api(`/comments/${id}/delete`, { method: 'POST' });
+      const li = el.closest('[data-comment]');
+      const ol = li.parentElement, section = li.closest('.reponses');
+      li.remove();
+      const reste = ol.children.length;
+      if (!reste) ol.remove();
+      $('h2', section).lastChild.textContent = titreFil(reste);
+      toast('Commentaire supprimé.');
+    } else if (action === 'gem') {
       if (!S.me) { toast('Rejoins la communauté pour donner une gemme.'); return go('#/rejoindre'); }
       const r = await api(`/posts/${id}/gem`, { method: 'POST' });
       $$(`.vote[data-id="${id}"]`).forEach(b => {
@@ -1400,6 +1604,18 @@ document.addEventListener('submit', async (e) => {
       }
       const r = await api('/posts', { method: 'POST', body: fd });
       sentView(r.post);
+    } else if (kindOf === 'comment') {
+      if (!S.me) { toast('Rejoins la communauté pour répondre.'); return go('#/rejoindre'); }
+      const r = await api(`/posts/${form.dataset.id}/comments`, { method: 'POST', body: { body: fd.get('body') } });
+      // On insère la réponse à la suite plutôt que de recharger la page : on reste
+      // où on était, et on voit son propre message apparaître.
+      const section = form.closest('.reponses');
+      let ol = $('.fil', section);
+      if (!ol) { ol = document.createElement('ol'); ol.className = 'fil'; section.insertBefore(ol, form); }
+      ol.insertAdjacentHTML('beforeend', reponseLi(r.comment).s);
+      $('h2', section).lastChild.textContent = titreFil(ol.children.length);
+      form.reset();
+      toast('Réponse publiée.');
     } else if (kindOf === 'report') {
       if (!S.me) { toast('Rejoins la communauté pour signaler.'); return go('#/rejoindre'); }
       await api(`/posts/${form.dataset.id}/report`, { method: 'POST', body: { reason: fd.get('reason') } });
