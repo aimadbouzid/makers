@@ -1,23 +1,25 @@
 {
-  "name": "makers.si",
+  "name": "makers.si — la bibliothèque de la communauté",
   "short_name": "makers.si",
-  "description": "Skills Claude Code, techniques de montage, PDF et liens partagés par la communauté.",
+  "description": "Skills Claude, agents, serveurs MCP, prompts, techniques de montage, PDF et liens partagés par la communauté.",
   "lang": "fr",
   "dir": "ltr",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "./",
+  "scope": "./",
+  "id": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#0d1117",
-  "theme_color": "#0d1117",
+  "orientation": "any",
+  "background_color": "#0c0d12",
+  "theme_color": "#090a0e",
   "categories": ["education", "productivity"],
   "icons": [
-    { "src": "/icons/icone-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icone-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/icons/icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "icons/icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "Partager", "url": "/#/partager" },
-    { "name": "Chercher", "url": "/#/recherche" }
+    { "name": "Partager quelque chose", "short_name": "Partager", "url": "./#/partager" },
+    { "name": "Les collections", "short_name": "Collections", "url": "./#/collections" },
+    { "name": "Le Top 5", "short_name": "Top 5", "url": "./#/top" }
   ]
 }

@@ -319,12 +319,21 @@ async function api(path, { method = 'GET', body } = {}) {
   charge(true);
   try {
     if (STATIQUE) return await apiStatique(path, method);
-    const res = await fetch('/api' + path, {
-      method,
-      credentials: 'same-origin',
-      headers: body && !isForm ? { 'Content-Type': 'application/json' } : undefined,
-      body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
-    });
+    let res;
+    try {
+      res = await fetch('/api' + path, {
+        method,
+        credentials: 'same-origin',
+        headers: body && !isForm ? { 'Content-Type': 'application/json' } : undefined,
+        body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
+      });
+    } catch {
+      // Le réseau n'a pas répondu du tout : appareil hors ligne, ou serveur
+      // injoignable. `fetch` ne dit que « Failed to fetch » — de l'anglais
+      // technique qui n'apprend rien à personne. On marque l'erreur, et c'est
+      // le routeur qui en fait une page lisible.
+      throw Object.assign(new Error('Le serveur ne répond pas.'), { reseau: true });
+    }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw Object.assign(new Error(data.error || 'Une erreur est survenue.'), { status: res.status });
     // Toute écriture périme les compteurs affichés ailleurs (gemmes, étoiles, votes).
@@ -1610,6 +1619,12 @@ function helpView() {
       <details class="faq"><summary>Pourquoi mon PDF est refusé ?</summary><p>Les PDF sont limités à ${S.limits.pdfKb} Ko, pour que le site reste rapide même en 4G. Si le tien dépasse, c’est presque toujours une image mal compressée à l’intérieur. Tu peux le réduire sur ton ordinateur (sur Mac : Aperçu → Exporter → Filtre Quartz → « Reduce File Size »), passer par un outil en ligne, ou simplement l’héberger ailleurs et coller le lien : un partage « PDF » accepte un lien à la place du fichier. Le formulaire te donne les trois solutions au moment où tu choisis le fichier.</p></details>
       <details class="faq"><summary>Quelles photos puis-je ajouter ?</summary><p>JPG, PNG ou WebP, trois par partage, 10 Mo chacune. Elles sont réduites automatiquement et la position GPS est effacée.</p></details>
       <details class="faq"><summary>Je peux supprimer un de mes partages ?</summary><p>Oui, depuis « Mes partages », bouton « Supprimer ».</p></details>
+
+      ${STATIQUE ? '' : html`
+        <h2 class="faq-title">Installer la bibliothèque</h2>
+        <p class="muted">Tu peux poser makers.si sur ton téléphone ou ton ordinateur comme une application : le menu de ton navigateur propose « Installer » ou « Ajouter à l’écran d’accueil ». Une fois installée, elle s’ouvre même sans connexion, et tu retrouves ce que tu avais déjà consulté. Rien de plus n’est gardé sur ton appareil : ni les pages privées, ni les fichiers des membres.</p>
+        <p class="muted">Si l’application semble figée sur une vieille version, ce bouton efface ce qu’elle garde en mémoire et repart du serveur. Tu ne perds rien : tout est en ligne.</p>
+        <div class="post-actions"><button class="btn" data-action="vider-cache">Vider la mémoire de l’application</button></div>`}
     </div>`);
 }
 
@@ -2091,6 +2106,22 @@ async function route() {
     else if (path === '/admin') await adminView(q);
     else go('#/');
   } catch (e) {
+    // Hors ligne, l'application s'ouvre quand même : sa coquille est sur l'appareil.
+    // La bibliothèque, elle, vit sur le serveur — on ne met jamais l'API en cache,
+    // parce qu'un contenu privé ou une réponse personnelle n'ont rien à faire sur
+    // un appareil partagé. Mieux vaut le dire clairement qu'afficher une erreur brute.
+    if (!navigator.onLine || e.reseau) {
+      return render(html`
+        <div class="narrow">
+          <div class="empty">
+            <b>${navigator.onLine ? 'Le serveur ne répond pas.' : 'Tu es hors ligne.'}</b><br>
+            L’application est bien là, elle s’ouvre sans connexion — mais les partages, les
+            réponses et les classements vivent sur le serveur, et ils ont besoin du réseau.<br>
+            Dès qu’il revient, la page se remet toute seule.
+            <button class="btn" data-action="reessayer">Réessayer maintenant</button>
+          </div>
+        </div>`);
+    }
     render(html`<div class="narrow"><div class="empty">Impossible de charger la page. ${e.message}</div></div>`);
   }
 }
@@ -2217,6 +2248,21 @@ document.addEventListener('click', async (e) => {
       const text = $(`[data-copy="${id}"]`).textContent;
       await navigator.clipboard.writeText(text);
       confirme(el);
+    } else if (action === 'reessayer') {
+      videCache();
+      route();
+    } else if (action === 'vider-cache') {
+      // La sortie de secours. Un service worker est la seule pièce d'un site qu'on ne
+      // peut pas reprendre à distance : il faut donc toujours laisser à la personne
+      // devant l'écran un moyen de tout remettre à zéro elle-même.
+      confirme(el, 'Nettoyage…');
+      try {
+        if ('serviceWorker' in navigator) {
+          for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
+        }
+        if ('caches' in window) for (const n of await caches.keys()) await caches.delete(n);
+      } catch { /* rien à vider : on recharge quand même */ }
+      location.reload();
     } else if (action === 'theme') {
       // Le choix est gardé sur l'appareil par theme.js, jamais envoyé au serveur.
       window.makersTheme?.choisis(el.dataset.theme);
@@ -2487,6 +2533,8 @@ document.addEventListener('input', (e) => {
 });
 
 window.addEventListener('hashchange', route);
+// Le réseau revient : on refait la page tout seul, sans rien demander à personne.
+window.addEventListener('online', () => { videCache(); route(); });
 
 // --- Le pont vers l'atelier -------------------------------------------------------
 // atelier.js — la palette de commandes et le clavier — est un module séparé,
@@ -2504,3 +2552,18 @@ window.makers = {
 
 await refreshMe();
 route();
+
+// --- Installation et hors ligne ----------------------------------------------------
+// Uniquement sur le site complet : la copie publiée n'embarque pas de service worker
+// (l'export l'écarte volontairement, voir scripts/export-statique.js), et tenter de
+// l'enregistrer là-bas ne produirait qu'une erreur dans la console.
+//
+// Après le premier affichage, jamais avant : installer ne doit pas retarder la page.
+// Et si la page est déjà chargée — ce qui arrive, ce module attend le réseau plus
+// haut — on n'attend pas un événement `load` qui est déjà passé.
+if (!STATIQUE && 'serviceWorker' in navigator) {
+  const installe = () => navigator.serviceWorker.register('/sw.js')
+    .catch(() => { /* pas de hors ligne sur cet appareil : le site marche quand même */ });
+  if (document.readyState === 'complete') installe();
+  else window.addEventListener('load', installe, { once: true });
+}
