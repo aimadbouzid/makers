@@ -1302,6 +1302,56 @@ mark.todo { background: color-mix(in srgb, var(--warn) 26%, transparent); color:
 .memo-liste .cote { padding: 14px 12px 6px; }
 
 /* ===========================================================================
+   19 bis. Ce qui s'est passé
+   La cloche ne dit rien tant qu'il n'y a rien à dire : pas de pastille grise
+   permanente, pas de « 0 ». Un en-tête qui crie en permanence finit par ne
+   plus être regardé du tout.
+   =========================================================================== */
+.cloche {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; flex: none;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface); color: var(--ink-soft); text-decoration: none;
+  transition: border-color .14s, color .14s;
+}
+.cloche:hover { border-color: var(--line-strong); color: var(--ink); }
+.cloche .ico { width: 16px; height: 16px; }
+.cloche.neuve { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.pastille {
+  position: absolute; top: -5px; right: -5px; min-width: 16px; height: 16px; padding: 0 4px;
+  display: grid; place-items: center; border-radius: var(--r-pill);
+  background: var(--accent-emphasis); color: var(--accent-ink);
+  font: 700 10px var(--mono); line-height: 1;
+}
+
+/* La liste : les mêmes filets que l'index. Ce qui n'a pas été lu porte un repère
+   de couleur à gauche et un texte plein ; le reste s'efface d'un cran. */
+.notifs { border-top: 1px solid var(--line-strong); max-width: var(--mesure); }
+.notif {
+  position: relative; display: grid; grid-template-columns: 22px minmax(0, 1fr) auto;
+  gap: 14px; align-items: baseline;
+  padding: 14px 4px 14px 14px; border-bottom: 1px solid var(--line);
+  text-decoration: none; color: var(--ink-soft);
+  transition: background-color .13s ease;
+}
+.notif:hover { background: color-mix(in srgb, var(--ink) 3.5%, transparent); }
+.notif.neuve::before {
+  content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 2px;
+  border-radius: 2px; background: var(--accent);
+}
+.notif-ico { display: inline-flex; color: var(--muted); }
+.notif.neuve .notif-ico { color: var(--accent); }
+.notif-ico .ico { width: 15px; height: 15px; }
+.notif-corps { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.notif-corps b { font: 600 14.5px/1.45 var(--font); color: var(--ink); }
+.notif:not(.neuve) .notif-corps b { font-weight: 400; color: var(--ink-soft); }
+.notif-motif {
+  font-size: 13.5px; line-height: 1.5; color: var(--muted);
+  padding-left: 10px; border-left: 2px solid var(--line-strong);
+}
+.notif-date { font: 12px var(--mono); color: var(--muted); white-space: nowrap; }
+
+/* ===========================================================================
    20. Messages, barre de chargement
    =========================================================================== */
 .toast {
@@ -1457,6 +1507,9 @@ body.chargement::before { width: 80%; opacity: 1; transition: width 2.5s cubic-b
      quarante pixels pour écrire « Opus 5 ». */
   .duo { flex-direction: column; }
   .duo select { flex: none; }
+  /* La date passe sous le texte : à 360 px, une colonne de plus la coupe en deux. */
+  .notif { grid-template-columns: 20px minmax(0, 1fr); gap: 4px 10px; }
+  .notif-date { grid-column: 2; }
   .colophon { grid-template-columns: minmax(0, 1fr); gap: 24px; margin-top: 44px; }
   .palette-fond { padding: 0; align-items: stretch; }
   .palette { max-width: none; max-height: none; border: 0; border-radius: 0; }

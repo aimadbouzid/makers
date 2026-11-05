@@ -135,6 +135,8 @@ const ICON = {
   mcp: svg('<path d="M5.8 2.2v3.4M10.2 2.2v3.4"/><rect x="3.6" y="5.6" width="8.8" height="4" rx="1.2"/><path d="M8 9.6v4.2"/>'),
   // Le modèle sur lequel c'est essayé.
   etincelle: svg('<path d="M8 2.2v11.6M2.2 8h11.6M4.2 4.2l7.6 7.6M11.8 4.2l-7.6 7.6"/>'),
+  // Ce qui s'est passé pendant ton absence.
+  cloche: svg('<path d="M4 6.6a4 4 0 0 1 8 0c0 3 1 4.2 1 4.2H3s1-1.2 1-4.2z"/><path d="M6.6 13a1.6 1.6 0 0 0 2.8 0"/>'),
 };
 
 // --- Utilitaires ------------------------------------------------------------
@@ -144,7 +146,7 @@ const ICON = {
 // pour ne pas redemander les mêmes compteurs à chaque changement de page.
 // `modeles` vient du serveur (jamais recopié ici) : le formulaire ne peut donc
 // pas proposer une famille que le serveur refuserait.
-const S = { me: null, admin: false, pending: 0, promo: null, marche: null, stats: null, modeles: {}, limits: { pdfKb: 200, fileMb: 15, imageMb: 10, images: 3 } };
+const S = { me: null, admin: false, pending: 0, nonLues: 0, promo: null, marche: null, stats: null, modeles: {}, limits: { pdfKb: 200, fileMb: 15, imageMb: 10, images: 3 } };
 
 // Une barre fine en haut de page dès le clic : la navigation demande un aller-retour
 // réseau, et sans ce signal on a l'impression que le clic n'a rien fait.
@@ -401,7 +403,16 @@ function header() {
           ${theme('papier', 'papier', 'Fond clair')}
           ${theme('nuit', 'nuit', 'Fond sombre')}
         </div>
-        ${S.admin ? html`<a class="btn small" href="#/admin">À valider${S.pending ? html`<span class="badge">${S.pending}</span>` : ''}</a>` : ''}
+        <!-- Sur téléphone, la modération quitte la barre du haut : elle ne sert qu'à
+             une personne, et la place revient à la cloche, qui sert tous les jours.
+             Elle reste atteignable par le rail et par la palette. -->
+        ${S.admin ? html`<a class="btn small hide-sm" href="#/admin">À valider${S.pending ? html`<span class="badge">${S.pending}</span>` : ''}</a>` : ''}
+        ${S.me && !STATIQUE ? html`
+          <a class="cloche ${S.nonLues ? 'neuve' : ''}" href="#/notifications"
+            aria-label="${S.nonLues ? `${S.nonLues} nouveauté${S.nonLues > 1 ? 's' : ''} depuis ta dernière visite` : 'Ce qui s’est passé'}"
+            title="${S.nonLues ? `${S.nonLues} nouveauté${S.nonLues > 1 ? 's' : ''}` : 'Ce qui s’est passé'}">
+            ${ICON.cloche}${S.nonLues ? html`<span class="pastille">${S.nonLues > 9 ? '9+' : S.nonLues}</span>` : ''}
+          </a>` : ''}
         ${S.me
           ? html`<span class="purse hide-sm" title="Gemmes qu’il te reste à donner cette semaine">${ICON.gem}${S.me.gemsLeft}</span>
             <a class="who" href="#/mes-partages">@${S.me.pseudo}</a>`
@@ -482,12 +493,18 @@ function railHTML(stats, path, q) {
         ${S.me
           ? html`
             <a class="btn primary" href="#/partager">${ICON.plus}Partager</a>
+            <a href="#/notifications" class="${path === '/notifications' ? 'on' : ''}">
+              ${ICON.cloche}Ce qui s’est passé ${S.nonLues ? html`<span>${S.nonLues}</span>` : ''}</a>
             <a href="#/mes-partages" class="${path === '/mes-partages' ? 'on' : ''}">${ICON.dossier}Mes partages</a>
             <a href="#/mes-ventes" class="${path === '/mes-ventes' ? 'on' : ''}">${ICON.file}Mes ventes</a>
             <a href="#/membre/${encodeURIComponent(S.me.pseudo)}">${ICON.perso}Mon profil</a>`
           : html`
             <a class="btn primary" href="#/rejoindre">${ICON.plus}Créer mon compte</a>
             <a href="#/connexion">${ICON.lock}Me connecter</a>`}
+        <!-- Hors du choix ci-dessus : une session d'administration est indépendante
+             d'un compte membre. On peut modérer sans être connecté comme membre. -->
+        ${S.admin ? html`<a href="#/admin" class="${path === '/admin' ? 'on' : ''}">
+          ${ICON.vote}Modération ${S.pending ? html`<span>${S.pending}</span>` : ''}</a>` : ''}
       </section>`}
 
     <div class="rail-bas">
@@ -1581,6 +1598,7 @@ function helpView() {
       <details class="faq"><summary>C’est quoi l’espace privé ?</summary><p>Une section à part, marquée d’un cadenas, qui contient des partages réservés. Tout le monde voit le sujet, mais le contenu demande un accès. Aujourd’hui il se donne à la main : écris-nous pour le demander.</p></details>
       <details class="faq"><summary>On peut payer pour être en haut ?</summary><p>Oui, et c’est écrit dessus : un partage dont la place a été payée porte la mention « sponsorisé » tant qu’elle dure. Ce qui s’achète est la place, jamais la publication — le partage passe la même relecture que les autres, et payer ne donne ni gemme, ni étoile, ni point. <a href="#/mise-en-avant">Voir comment ça marche</a>.</p></details>
       <details class="faq"><summary>C’est quoi une collection ?</summary><p>Un parcours : des partages déjà publiés, remis dans l’ordre où on devrait les lire, avec un mot sur chacun. « Démarrer avec Claude Code en une soirée », par exemple. Tu n’écris rien de neuf — tu ranges, et ranger demande du jugement. Clique « Composer » depuis <a href="#/collections">les collections</a>, choisis au moins deux partages, et envoie : elle est relue comme un partage. La modifier la renvoie en relecture, sauf si tu ne touches qu’aux notes.</p></details>
+      <details class="faq"><summary>Comment je sais que mon partage est passé ?</summary><p>La cloche en haut à droite s’allume. Tu es prévenu quand un de tes partages ou une de tes collections est publié ou refusé (avec le motif), quand quelqu’un répond sous un de tes partages, quand on commande ce que tu vends, et quand un achat que tu as fait est confirmé. <b>Rien n’est envoyé par email ni poussé sur ton téléphone</b> : la liste t’attend sur <a href="#/notifications">Ce qui s’est passé</a>, et elle ne garde que les trois derniers mois. Ouvrir la page marque tout comme lu, mais n’efface rien.</p></details>
       <details class="faq"><summary>C’est quoi « essayé sur » ?</summary><p>Devant un prompt ou un agent, la première question est « ça marche sur quoi ? » — le même prompt peut être excellent sur un modèle et inutile sur un autre. Quand tu partages un skill, un agent, un serveur MCP ou un prompt, tu peux donc dire sur quel modèle tu l’as essayé. On range les <b>familles</b> (Claude, GPT, Gemini…) et tu écris la version à côté (« Opus 5 »), parce qu’une famille dure des années quand une version est périmée en deux mois. Le rail de gauche te laisse alors tout filtrer : « montre-moi ce qui tourne sur Claude ». C’est facultatif, et mieux vaut le laisser vide que de deviner : annoncer un modèle qu’on n’a pas essayé, c’est refusé par la <a href="#/charte">charte</a>.</p></details>
       <details class="faq"><summary>Un agent, un serveur MCP : quelle différence avec un skill ?</summary><p>Un <b>skill</b> est un mode d’emploi que Claude lit tout seul quand ta demande correspond : tu le poses dans un dossier et tu l’oublies. Un <b>agent</b> fait un travail du début à la fin sans toi — il boucle, il se sert d’outils, et il s’arrête quand c’est fini ou quand il a besoin de toi. Un <b>serveur MCP</b> ne fait rien tout seul : il <i>donne</i> des outils à un modèle (une base de données, des fichiers, une API), et c’est le modèle qui s’en sert. En résumé : le skill explique, l’agent exécute, le MCP branche.</p></details>
       <details class="faq"><summary>Je peux vendre un skill que j’ai écrit ?</summary><p>Oui. Mets un prix dans le formulaire de partage : le <b>contenu</b> ne s’ouvre alors qu’après l’achat, mais le titre, la description et les tags restent publics — sinon personne ne saurait ce qu’il achète. Ton partage passe la même relecture que les autres, et l’équipe peut refuser une vente comme elle refuse un contenu. La plateforme retient ${S.marche?.commission ?? 5} % sur chaque vente, le reste te revient. Tu suis tout dans <a href="#/mes-ventes">Mes ventes</a>.</p></details>
@@ -1804,6 +1822,52 @@ async function achatsView() {
     </div>`);
 }
 
+// --- Ce qui s'est passé -------------------------------------------------------------
+// La liste de ce qui est arrivé pendant l'absence. Ouvrir la page vaut lecture : on ne
+// marque pas lu une pastille qu'on n'a fait qu'apercevoir dans l'en-tête.
+const NOTIF_ICONE = {
+  'partage-publie': 'vote', 'partage-refuse': 'alerte', 'partage-retire': 'alerte',
+  reponse: 'bulle', 'collection-publiee': 'vote', 'collection-refusee': 'alerte',
+  vente: 'gem', 'achat-confirme': 'vote', 'mise-en-avant': 'megaphone', 'acces-prive': 'lock',
+};
+
+async function notificationsView() {
+  if (!S.me) { go('#/connexion'); return; }
+  const { notifications: liste } = await api('/me/notifications');
+  document.title = 'Ce qui s’est passé – makers.si';
+  render(html`
+    <div class="narrow">
+      <a class="back" href="#/">← Tous les partages</a>
+      <h1 class="page-title">${ICON.cloche}Ce qui s’est passé</h1>
+      <p class="page-sub">Pendant que tu n’étais pas là. Rien n’est envoyé par email ni poussé sur ton téléphone : cette liste t’attend ici, et elle ne garde que les trois derniers mois.</p>
+      ${liste.length ? html`
+        <div class="notifs">
+          ${liste.map(n => html`
+            <a class="notif ${n.lu ? '' : 'neuve'}" href="${n.lien || '#/'}">
+              <span class="notif-ico">${ICON[NOTIF_ICONE[n.type] || 'bulle']}</span>
+              <span class="notif-corps">
+                <b>${n.texte}</b>
+                ${n.motif ? html`<span class="notif-motif">${n.motif}</span>` : ''}
+              </span>
+              <span class="notif-date">${ago(n.at)}</span>
+            </a>`)}
+        </div>`
+        : html`<div class="empty">Rien pour l’instant.<br>
+            Tu seras prévenu ici quand un de tes partages sera relu, quand quelqu’un te répondra,
+            ou quand on commandera ce que tu vends.</div>`}
+    </div>`);
+  // Ouvrir la page vaut lecture : la pastille s'éteint, et l'en-tête se met à jour
+  // sans recharger. Si l'appel échoue, ce n'est pas grave — elle se rallumera.
+  if (S.nonLues) {
+    try {
+      await api('/me/notifications/read', { method: 'POST' });
+      S.nonLues = 0;
+      header();
+      rail();
+    } catch { /* on réessaiera à la prochaine ouverture */ }
+  }
+}
+
 async function mineView() {
   if (!S.me) { go('#/connexion'); return; }
   const [{ posts }, mesColls] = await Promise.all([api('/me/posts'), api('/me/collections')]);
@@ -1997,7 +2061,7 @@ async function route() {
   // voit quelle section est ouverte. Ils ne bloquent pas l'affichage de la vue.
   rail();
   // Dans une copie en lecture seule, les pages qui écrivent n'ont nulle part où écrire.
-  if (STATIQUE && (['/rejoindre', '/connexion', '/partager', '/compte', '/mes-partages', '/mes-ventes', '/mes-achats', '/admin'].includes(path)
+  if (STATIQUE && (['/rejoindre', '/connexion', '/partager', '/compte', '/mes-partages', '/mes-ventes', '/mes-achats', '/notifications', '/admin'].includes(path)
     || path === '/collection' || path.startsWith('/collection/'))) {
     toast('Cette copie du site est en lecture seule.');
     return go('#/');
@@ -2020,6 +2084,7 @@ async function route() {
     else if (path.startsWith('/c/')) await collectionView(path.slice(3));
     else if (path === '/collection') composerView(null);
     else if (path.startsWith('/collection/')) composerView(path.slice(12));
+    else if (path === '/notifications') await notificationsView();
     else if (path === '/mes-partages') await mineView();
     else if (path === '/mes-ventes') await ventesView();
     else if (path === '/mes-achats') await achatsView();
@@ -2033,7 +2098,7 @@ async function route() {
 async function refreshMe() {
   try {
     const r = await api('/me');
-    Object.assign(S, { me: r.member, admin: r.admin, pending: r.pending });
+    Object.assign(S, { me: r.member, admin: r.admin, pending: r.pending, nonLues: r.nonLues || 0 });
     if (r.limits) S.limits = r.limits;
     if (r.promo) S.promo = r.promo;
     if (r.marche) S.marche = r.marche;

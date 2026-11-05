@@ -68,6 +68,7 @@ function commandes() {
         { groupe: 'Faire', mot: 'Composer une collection', hash: '#/collection', icone: 'plus' },
       );
       liste.push(
+        { groupe: 'Mon compte', mot: 'Ce qui s’est passé', hash: '#/notifications', icone: 'cloche' },
         { groupe: 'Mon compte', mot: 'Mes partages', hash: '#/mes-partages', icone: 'dossier' },
         { groupe: 'Mon compte', mot: 'Mes ventes', hash: '#/mes-ventes', icone: 'doc' },
         { groupe: 'Mon compte', mot: 'Mes achats', hash: '#/mes-achats', icone: 'doc' },
