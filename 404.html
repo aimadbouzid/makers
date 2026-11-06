@@ -6,14 +6,15 @@
   <title>makers.si – la bibliothèque de la communauté</title>
   <meta name="description" content="makers.si : skills Claude, prompts, idées, sondages et PDF partagés par la communauté des vibe codeurs et de l’IA. Chaque partage est relu avant publication.">
   <meta name="color-scheme" content="dark light">
-  <meta name="theme-color" content="#090a0e">
+  <meta name="theme-color" content="#000000">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <!-- Sans cette ligne, le manifeste existait mais aucun navigateur ne le lisait :
        le site n'était pas installable, malgré ses icônes et son service worker. -->
   <link rel="manifest" href="manifest.webmanifest">
-  <!-- Les deux polices visibles dès la première image de la page : chargées en priorité. -->
-  <link rel="preload" href="fonts/ibm-plex-sans-400.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="fonts/ibm-plex-mono-600.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- Plus aucune police n'est téléchargée : le site écrit avec celle de
+       l'appareil (San Francisco sur iPhone et Mac, Roboto sur Android, Segoe UI
+       sur Windows). Six fichiers et 115 Ko de moins avant la première ligne de
+       texte — et le texte s'affiche à la première image, sans attendre. -->
   <link rel="stylesheet" href="style.css">
   <!-- Le thème est posé avant le premier affichage, sinon on verrait un éclair
        de nuit avant de passer au papier. Un fichier, pas une balise en ligne :

@@ -1,68 +1,42 @@
 /* ===========================================================================
-   makers.si — « L'Atelier »
+   makers.si — l'interface
    ---------------------------------------------------------------------------
-   Le parti pris, en une phrase : ce site n'est pas un fil d'actualité, c'est
-   le catalogue d'un atelier. Tout découle de là.
+   Le parti pris, en une phrase : on ne regarde pas l'interface, on regarde ce
+   qu'il y a dedans. Tout découle de là.
 
-   Ce que ça change, concrètement :
-   - Un index réglé par des filets, pas des cartes posées sur un fond. Une
-     bibliothèque se parcourt du regard, en descendant ; des cartes arrondies
-     avec une ombre chacune font regarder les cartes, pas leur contenu.
-   - La couleur du type devient la colonne vertébrale. Chaque partage porte à
-     sa gauche un filet de 2 px à la couleur de sa catégorie, et son étiquette
-     en monospace dans la marge. En descendant la page, on lit la composition
-     de la bibliothèque à la couleur, sans lire un mot.
-   - Les angles se resserrent (6 px au lieu de 12), les ombres disparaissent
-     presque. Ce sont les deux réglages qui séparent un catalogue technique
-     d'un tableau de bord de logiciel.
-   - Le monospace en petites capitales porte toutes les étiquettes. C'est la
-     signature : un catalogue a des cotes, des rubriques, des numéros.
+   Ce que ça veut dire, concrètement :
+   - La typographie est celle de l'appareil. Sur un iPhone ou un Mac c'est San
+     Francisco, sur Android Roboto, sur Windows Segoe UI. Aucune police n'est
+     téléchargée : le site a cessé d'envoyer six fichiers et 115 Ko avant la
+     première ligne de texte, et il a l'air d'appartenir à l'appareil qui
+     l'affiche au lieu d'avoir l'air d'un site.
+   - Les surfaces sont neutres et empilées : la page, ce qui est posé dessus,
+     ce qui est posé par-dessus. La couleur ne sert plus de décor ; elle est
+     réservée à ce qui a un sens — la catégorie d'un partage, une action.
+   - Une seule couleur d'action, le bleu. Un bouton bleu veut dire « c'est ici
+     qu'on appuie », et il n'y a pas deux endroits qui le disent à la fois.
+   - Les barres sont des matières : translucides et floutées, elles laissent
+     deviner ce qui passe dessous. C'est ce qui donne de la profondeur sans
+     dessiner une seule ligne de plus.
+   - Les angles s'arrondissent, les filets s'effacent, les ombres sont larges
+     et presque invisibles. Ce qui sépare deux blocs, ce n'est plus un trait :
+     c'est de l'espace.
    - Les chiffres sont en chasse fixe tabulaire, donc les colonnes de points
      s'alignent verticalement d'une ligne à l'autre.
-   - Deux thèmes complets. « Nuit » garde l'identité du site ; « Papier » n'est
-     pas une inversion mais un vrai papier chaud, avec ses propres couleurs de
-     catégorie assez foncées pour se lire sur du blanc cassé.
+   - Deux thèmes complets, construits sur les gris système : « nuit » sur du
+     noir vrai (sur un écran OLED, le noir est éteint), « papier » sur le gris
+     très clair des listes groupées, où les panneaux ressortent en blanc.
 
    Le vocabulaire de classes d'origine est gardé en entier : les pages HTML
    fabriquées pour les moteurs de recherche (scripts/pages-statiques.js) et
    l'espace d'administration s'en servent. Ce qui change, c'est ce que chaque
    classe veut dire, jamais son nom.
-   =========================================================================== */
 
-/* IBM Plex Sans / Mono, licence OFL 1.1 (public/fonts/LICENSE.txt).
-   Hébergées par le site : aucun appel à un service extérieur, donc rien n'est
-   envoyé à un tiers. Sous-ensemble latin : tous les accents français, œ compris.
-   `swap` : le texte s'affiche tout de suite avec la police de l'appareil. */
-@font-face {
-  font-family: 'IBM Plex Sans';
-  src: url('fonts/ibm-plex-sans-400.woff2') format('woff2');
-  font-weight: 400; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'IBM Plex Sans';
-  src: url('fonts/ibm-plex-sans-600.woff2') format('woff2');
-  font-weight: 600; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'IBM Plex Sans';
-  src: url('fonts/ibm-plex-sans-700.woff2') format('woff2');
-  font-weight: 700; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'IBM Plex Mono';
-  src: url('fonts/ibm-plex-mono-400.woff2') format('woff2');
-  font-weight: 400; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'IBM Plex Mono';
-  src: url('fonts/ibm-plex-mono-600.woff2') format('woff2');
-  font-weight: 600; font-style: normal; font-display: swap;
-}
-@font-face {
-  font-family: 'IBM Plex Mono';
-  src: url('fonts/ibm-plex-mono-700.woff2') format('woff2');
-  font-weight: 700; font-style: normal; font-display: swap;
-}
+   Les fichiers IBM Plex restent dans public/fonts/ : plus rien ne les demande,
+   mais les effacer est une autre décision que celle-ci, et elle se prend à
+   froid. Pour revenir en arrière, il suffit de redéclarer les @font-face et de
+   remettre les deux familles en tête de --font et --mono.
+   =========================================================================== */
 
 /* ===========================================================================
    1. Les repères — thème « Nuit »
@@ -74,70 +48,85 @@
 :root {
   color-scheme: dark;
 
-  --bg: #0c0d12;              /* la page */
-  --bar: #090a0e;             /* la barre du haut et le rail */
-  --bg-deep: #08090d;         /* ce qui est en creux : code, arborescences */
-  --surface: #13141b;         /* ce qui est posé dessus : panneaux, cartes */
-  --surface-2: #1b1d26;       /* boutons au repos, pastilles */
-  --surface-3: #262935;       /* survol */
+  /* Les surfaces, par étages. Le fond est un noir vrai : sur un écran OLED,
+     ces pixels sont éteints, et tout ce qui est posé dessus paraît flotter. */
+  --bg: #000000;              /* la page */
+  --bar: rgb(22 22 24 / .68); /* la barre du haut et le rail : une matière, pas une couleur */
+  --bar-plein: #161618;       /* la même, pour les navigateurs sans flou */
+  --bg-deep: #0a0a0c;         /* ce qui est en creux : code, arborescences */
+  --surface: #1c1c1e;         /* ce qui est posé dessus : panneaux, cartes */
+  --surface-2: #2c2c2e;       /* boutons au repos, pastilles, pistes de segments */
+  --surface-3: #3a3a3c;       /* survol */
 
-  --ink: #eceef4;             /* les titres */
-  --ink-soft: #c7ccd8;        /* le texte courant */
-  --muted: #8a90a0;           /* ce qui accompagne */
-  --line: #212430;            /* le filet ordinaire : la trame du catalogue */
-  --line-strong: #363a4a;     /* le filet qui sépare vraiment */
+  /* L'encre. Du blanc franc pour les titres, puis deux niveaux de retrait
+     obtenus en laissant passer le fond — c'est ce qui garde le gris juste quelle
+     que soit la surface en dessous. */
+  --ink: #ffffff;
+  --ink-soft: rgb(235 235 245 / .86);
+  --muted: rgb(235 235 245 / .55);
+  --line: rgb(235 235 245 / .11);
+  --line-strong: rgb(235 235 245 / .22);
 
-  --brand: #8b80f0;
-  --accent: #a78bfa;
-  --accent-emphasis: #6d4aff;
-  --accent-subtle: color-mix(in srgb, var(--brand) 16%, transparent);
+  /* Une seule couleur d'action, et c'est le bleu. */
+  --brand: #0a84ff;
+  --accent: #0a84ff;
+  --accent-emphasis: #409cff;
+  --accent-subtle: rgb(10 132 255 / .18);
   --accent-ink: #ffffff;
 
-  --ok: #43b968;
-  --warn: #d6a02a;
-  --bad: #f2564b;
+  --ok: #30d158;
+  --warn: #ffd60a;
+  --bad: #ff453a;
 
-  /* Une couleur par catégorie. Choisies claires : elles vivent sur du noir.
-     Agent prend un vert-jaune franc (il travaille, il avance) et le serveur MCP
-     un bleu-vert éteint : c'est de la plomberie, ça branche des outils sur un
-     modèle, et ça n'a pas à crier plus fort que ce qu'on vient chercher. */
-  --k-skill: #5bd6a4;
-  --k-agent: #a8d84f;
-  --k-mcp: #8fb8c4;
-  --k-prompt: #56c8d8;
-  --k-idee: #e8b55c;
-  --k-sondage: #f08cc4;
-  --k-pdf: #f4837e;
-  --k-lien: #7aa8f7;
-  --k-info: #b69be0;
-  --k-montage: #f0a05c;
+  /* Une couleur par catégorie, prise dans la même gamme que le reste. Elles ne
+     peignent plus de grandes surfaces : elles tiennent dans un mot, un point et
+     une couverture. Un lien est bleu parce qu'un lien est bleu. */
+  --k-skill: #30d158;         /* vert */
+  --k-agent: #bf5af2;         /* violet */
+  --k-mcp: #40c8e0;           /* bleu-vert : de la plomberie */
+  --k-prompt: #64d2ff;        /* cyan */
+  --k-idee: #ffd60a;          /* jaune */
+  --k-sondage: #ff375f;       /* rose */
+  --k-pdf: #ff453a;           /* rouge */
+  --k-lien: #0a84ff;          /* bleu */
+  --k-info: #5e5ce6;          /* indigo */
+  --k-montage: #ff9f0a;       /* orange */
 
-  --star: #e8b43a;
-  --or: #e8b43a;
-  --argent: #c3ccd6;
-  --bronze: #d49a6a;
+  --star: #ffd60a;
+  --or: #ffd60a;
+  --argent: #d1d1d6;
+  --bronze: #ff9f0a;
 
-  /* Des angles serrés. Le site passait de « catalogue » à « tableau de bord »
-     uniquement à cause de ses 12 px d'arrondi. */
-  --radius: 6px;
-  --r-sm: 4px;
-  --r-lg: 10px;
-  --r-pill: 999px;
+  /* Des angles larges, et la pilule pour ce sur quoi on appuie. */
+  --radius: 14px;
+  --r-sm: 10px;
+  --r-lg: 20px;
+  --r-pill: 980px;
 
-  /* Presque pas d'ombre : ce qui sépare les blocs, ici, c'est un filet.
-     L'ombre est réservée à ce qui flotte vraiment (palette, tiroir, message). */
-  --ombre-1: none;
-  --ombre-2: 0 16px 40px -20px rgb(0 0 0 / .75);
-  --ombre-3: 0 28px 64px -24px rgb(0 0 0 / .85);
-  --voile: rgb(4 5 8 / .72);
+  /* Des ombres larges et presque invisibles : elles disent la hauteur, elles ne
+     dessinent pas un contour. Ce qui sépare deux blocs, c'est l'espace. */
+  --ombre-1: 0 1px 2px rgb(0 0 0 / .3), 0 10px 26px -14px rgb(0 0 0 / .55);
+  --ombre-2: 0 24px 56px -26px rgb(0 0 0 / .78);
+  --ombre-3: 0 44px 96px -32px rgb(0 0 0 / .86);
+  --voile: rgb(0 0 0 / .5);
 
-  --font: 'IBM Plex Sans', ui-sans-serif, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* La matière des barres : un flou, et une saturation poussée pour que les
+     couleurs qui passent dessous restent vivantes à travers. */
+  --flou: saturate(180%) blur(22px);
+
+  /* La police de l'appareil. Rien n'est téléchargé. */
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+
+  /* La courbe du mouvement : départ franc, arrivée longue. C'est ce qui fait la
+     différence entre un élément qui apparaît et un élément qui se pose. */
+  --ease: cubic-bezier(.32, .72, 0, 1);
+  --ease-doux: cubic-bezier(.25, .1, .25, 1);
 
   /* La mesure de lecture : 68 caractères. Au-delà, l'œil perd sa ligne. */
   --mesure: 68ch;
-  --rail: 248px;
-  --barre-h: 56px;
+  --rail: 256px;
+  --barre-h: 54px;
 }
 
 /* ===========================================================================
@@ -148,49 +137,58 @@
 :root[data-theme="papier"] {
   color-scheme: light;
 
-  --bg: #faf9f6;
-  --bar: #fffefb;
-  --bg-deep: #f1efe8;         /* le creux est plus foncé que la page, pas plus clair */
+  /* Le gris très clair des listes groupées, et des panneaux blancs posés
+     dessus. L'inverse du réflexe habituel — page blanche, panneaux gris — et
+     c'est ce qui fait qu'un panneau se voit sans avoir besoin d'un cadre. */
+  --bg: #f2f2f7;
+  --bar: rgb(255 255 255 / .72);
+  --bar-plein: #fbfbfd;
+  --bg-deep: #e9e9ee;
   --surface: #ffffff;
-  --surface-2: #f2f0ea;
-  --surface-3: #e7e4da;
+  --surface-2: #e9e9ef;
+  --surface-3: #dedee3;
 
-  --ink: #17181d;
-  --ink-soft: #3a3d46;
-  --muted: #71747c;
-  --line: #e4e0d7;
-  --line-strong: #cbc6b9;
+  --ink: #000000;
+  --ink-soft: rgb(60 60 67 / .88);
+  /* Un cran plus sombre que le gris secondaire d'Apple, qui plafonne à 3,3:1 sur
+     du blanc. Les descriptions de l'index sont écrites dans cette couleur : ce
+     n'est pas de l'ornement, ça se lit, donc ça passe le seuil de 4,5:1. */
+  --muted: rgb(60 60 67 / .78);
+  --line: rgb(60 60 67 / .14);
+  --line-strong: rgb(60 60 67 / .29);
 
-  --brand: #5b46d6;
-  --accent: #5235c9;
-  --accent-emphasis: #4a2fc0;
-  --accent-subtle: color-mix(in srgb, var(--brand) 11%, transparent);
+  --brand: #007aff;
+  --accent: #007aff;
+  --accent-emphasis: #0062cc;
+  --accent-subtle: rgb(0 122 255 / .14);
   --accent-ink: #ffffff;
 
-  --ok: #0f7a45;
-  --warn: #8a6100;
-  --bad: #c0392f;
+  --ok: #248a3d;
+  --warn: #8f6b00;
+  --bad: #d70015;
 
-  --k-skill: #0f7a56;
-  --k-agent: #5c7510;
-  --k-mcp: #2f6676;
-  --k-prompt: #0e6c7a;
-  --k-idee: #85560a;
-  --k-sondage: #ab3577;
-  --k-pdf: #bb3a30;
-  --k-lien: #2a5fc4;
-  --k-info: #6341b4;
-  --k-montage: #9e4d09;
+  /* Les mêmes couleurs, assombries exprès : celles du thème nuit sont faites
+     pour du noir et deviennent illisibles sur du blanc. */
+  --k-skill: #248a3d;
+  --k-agent: #8944ab;
+  --k-mcp: #008299;
+  --k-prompt: #0071a4;
+  --k-idee: #8f6b00;
+  --k-sondage: #d30f45;
+  --k-pdf: #d70015;
+  --k-lien: #0040dd;
+  --k-info: #3634a3;
+  --k-montage: #c93400;
 
-  --star: #a07000;
-  --or: #8a6100;
+  --star: #8f6b00;
+  --or: #8f6b00;
   --argent: #6d7076;
-  --bronze: #8a5a2a;
+  --bronze: #c93400;
 
-  --ombre-1: none;
-  --ombre-2: 0 14px 34px -22px rgb(40 36 24 / .35);
-  --ombre-3: 0 24px 56px -24px rgb(40 36 24 / .42);
-  --voile: rgb(28 26 20 / .34);
+  --ombre-1: 0 1px 2px rgb(0 0 0 / .06), 0 10px 26px -16px rgb(0 0 0 / .18);
+  --ombre-2: 0 20px 48px -26px rgb(0 0 0 / .26);
+  --ombre-3: 0 38px 84px -32px rgb(0 0 0 / .3);
+  --voile: rgb(0 0 0 / .26);
 }
 
 /* ===========================================================================
@@ -213,6 +211,11 @@ body {
    avec de l'encre noire sur un fond encore noir. Un changement de thème doit
    être instantané ou ne pas être. */
 
+/* Les cases et les boutons ronds prennent la couleur d'action du site. Une seule
+   déclaration, et le navigateur dessine ses propres contrôles à la bonne teinte —
+   ce qui vaut mieux que de les redessiner en CSS et de perdre leur accessibilité. */
+input[type=checkbox], input[type=radio] { accent-color: var(--accent); }
+
 h1, h2, h3, h4 { color: var(--ink); font-weight: 700; letter-spacing: -.022em; }
 a { color: inherit; }
 button, input, select, textarea { font: inherit; color: inherit; }
@@ -228,18 +231,17 @@ button, input, select, textarea { font: inherit; color: inherit; }
 ::selection { background: color-mix(in srgb, var(--accent-emphasis) 40%, transparent); }
 ::placeholder { color: var(--muted); }
 
-/* L'étiquette du catalogue : monospace, petites capitales, interlettrage ouvert.
-   Elle sert partout — rubriques du rail, titres de section, légendes de tableau.
-   C'est elle qui donne le ton « fiche technique » plutôt que « blog ». */
+/* L'en-tête d'un groupe : petit, en capitales, gris. On le lit avant la liste
+   qu'il annonce, jamais à sa place. */
 .cote {
-  font: 600 11.5px/1 var(--mono);
-  letter-spacing: .09em;
+  font: 590 12px/1 var(--font);
+  letter-spacing: .035em;
   text-transform: uppercase;
   color: var(--muted);
 }
 
 /* Les chiffres s'alignent d'une ligne à l'autre. */
-.chiffre { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.chiffre { font-family: var(--font); font-variant-numeric: tabular-nums; }
 
 /* ===========================================================================
    4. La barre du haut
@@ -249,10 +251,17 @@ button, input, select, textarea { font: inherit; color: inherit; }
    =========================================================================== */
 .site-header {
   position: sticky; top: 0; z-index: 40;
-  background: color-mix(in srgb, var(--bar) 88%, transparent);
-  backdrop-filter: saturate(130%) blur(12px);
-  -webkit-backdrop-filter: saturate(130%) blur(12px);
+  background: var(--bar-plein);
   border-bottom: 1px solid var(--line);
+}
+/* La translucidité n'existe que si le navigateur sait flouter. Sinon la barre
+   reste opaque : une barre semi-transparente sans flou laisserait le texte de la
+   page traverser les boutons. */
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .site-header {
+    background: var(--bar);
+    -webkit-backdrop-filter: var(--flou); backdrop-filter: var(--flou);
+  }
 }
 .bar {
   height: var(--barre-h);
@@ -260,7 +269,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   display: flex; align-items: center; gap: 14px;
 }
 .logo {
-  font: 700 19px var(--font); text-decoration: none; letter-spacing: -.04em;
+  font: 700 20px var(--font); text-decoration: none; letter-spacing: -.045em;
   white-space: nowrap; color: var(--ink);
   /* Le logo occupe exactement la largeur du rail : son point tombe sur la
      colonne de l'index, et la page a un axe. */
@@ -269,50 +278,56 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .logo i { color: var(--brand); font-style: normal; }
 .bar-end { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 
-/* Le déclencheur de la palette : large, calme, avec son raccourci écrit. */
+/* Le déclencheur de la palette. Un champ de recherche sans cadre : une cuvette
+   claire dans la barre, où l'on tombe plutôt qu'on ne vise. */
 .cmd {
-  flex: 1; max-width: 420px; height: 34px;
-  display: flex; align-items: center; gap: 9px;
-  padding: 0 10px 0 12px;
-  border: 1px solid var(--line); border-radius: var(--radius);
-  background: var(--surface); color: var(--muted);
-  font: 14px var(--font); text-align: left; cursor: pointer;
-  transition: border-color .15s, color .15s, background-color .15s;
+  flex: 1; max-width: 440px; height: 34px;
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 10px 0 11px;
+  border: 0; border-radius: var(--r-sm);
+  background: var(--surface-2); color: var(--muted);
+  font: 15px var(--font); letter-spacing: -.01em; text-align: left; cursor: pointer;
+  transition: background-color .18s var(--ease-doux), color .18s var(--ease-doux);
 }
-.cmd:hover { border-color: var(--line-strong); color: var(--ink-soft); }
+.cmd:hover { background: var(--surface-3); color: var(--ink-soft); }
 .cmd .ico { width: 15px; height: 15px; flex: none; }
 .cmd span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 kbd {
-  font: 600 11px var(--mono); color: var(--muted);
-  border: 1px solid var(--line-strong); border-radius: 4px;
-  padding: 2px 5px; line-height: 1; white-space: nowrap;
+  font: 500 11.5px var(--font); color: var(--muted);
+  background: var(--surface-3); border-radius: 5px;
+  padding: 3px 6px; line-height: 1; white-space: nowrap;
 }
 
-/* Le choix du thème : trois états, en monospace, dans un rail. */
+/* Le choix du thème : un contrôle segmenté. Une piste creuse, et la pastille
+   choisie qui remonte à la surface — c'est le seul endroit du site où une ombre
+   sert à dire « celui-là est devant ». */
 .theme {
-  display: inline-flex; padding: 2px; gap: 1px;
-  border: 1px solid var(--line); border-radius: var(--radius);
-  background: var(--surface);
+  display: inline-flex; padding: 2px; gap: 2px;
+  border: 0; border-radius: var(--r-sm);
+  background: var(--surface-2);
 }
 .theme button {
-  border: 0; background: none; cursor: pointer; color: var(--muted);
-  font: 600 10.5px var(--mono); letter-spacing: .06em; text-transform: uppercase;
-  padding: 4px 8px; border-radius: 3px; line-height: 1.4;
-  transition: background-color .14s, color .14s;
+  border: 0; background: none; cursor: pointer; color: var(--ink-soft);
+  font: 590 12px var(--font); letter-spacing: -.005em;
+  padding: 4px 10px; border-radius: 7px; line-height: 1.45;
+  transition: background-color .2s var(--ease-doux), color .2s var(--ease-doux);
 }
 .theme button:hover { color: var(--ink); }
-.theme button[aria-pressed="true"] { background: var(--surface-3); color: var(--ink); }
+.theme button[aria-pressed="true"] {
+  background: var(--surface); color: var(--ink);
+  box-shadow: 0 1px 3px rgb(0 0 0 / .2), 0 0 0 .5px rgb(0 0 0 / .08);
+}
 
 .who { font: 600 13.5px var(--font); color: var(--muted); text-decoration: none; padding: 0 2px; }
 .who:hover { color: var(--ink); }
 .badge {
-  font: 700 11px var(--mono); background: var(--accent-emphasis); color: var(--accent-ink);
+  font: 700 11px var(--font); background: var(--accent-emphasis); color: var(--accent-ink);
   padding: 1px 6px; border-radius: 3px; margin-left: 6px;
 }
 .lecture-seule {
   display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px;
   border: 1px solid var(--line); border-radius: var(--radius);
-  color: var(--muted); font: 600 11.5px var(--mono); letter-spacing: .05em; text-transform: uppercase;
+  color: var(--muted); font: 600 11.5px var(--font); letter-spacing: .05em; text-transform: uppercase;
 }
 .lecture-seule .ico { width: 13px; height: 13px; }
 
@@ -328,58 +343,57 @@ kbd {
 .rail {
   position: fixed; top: var(--barre-h); left: 0; bottom: 0; width: var(--rail);
   z-index: 30;
-  display: flex; flex-direction: column; gap: 22px;
-  padding: 22px 14px 28px;
+  display: flex; flex-direction: column; gap: 24px;
+  padding: 20px 12px 28px;
   overflow-y: auto; overscroll-behavior: contain;
-  background: var(--bar);
+  background: var(--bar-plein);
   border-right: 1px solid var(--line);
   scrollbar-width: thin;
 }
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .rail {
+    background: var(--bar);
+    -webkit-backdrop-filter: var(--flou); backdrop-filter: var(--flou);
+  }
+}
 .rail section { display: flex; flex-direction: column; gap: 1px; }
-.rail .cote { padding: 0 10px 8px; }
+.rail .cote { padding: 0 10px 7px; }
 
-/* Une ligne du rail : rien au repos, la couleur de la catégorie quand elle est
-   ouverte. Le compteur est à droite, en chasse fixe, donc les nombres
-   s'alignent les uns sous les autres. */
+/* Une ligne du rail. L'icône porte la couleur de sa catégorie en permanence,
+   pas seulement quand elle est ouverte : c'est la colonne de couleurs qui rend
+   une barre latérale lisible d'un coup d'œil, sans lire les mots. La sélection,
+   elle, reste neutre — sinon deux choses crient en même temps. */
 .rail a, .rail .rail-btn {
   position: relative;
-  display: flex; align-items: center; gap: 9px;
-  min-height: 32px; padding: 5px 10px;
+  display: flex; align-items: center; gap: 10px;
+  min-height: 34px; padding: 6px 10px;
   border: 0; background: none; width: 100%; text-align: left;
   border-radius: var(--r-sm);
   text-decoration: none; color: var(--ink-soft);
-  font: 14.5px var(--font); cursor: pointer;
-  transition: background-color .13s, color .13s;
+  font: 15px var(--font); letter-spacing: -.012em; cursor: pointer;
+  transition: background-color .16s var(--ease-doux), color .16s var(--ease-doux);
 }
 .rail a:hover, .rail .rail-btn:hover { background: var(--surface-2); color: var(--ink); }
 .rail a span:last-child {
   margin-left: auto; flex: none;
-  font: 12px var(--mono); font-variant-numeric: tabular-nums; color: var(--muted);
+  font: 13px var(--font); font-variant-numeric: tabular-nums; color: var(--muted);
 }
-.rail a .ico { width: 14px; height: 14px; flex: none; color: var(--muted); }
-/* La catégorie ouverte : un filet de 2 px à sa couleur, et l'encre pleine.
-   Pas de pastille violette — le violet est la couleur de la maison, pas celle
-   d'un état. */
+.rail a .ico, .rail .rail-btn .ico { width: 16px; height: 16px; flex: none; color: var(--k, var(--muted)); }
 .rail a.on {
-  color: var(--ink); font-weight: 600;
-  background: color-mix(in srgb, var(--k, var(--brand)) 10%, transparent);
+  color: var(--ink); font-weight: 590;
+  background: var(--surface-3);
 }
-.rail a.on::before {
-  content: ''; position: absolute; left: 0; top: 4px; bottom: 4px; width: 2px;
-  border-radius: 2px; background: var(--k, var(--brand));
-}
-.rail a.on span:last-child { color: var(--k, var(--accent)); }
-.rail a.on .ico { color: var(--k, var(--accent)); }
+.rail a.on span:last-child { color: var(--ink-soft); }
 /* Une rubrique encore vide reste visible mais en retrait : elle dit ce que la
    bibliothèque accueille, sans faire croire qu'il y a quelque chose à y lire. */
-.rail a.vide { opacity: .45; }
+.rail a.vide { opacity: .4; }
 .rail a.vide:hover, .rail a.vide.on { opacity: 1; }
-.rail-sep { height: 1px; background: var(--line); margin: 2px 10px; }
+.rail-sep { height: 1px; background: var(--line); margin: 4px 10px; }
 .rail .btn { margin: 0 2px 2px; }
 .rail-bas { margin-top: auto; }
-.rail-bas p { margin: 0; padding: 0 10px; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
-.rail-bas a { display: inline; padding: 0; min-height: 0; color: var(--muted); text-decoration: underline; text-decoration-color: var(--line-strong); }
-.rail-bas a:hover { background: none; color: var(--accent); }
+.rail-bas p { margin: 0; padding: 0 10px; font-size: 13px; color: var(--muted); line-height: 1.55; }
+.rail-bas a { display: inline; padding: 0; min-height: 0; color: var(--accent); text-decoration: none; }
+.rail-bas a:hover { background: none; text-decoration: underline; }
 
 /* Le voile du tiroir, sur petit écran seulement. */
 .voile {
@@ -427,66 +441,78 @@ body.page-seule .logo { width: auto; }
    =========================================================================== */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-  height: 36px; padding: 0 14px;
-  border: 1px solid var(--line-strong); border-radius: var(--radius);
-  background: var(--surface); color: var(--ink);
+  height: 36px; padding: 0 17px;
+  border: 0; border-radius: var(--r-pill);
+  background: var(--surface-2); color: var(--ink);
   text-decoration: none; cursor: pointer;
-  font: 600 14px var(--font); white-space: nowrap;
-  transition: background-color .14s, border-color .14s, color .14s;
+  font: 590 15px var(--font); letter-spacing: -.012em; white-space: nowrap;
+  transition: background-color .18s var(--ease-doux), transform .2s var(--ease), opacity .18s;
 }
-.btn:hover { background: var(--surface-2); border-color: var(--line-strong); }
-.btn:active { background: var(--surface-3); }
-.btn.primary {
-  background: var(--accent-emphasis); border-color: var(--accent-emphasis); color: var(--accent-ink);
-}
-.btn.primary:hover { background: color-mix(in srgb, var(--accent-emphasis) 88%, #fff); border-color: transparent; }
-.btn.primary:active { background: color-mix(in srgb, var(--accent-emphasis) 88%, #000); }
-.btn.ghost { background: none; border-color: transparent; color: var(--ink-soft); }
-.btn.ghost:hover { background: var(--surface-2); color: var(--ink); border-color: transparent; }
+.btn:hover { background: var(--surface-3); }
+/* Le bouton s'enfonce sous le doigt. C'est tout ce qu'il faut pour qu'un geste
+   soit reçu : pas une animation, une réponse. */
+.btn:active { transform: scale(.96); }
+@media (prefers-reduced-motion: reduce) { .btn:active { transform: none; opacity: .72; } }
+.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { background: var(--accent-emphasis); }
+/* Le bouton discret, c'est du texte bleu. Rien d'autre : pas de cadre à dessiner
+   autour d'une action secondaire. */
+.btn.ghost { background: none; color: var(--accent); }
+.btn.ghost:hover { background: var(--accent-subtle); }
 .btn.ok { color: var(--ok); }
-.btn.ok:hover { background: color-mix(in srgb, var(--ok) 14%, transparent); border-color: color-mix(in srgb, var(--ok) 45%, transparent); }
+.btn.ok:hover { background: color-mix(in srgb, var(--ok) 16%, transparent); }
 .btn.bad { color: var(--bad); }
-.btn.bad:hover { background: color-mix(in srgb, var(--bad) 13%, transparent); border-color: color-mix(in srgb, var(--bad) 45%, transparent); }
-.btn.small { height: 30px; padding: 0 11px; font-size: 13px; }
-.btn:disabled { opacity: .45; cursor: default; }
-.ico { width: 15px; height: 15px; flex: none; }
-.btn.small .ico { width: 13px; height: 13px; }
+.btn.bad:hover { background: color-mix(in srgb, var(--bad) 16%, transparent); }
+.btn.small { height: 30px; padding: 0 13px; font-size: 13.5px; }
+.btn:disabled { opacity: .4; cursor: default; }
+.ico { width: 16px; height: 16px; flex: none; }
+.btn.small .ico { width: 14px; height: 14px; }
 /* Une copie qui se confirme sur le bouton lui-même : le message dans le coin
    de l'écran arrivait trop loin du geste pour qu'on le relie au clic. */
-.btn.copie { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 50%, transparent); }
+.btn.copie { color: var(--ok); background: color-mix(in srgb, var(--ok) 16%, transparent); }
 
 /* ===========================================================================
    9. La barre de l'index : titre, tris, affichage
    =========================================================================== */
 .toolbar {
-  display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap;
-  padding-bottom: 12px; margin-bottom: 0;
-  border-bottom: 1px solid var(--line-strong);
+  display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap;
+  padding-bottom: 18px; margin-bottom: 0;
+  border-bottom: 0;
 }
+/* Un grand titre, serré. C'est lui qui dit où on est ; le reste de la barre est
+   un réglage, et un réglage n'a pas à peser autant qu'un titre. */
 .toolbar h1 {
-  margin: 0 auto 0 0; font-size: 22px; letter-spacing: -.03em; line-height: 1.2;
-  display: flex; align-items: baseline; gap: 10px;
+  margin: 0 auto 0 0; font-size: 30px; font-weight: 700;
+  letter-spacing: -.035em; line-height: 1.14;
+  display: flex; align-items: baseline; gap: 11px;
 }
 .toolbar h1 small {
-  font: 600 11.5px var(--mono); letter-spacing: .08em; text-transform: uppercase;
+  font: 400 15px var(--font); letter-spacing: -.01em; text-transform: none;
   color: var(--muted); font-variant-numeric: tabular-nums;
 }
-/* Les tris : du texte, séparé par des filets verticaux. Un contrôle segmenté
-   arrondi aurait ramené l'air « tableau de bord » qu'on vient d'enlever. */
-.tabs { display: inline-flex; align-items: center; gap: 0; font-size: 13.5px; }
+/* Les tris et l'affichage : deux contrôles segmentés. Une piste creuse, une
+   pastille qui remonte à la surface sous le choix retenu. On voit l'état sans
+   lire, et on sait où appuyer pour en changer. */
+.tabs, .vues {
+  display: inline-flex; align-items: center; gap: 2px;
+  padding: 2px; border-radius: var(--r-sm);
+  background: var(--surface-2);
+}
 .tabs a, .vues button {
-  padding: 4px 11px; text-decoration: none; color: var(--muted);
-  border: 0; background: none; cursor: pointer; font: inherit; line-height: 1.5;
-  border-bottom: 2px solid transparent; margin-bottom: -1px;
-  transition: color .14s, border-color .14s;
+  padding: 5px 13px; border-radius: 8px; text-decoration: none;
+  color: var(--ink-soft); border: 0; background: none; cursor: pointer;
+  font: 590 13.5px var(--font); letter-spacing: -.01em; line-height: 1.5;
+  white-space: nowrap;
+  transition: background-color .2s var(--ease-doux), color .2s var(--ease-doux);
 }
 .tabs a:hover, .vues button:hover { color: var(--ink); }
 .tabs a.on, .vues button.on {
-  color: var(--ink); font-weight: 600; border-bottom-color: var(--accent);
+  background: var(--surface); color: var(--ink);
+  box-shadow: 0 1px 3px rgb(0 0 0 / .2), 0 0 0 .5px rgb(0 0 0 / .08);
 }
-.vues { display: inline-flex; margin-left: 4px; }
+.vues { margin-left: 0; }
 .vues .ico { width: 14px; height: 14px; }
-.vues button { display: inline-flex; align-items: center; gap: 5px; }
+.vues button { display: inline-flex; align-items: center; gap: 6px; }
 
 /* ===========================================================================
    10. L'index — une ligne par partage
@@ -494,30 +520,34 @@ body.page-seule .logo { width: auto; }
    Les faits et la gemme sont à droite, en chasse fixe : c'est la colonne de
    chiffres d'un catalogue, et elle s'aligne d'une ligne à l'autre.
    =========================================================================== */
-.list { border-bottom: 1px solid var(--line); }
+/* La liste est un bloc : un panneau arrondi posé sur la page, et des lignes
+   séparées à l'intérieur. Les filets ne font plus le tour de chaque ligne — ils
+   ne font que marquer où l'une s'arrête, et ils s'arrêtent avant le bord, pour
+   qu'on voie que c'est un seul objet. */
+.list {
+  background: var(--surface); border-radius: var(--r-lg);
+  overflow: hidden; box-shadow: var(--ombre-1); border-bottom: 0;
+}
 .item {
   position: relative;
   display: grid;
-  grid-template-columns: 84px minmax(0, 1fr) auto auto;
+  /* Cinq colonnes, toujours : chaque partage a une couverture, même sans photo. */
+  grid-template-columns: 76px minmax(0, 1fr) auto auto auto;
   align-items: start; gap: 0 18px;
-  padding: 15px 14px 15px 18px;
-  border-bottom: 1px solid var(--line);
-  transition: background-color .13s ease;
+  padding: 15px 18px;
+  transition: background-color .16s var(--ease-doux);
 }
-.item:last-child { border-bottom: 0; }
-/* Le filet de couleur : la colonne vertébrale de l'index. */
-.item::before {
-  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
-  background: var(--k, var(--line-strong)); opacity: .72;
-  transition: opacity .13s ease, width .13s ease;
+/* Le séparateur commence là où commence le texte, pas au bord du panneau. */
+.item::after {
+  content: ''; position: absolute; left: 18px; right: 0; bottom: 0;
+  height: 1px; background: var(--line);
 }
-.item:hover { background: color-mix(in srgb, var(--ink) 3.5%, transparent); }
-.item:hover::before { opacity: 1; width: 3px; }
-.item.pinned { background: color-mix(in srgb, var(--brand) 6%, transparent); }
+.item:last-child::after { display: none; }
+.item:hover { background: var(--surface-2); }
+.item.pinned { background: var(--accent-subtle); }
 /* Le clavier (j et k) déplace le focus d'un titre à l'autre. La ligne entière
    s'allume alors, pas seulement le mot : sans ça on perd sa place en descendant. */
-.item:focus-within { background: color-mix(in srgb, var(--ink) 5%, transparent); }
-.item:focus-within::before { opacity: 1; width: 3px; }
+.item:focus-within { background: var(--surface-2); }
 
 /* L'étiquette du type, dans la marge. Le point de couleur et le mot, rien de plus. */
 .item .kind { margin-top: 2px; }
@@ -535,14 +565,12 @@ body.page-seule .logo { width: auto; }
 /* La ligne de faits : tout ce qui se compte, aligné à droite en chasse fixe. */
 .faits {
   display: flex; align-items: center; gap: 14px; flex: none;
-  font: 12.5px var(--mono); font-variant-numeric: tabular-nums; color: var(--muted);
+  font: 12.5px var(--font); font-variant-numeric: tabular-nums; color: var(--muted);
   padding-top: 3px;
 }
 .faits > * { white-space: nowrap; }
 .faits .auteur { font-family: var(--font); font-size: 13px; }
-.item .thumb { grid-column: 3; }
-.item.has-thumb .faits { grid-column: 4; }
-.item.has-thumb { grid-template-columns: 84px minmax(0, 1fr) auto auto auto; }
+.item .couv { grid-column: 3; }
 
 /* La métadonnée en ligne, là où elle sert encore (page d'un partage, admin). */
 .meta {
@@ -552,13 +580,16 @@ body.page-seule .logo { width: auto; }
 .meta a { text-decoration: none; }
 
 /* L'étiquette de catégorie. */
+/* La catégorie d'un partage : son nom, à sa couleur, précédé d'un point. Plus
+   de capitales ni d'interlettrage ouvert — un mot écrit normalement se lit plus
+   vite, et la couleur suffit à le distinguer du titre. */
 .kind {
   display: inline-flex; align-items: center; gap: 6px;
-  font: 600 11px var(--mono); letter-spacing: .07em; text-transform: uppercase;
+  font: 590 13px var(--font); letter-spacing: -.008em;
   color: var(--k, var(--muted)); white-space: nowrap; line-height: 1.5;
 }
 .kind::before {
-  content: ''; width: 5px; height: 5px; border-radius: 50%;
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
   background: currentColor; flex: none;
 }
 .k-skill { --k: var(--k-skill); } .k-montage { --k: var(--k-montage); } .k-pdf { --k: var(--k-pdf); }
@@ -571,7 +602,7 @@ body.page-seule .logo { width: auto; }
    déjà la seule couleur de la ligne. */
 .modele {
   display: inline-flex; align-items: center; white-space: nowrap;
-  font: 600 11.5px var(--mono); letter-spacing: .04em;
+  font: 600 11.5px var(--font); letter-spacing: .04em;
   color: var(--ink-soft); text-decoration: none;
   border: 1px solid var(--line-strong); border-radius: 3px; padding: 1px 6px;
   transition: border-color .13s, color .13s;
@@ -589,52 +620,54 @@ body.page-seule .logo { width: auto; }
 .tagcloud { display: flex; flex-wrap: wrap; gap: 6px 14px; }
 .tagcloud.center { justify-content: flex-start; margin: 14px 0; }
 
-/* Les mentions : privé, en vente, sponsorisé, épinglé. */
+/* Les mentions : privé, en vente, sponsorisé, épinglé. Des pastilles teintées
+   plutôt que des petites capitales — assez pour qu'on les voie, assez discrètes
+   pour qu'elles ne concurrencent pas le titre juste à côté. */
 .pin {
   display: inline-flex; align-items: center; gap: 4px;
-  font: 600 11px var(--mono); letter-spacing: .06em; text-transform: uppercase;
-  color: var(--accent);
+  font: 590 11.5px var(--font); letter-spacing: -.004em;
+  padding: 2px 8px; border-radius: var(--r-pill);
+  background: var(--accent-subtle); color: var(--accent);
 }
 .pin .ico { width: 12px; height: 12px; }
-.pin.lock { color: var(--muted); }
-.pin.sponso { color: var(--warn); }
-.pin.vente { color: var(--ok); font-variant-numeric: tabular-nums; }
+.pin.lock { background: var(--surface-3); color: var(--ink-soft); }
+.pin.sponso { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+.pin.vente { background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok); font-variant-numeric: tabular-nums; }
 
 /* Le rang. Les trois premiers prennent leur métal, le reste un simple numéro. */
 .vote-col { display: flex; align-items: center; gap: 10px; flex: none; padding-top: 1px; }
 .rang {
-  font: 700 11px var(--mono); letter-spacing: .05em; color: var(--muted);
+  font: 700 11px var(--font); letter-spacing: .05em; color: var(--muted);
   white-space: nowrap;
 }
-.rang-n { font: 12px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.rang-n { font: 12px var(--font); color: var(--muted); font-variant-numeric: tabular-nums; }
 .rang-1 { --rang: var(--or); } .rang-2 { --rang: var(--argent); } .rang-3 { --rang: var(--bronze); }
 .item.podium .rang { color: var(--rang); }
 
 /* La gemme. Le signal rare du site : elle mérite d'être un vrai bouton. */
 .vote {
   display: inline-flex; align-items: center; gap: 6px;
-  padding: 5px 10px; height: fit-content; width: auto;
-  border: 1px solid var(--line-strong); border-radius: var(--radius);
-  background: none; color: var(--muted); cursor: pointer;
-  font: 600 13px var(--font); font-variant-numeric: tabular-nums;
-  transition: background-color .13s, color .13s, border-color .13s;
+  padding: 5px 12px; height: fit-content; width: auto;
+  border: 0; border-radius: var(--r-pill);
+  background: var(--surface-2); color: var(--ink-soft); cursor: pointer;
+  font: 590 13px var(--font); font-variant-numeric: tabular-nums;
+  transition: background-color .18s var(--ease-doux), color .18s var(--ease-doux), transform .2s var(--ease);
 }
 .vote .ico { width: 13px; height: 13px; }
-.vote b { font: 700 13px var(--mono); font-variant-numeric: tabular-nums; }
+.vote b { font: 650 13px var(--font); font-variant-numeric: tabular-nums; }
 .vote-mot { font-size: 12.5px; font-weight: 400; }
-.vote:hover { border-color: var(--accent); color: var(--ink); }
-.vote.on {
-  border-color: var(--accent); color: var(--accent);
-  background: var(--accent-subtle);
-}
-.vote.compacte, .vote.court { padding: 5px 9px; }
+.vote:hover { background: var(--surface-3); color: var(--ink); }
+.vote:active { transform: scale(.94); }
+@media (prefers-reduced-motion: reduce) { .vote:active { transform: none; } }
+.vote.on { color: var(--accent); background: var(--accent-subtle); }
+.vote.compacte, .vote.court { padding: 5px 11px; }
 .vote.compacte .vote-mot, .vote.court .vote-mot { display: none; }
 
 /* Les étoiles en lecture. */
 .stars { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); }
 .stars .ico { width: 12px; height: 12px; }
 .stars i { display: inline-flex; color: var(--star); }
-.stars b { font: 700 12.5px var(--mono); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.stars b { font: 700 12.5px var(--font); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
 .stars.big { gap: 1px; }
 .stars.big button {
   background: none; border: 0; padding: 3px; cursor: pointer; color: var(--line-strong);
@@ -649,9 +682,10 @@ body.page-seule .logo { width: auto; }
 .repl { display: inline-flex; align-items: center; gap: 4px; }
 .repl .ico { width: 12px; height: 12px; }
 .purse {
-  display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 9px;
-  border: 1px solid color-mix(in srgb, var(--brand) 40%, transparent); border-radius: var(--radius);
-  font: 700 12.5px var(--mono); color: var(--accent); font-variant-numeric: tabular-nums;
+  display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 11px;
+  border: 0; border-radius: var(--r-pill);
+  background: var(--accent-subtle);
+  font: 650 12.5px var(--font); color: var(--accent); font-variant-numeric: tabular-nums;
 }
 .purse .ico { width: 13px; height: 13px; }
 
@@ -659,54 +693,62 @@ body.page-seule .logo { width: auto; }
 .auteur { color: var(--ink-soft); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
 .auteur:hover { color: var(--accent); }
 .rond {
-  flex: none; width: 19px; height: 19px; border-radius: 3px; display: grid; place-items: center;
+  flex: none; width: 20px; height: 20px; border-radius: 50%;
+  display: grid; place-items: center;
   background: var(--surface-3); color: var(--ink-soft);
-  font: 700 10px var(--mono); letter-spacing: 0;
+  font: 650 10.5px var(--font); letter-spacing: -.01em;
 }
 .auteur:hover .rond { background: var(--accent-subtle); color: var(--accent); }
 
 .empty {
-  padding: 72px 20px; text-align: left; color: var(--muted);
-  font-size: 15px; line-height: 1.7; border-bottom: 1px solid var(--line);
+  padding: 64px 24px; text-align: left; color: var(--muted);
+  font-size: 15.5px; line-height: 1.7; border-bottom: 0;
 }
-.empty .btn { margin-top: 16px; }
+.empty .btn { margin-top: 18px; }
 
 /* ===========================================================================
    11. La vue en cartes
    Même langage que l'index : un cadre d'un pixel, le filet de couleur en haut,
    les faits en bas en chasse fixe. Aucune ombre, aucun soulèvement au survol.
    =========================================================================== */
-/* Les filets sont dessinés autour de chaque case, pas peints sous la grille.
-   Avec un fond qui traverse les interstices, une dernière rangée incomplète
-   laissait un rectangle gris à la place de la case manquante. Une ombre portée
-   d'un pixel ne prend aucune place et se superpose exactement dans l'intervalle. */
+/* Les cartes ne sont plus les cases d'une grille collée : ce sont des objets
+   posés sur la page, avec de l'espace entre eux et une ombre large et basse qui
+   dit leur hauteur sans dessiner de contour. Au survol, la carte se soulève — un
+   seul mouvement, et c'est celui qu'on attend d'une chose qu'on peut prendre. */
 .grille {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
-  gap: 1px; border: 1px solid var(--line);
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(282px, 1fr));
+  gap: 18px; border: 0;
 }
 .carte {
   display: flex; flex-direction: column; overflow: hidden;
-  background: var(--bg); position: relative;
-  box-shadow: 0 0 0 1px var(--line);
-  transition: background-color .14s ease;
+  background: var(--surface); position: relative;
+  border-radius: var(--r-lg); box-shadow: var(--ombre-1);
+  transition: transform .3s var(--ease), box-shadow .3s var(--ease), background-color .2s;
 }
-.carte::before {
-  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px;
-  background: var(--k, var(--line-strong)); opacity: .5; transition: opacity .14s;
+.carte:hover, .carte:focus-within {
+  transform: translateY(-3px);
+  box-shadow: 0 2px 5px rgb(0 0 0 / .26), 0 22px 44px -18px rgb(0 0 0 / .55);
 }
-.carte:hover, .carte:focus-within { background: var(--surface); }
-.carte:hover::before, .carte:focus-within::before { opacity: 1; }
-.carte.pinned { background: color-mix(in srgb, var(--brand) 6%, transparent); }
-.carte-visuel { position: relative; display: block; aspect-ratio: 16 / 8; background: var(--bg-deep); overflow: hidden; }
-.carte-visuel img { width: 100%; height: 100%; object-fit: cover; display: block; }
+@media (prefers-reduced-motion: reduce) { .carte:hover, .carte:focus-within { transform: none; } }
+.carte.pinned { box-shadow: var(--ombre-1), 0 0 0 1.5px var(--accent); }
+/* La médaille est posée SUR la couverture : elle emprunte donc le procédé des
+   barres — un fond sombre translucide et un flou — pour rester lisible quelle que
+   soit la couleur en dessous, sans avoir à être opaque. */
 .medaille {
-  position: absolute; top: 8px; left: 8px; min-width: 20px; height: 20px; padding: 0 5px;
-  display: grid; place-items: center; border-radius: 3px;
-  background: var(--rang, var(--line-strong)); color: #14130f;
-  font: 700 11px var(--mono);
+  position: absolute; z-index: 2; top: 10px; left: 10px; height: 22px; padding: 0 9px;
+  display: grid; place-items: center; border-radius: var(--r-pill);
+  background: rgb(0 0 0 / .46); color: var(--rang, #fff);
+  -webkit-backdrop-filter: blur(12px) saturate(160%); backdrop-filter: blur(12px) saturate(160%);
+  box-shadow: inset 0 0 0 .5px rgb(255 255 255 / .22);
+  font: 650 11.5px var(--font); letter-spacing: -.005em; font-variant-numeric: tabular-nums;
 }
-.medaille.plate { position: static; }
-.carte-corps { display: flex; flex-direction: column; gap: 8px; padding: 15px 16px 13px; flex: 1; }
+/* Le verre s'inverse avec le thème. Sur du papier, les couleurs de rang sont des
+   bruns sombres : posées sur un verre noir, elles devenaient illisibles. */
+:root[data-theme="papier"] .medaille {
+  background: rgb(255 255 255 / .74);
+  box-shadow: inset 0 0 0 .5px rgb(0 0 0 / .14);
+}
+.carte-corps { display: flex; flex-direction: column; gap: 7px; padding: 14px 16px 13px; flex: 1; }
 .carte-haut { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
 .carte-titre {
   font: 700 15.5px/1.3 var(--font); letter-spacing: -.018em; color: var(--ink);
@@ -714,55 +756,179 @@ body.page-seule .logo { width: auto; }
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
 }
 .carte-titre:hover { color: var(--accent); }
+.carte-desc {
+  margin: 0; color: var(--muted); font-size: 13.5px; line-height: 1.48;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* ---------------------------------------------------------------------------
+   Les couvertures
+   Dans ce catalogue, presque rien n'a de photo : un skill, un prompt, un lien
+   n'en ont pas, et on ne va pas en inventer. L'index était donc un mur de texte
+   gris. Chaque partage porte maintenant une couverture faite de trois choses
+   qui lui appartiennent : la couleur de sa catégorie, un motif tiré de son
+   identifiant — toujours le même, jamais tiré au sort — et son propre contenu
+   posé dessus en chasse fixe. De loin, une matière et une couleur ; de près, le
+   début du prompt. C'est la différence entre décorer et montrer.
+   --------------------------------------------------------------------------- */
+.couv {
+  position: relative; display: block; overflow: hidden; isolation: isolate;
+  /* Proportion de couverture, mais bornée : sur une carte large, un 16/9 plein
+     poussait le titre sous la ligne de flottaison. */
+  aspect-ratio: 16 / 9; max-height: 172px; min-height: 108px;
+  text-decoration: none;
+  /* Le dégradé part de la surface qui porte la couverture, pas du fond de la
+     page : sinon la couverture est plus sombre que la carte sur laquelle elle
+     est posée, et la carte a l'air d'avoir un trou en haut. */
+  background: linear-gradient(152deg,
+    color-mix(in srgb, var(--k, var(--accent)) 30%, var(--surface)),
+    color-mix(in srgb, var(--k, var(--accent)) 7%, var(--surface)));
+  border-bottom: 1px solid var(--line);
+}
+/* Le motif. Un seul pseudo-élément, huit dessins, choisis par l'empreinte du
+   partage. Débordant de 20 % pour qu'aucun motif ne s'arrête sur un bord. */
+.couv::before {
+  content: ''; position: absolute; inset: -20%; z-index: 0;
+  color: var(--k, var(--accent)); opacity: .34;
+  --trait: color-mix(in srgb, currentColor 72%, transparent);
+  transition: opacity .16s ease;
+}
+.couv[data-motif="0"]::before { background-image: repeating-linear-gradient(135deg, var(--trait) 0 1px, transparent 1px 9px); }
+.couv[data-motif="1"]::before { background-image: radial-gradient(currentColor .9px, transparent 1.4px); background-size: 12px 12px; }
+.couv[data-motif="2"]::before { background-image: repeating-linear-gradient(0deg, var(--trait) 0 1px, transparent 1px 8px); }
+.couv[data-motif="3"]::before {
+  background-image: repeating-linear-gradient(90deg, var(--trait) 0 1px, transparent 1px 12px),
+                    repeating-linear-gradient(0deg, var(--trait) 0 1px, transparent 1px 12px);
+}
+.couv[data-motif="4"]::before { background-image: repeating-radial-gradient(circle at 14% 116%, transparent 0 15px, var(--trait) 15px 16px); }
+.couv[data-motif="5"]::before {
+  background-image: repeating-linear-gradient(45deg, var(--trait) 0 1px, transparent 1px 11px),
+                    repeating-linear-gradient(-45deg, var(--trait) 0 1px, transparent 1px 11px);
+}
+.couv[data-motif="6"]::before {
+  background-image: radial-gradient(circle at 84% 14%, currentColor 0 13%, transparent 14%),
+                    radial-gradient(circle at 84% 14%, transparent 0 26%, var(--trait) 26% 27%, transparent 28%),
+                    radial-gradient(circle at 84% 14%, transparent 0 40%, var(--trait) 40% 41%, transparent 42%);
+}
+.couv[data-motif="7"]::before {
+  background-image: repeating-linear-gradient(135deg, var(--trait) 0 2px, transparent 2px 7px),
+                    repeating-linear-gradient(0deg, var(--trait) 0 1px, transparent 1px 15px);
+}
+.carte:hover .couv::before, .carte:focus-within .couv::before,
+.item:hover .couv::before, .item:focus-within .couv::before { opacity: .46; }
+
+/* L'extrait : le vrai contenu du partage, en petit, fondu vers le bas. Ce n'est
+   pas un faux-texte — c'est le prompt qu'on va copier, lisible si on s'approche. */
+.couv-extrait {
+  position: absolute; inset: 0; z-index: 1; padding: 12px 14px;
+  font: 10.5px/1.6 var(--mono); white-space: pre-wrap; word-break: break-word;
+  color: color-mix(in srgb, var(--k, var(--accent)) 46%, var(--ink));
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(180deg, #000 38%, transparent 94%);
+  mask-image: linear-gradient(180deg, #000 38%, transparent 94%);
+}
+/* Le mot : ce qui tient lieu de contenu quand il n'y en a pas à montrer — le
+   domaine d'un lien, l'extension d'un fichier, le nombre de votes. */
+.couv-mot {
+  position: absolute; inset: 0; z-index: 1; padding: 12px;
+  display: grid; place-items: center; text-align: center; word-break: break-word;
+  font: 700 20px/1.2 var(--mono); letter-spacing: -.025em;
+  color: color-mix(in srgb, var(--k, var(--accent)) 64%, var(--ink));
+}
+/* La catégorie en grand, quand c'est tout ce qu'il y a à montrer. */
+.couv-cote {
+  font-size: 26px; letter-spacing: .14em; text-transform: uppercase;
+  color: color-mix(in srgb, var(--k, var(--accent)) 76%, var(--ink));
+  opacity: .78;
+}
+/* L'adresse d'un lien. Le domaine en petit au-dessus, le chemin en grand : sur
+   quinze liens dont douze vers le même site, c'est le chemin qui dit lequel. */
+.couv-lien {
+  position: absolute; inset: 0; z-index: 1; padding: 13px 15px;
+  display: flex; flex-direction: column; justify-content: flex-end; gap: 5px; min-width: 0;
+}
+.couv-lien small {
+  font: 600 10.5px var(--mono); letter-spacing: .08em; text-transform: uppercase;
+  color: color-mix(in srgb, var(--k, var(--accent)) 50%, var(--ink)); opacity: .8;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.couv-lien b {
+  font: 700 17px/1.26 var(--mono); letter-spacing: -.03em; word-break: break-word;
+  color: color-mix(in srgb, var(--k, var(--accent)) 70%, var(--ink));
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.couv-photo { background: var(--bg-deep); }
+.couv-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* La vignette de l'index : la même couverture, à la taille d'une cote. L'extrait
+   n'y est plus lisible et ce n'est pas le but — il y fait une trame, et c'est à
+   ça qu'on reconnaît un prompt d'un lien en descendant la page. */
+.couv-mini {
+  width: 94px; height: 60px; aspect-ratio: auto; max-height: none; min-height: 0; flex: none;
+  border: 1px solid var(--line); border-radius: var(--r-sm); border-bottom-color: var(--line);
+}
+.couv-mini .couv-extrait { padding: 5px 6px; font-size: 5.6px; line-height: 1.5; }
+.couv-mini .couv-mot { padding: 5px; font-size: 11px; letter-spacing: -.02em; }
+.couv-mini .couv-cote { font-size: 12px; letter-spacing: .1em; }
+.couv-mini .couv-lien { padding: 6px 7px; gap: 2px; }
+/* À la taille d'une vignette, le domaine est déjà écrit dans la ligne à côté :
+   seul le chemin reste, et il y fait une trame plutôt qu'une légende. */
+.couv-mini .couv-lien small { display: none; }
+.couv-mini .couv-lien b { font-size: 8px; line-height: 1.34; -webkit-line-clamp: 3; }
+.couv-mini::before { inset: -30%; }
 .carte-bas {
   display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; overflow: hidden;
   margin-top: auto; padding-top: 11px; border-top: 1px solid var(--line);
-  font: 12.5px var(--mono); font-variant-numeric: tabular-nums; color: var(--muted);
+  font: 12.5px var(--font); font-variant-numeric: tabular-nums; color: var(--muted);
 }
 .carte-bas > * { flex: none; }
 .carte-auteur { margin-left: auto; min-width: 0; overflow: hidden; white-space: nowrap; font-family: var(--font); }
-.carte-detail { font: 12.5px var(--mono); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-
-/* Miniatures */
-.thumb { display: block; width: 86px; height: 58px; border-radius: var(--r-sm); overflow: hidden; background: var(--bg-deep); flex: none; }
-.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.carte-detail { font: 12.5px var(--font); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 
 /* ===========================================================================
    12. Le bandeau d'accueil et l'étagère du haut
    =========================================================================== */
+/* Un panneau posé sur la page : arrondi, sans cadre, avec la même ombre basse
+   que les cartes. Plus de filet de couleur sur la tranche — ce qui dit « ceci est
+   un bloc », maintenant, c'est sa forme. */
 .start {
   display: flex; align-items: center; justify-content: space-between; gap: 20px;
-  border: 1px solid var(--line); border-left: 2px solid var(--brand);
-  padding: 14px 18px; margin-bottom: 26px; background: var(--surface);
+  border: 0; border-radius: var(--r-lg); box-shadow: var(--ombre-1);
+  padding: 18px 20px; margin-bottom: 26px; background: var(--surface);
 }
-.start b { display: block; font-size: 15.5px; color: var(--ink); letter-spacing: -.015em; }
-.start span { color: var(--muted); font-size: 14px; }
+.start b { display: block; font-size: 16px; color: var(--ink); letter-spacing: -.02em; }
+.start span { color: var(--muted); font-size: 14.5px; }
 .start .btn { flex: none; }
-.intro { border: 1px solid var(--line); padding: 18px; margin-bottom: 18px; display: flex; gap: 18px; align-items: center; justify-content: space-between; }
-.intro b { display: block; font-size: 16px; color: var(--ink); }
+.intro {
+  border: 0; border-radius: var(--r-lg); box-shadow: var(--ombre-1);
+  background: var(--surface);
+  padding: 18px 20px; margin-bottom: 18px;
+  display: flex; gap: 18px; align-items: center; justify-content: space-between;
+}
+.intro b { display: block; font-size: 16px; color: var(--ink); letter-spacing: -.02em; }
 .intro span { color: var(--muted); font-size: 14.5px; }
 
 /* L'étagère : les trois premiers de la semaine, posés en haut de l'index.
    Dans une bibliothèque, la sélection est sur une table à l'entrée — pas dans
    une colonne de droite que personne ne lit. */
-.etagere { margin-bottom: 28px; }
-.etagere-tete { display: flex; align-items: baseline; gap: 12px; padding-bottom: 9px; border-bottom: 1px solid var(--line-strong); }
+.etagere { margin-bottom: 30px; }
+.etagere-tete { display: flex; align-items: baseline; gap: 12px; padding-bottom: 11px; border-bottom: 0; }
 .etagere-tete .cote { padding: 0; }
-.etagere-tete a { margin-left: auto; font-size: 13px; color: var(--muted); text-decoration: none; }
-.etagere-tete a:hover { color: var(--accent); }
-.etagere-liste { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-top: 0; }
+.etagere-tete a { margin-left: auto; font: 590 14px var(--font); letter-spacing: -.01em; color: var(--accent); text-decoration: none; }
+.etagere-tete a:hover { text-decoration: underline; }
+.etagere-liste { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; background: none; border: 0; }
 .etagere-item {
-  position: relative; display: flex; flex-direction: column; gap: 7px;
-  padding: 14px 15px 13px; background: var(--bg); text-decoration: none;
-  transition: background-color .14s;
+  position: relative; display: flex; flex-direction: column; gap: 8px;
+  padding: 15px 16px 14px; background: var(--surface); text-decoration: none;
+  border-radius: var(--radius); box-shadow: var(--ombre-1);
+  transition: transform .3s var(--ease), box-shadow .3s var(--ease);
 }
-.etagere-item:hover { background: var(--surface); }
-.etagere-item::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--k, var(--line-strong)); opacity: .5; }
-.etagere-rang { font: 700 10.5px var(--mono); letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+.etagere-item:hover { transform: translateY(-2px); box-shadow: 0 2px 5px rgb(0 0 0 / .24), 0 18px 36px -16px rgb(0 0 0 / .5); }
+@media (prefers-reduced-motion: reduce) { .etagere-item:hover { transform: none; } }
+.etagere-rang { font: 590 12px var(--font); letter-spacing: -.004em; text-transform: none; color: var(--k, var(--muted)); }
 .etagere-item.podium .etagere-rang { color: var(--rang); }
-.etagere-titre { font: 700 14.5px/1.32 var(--font); letter-spacing: -.015em; color: var(--ink); text-wrap: balance; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.etagere-item:hover .etagere-titre { color: var(--accent); }
-.etagere-pts { font: 12px var(--mono); font-variant-numeric: tabular-nums; color: var(--muted); margin-top: auto; }
+.etagere-titre { font: 700 15px/1.32 var(--font); letter-spacing: -.022em; color: var(--ink); text-wrap: balance; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.etagere-pts { font: 13px var(--font); font-variant-numeric: tabular-nums; color: var(--muted); margin-top: auto; }
 
 /* « Voir plus » */
 .plus { display: flex; margin: 22px 0 4px; }
@@ -775,7 +941,7 @@ body.page-seule .logo { width: auto; }
   display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 28px 36px;
 }
 .colophon section { display: flex; flex-direction: column; gap: 8px; }
-.colophon h3 { margin: 0; font: 600 11.5px var(--mono); letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+.colophon h3 { margin: 0; font: 600 11.5px var(--font); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
 .colophon p { margin: 0; font-size: 13.5px; line-height: 1.6; color: var(--muted); }
 .colophon ol { margin: 0; padding-left: 18px; font-size: 13.5px; line-height: 1.6; color: var(--muted); }
 .colophon li { margin-bottom: 5px; }
@@ -796,7 +962,7 @@ body.page-seule .logo { width: auto; }
    =========================================================================== */
 .back {
   display: inline-flex; align-items: center; gap: 6px; margin-bottom: 26px;
-  font: 600 11.5px var(--mono); letter-spacing: .07em; text-transform: uppercase;
+  font: 600 11.5px var(--font); letter-spacing: .04em; text-transform: uppercase;
   color: var(--muted); text-decoration: none;
 }
 .back:hover { color: var(--ink); }
@@ -820,14 +986,20 @@ body.page-seule .logo { width: auto; }
 }
 
 /* Les blocs en creux : code, pièces jointes, liens. */
-.block { border: 1px solid var(--line); background: var(--bg-deep); margin: 22px 0; overflow: hidden; }
+/* Le bloc de contenu : un panneau arrondi, pas un cadre. Son en-tête ne porte
+   plus de filet — c'est le changement de fond qui dit où le contenu commence. */
+.block {
+  border: 0; background: var(--surface); margin: 24px 0; overflow: hidden;
+  border-radius: var(--radius); box-shadow: var(--ombre-1);
+}
 .block-head {
   display: flex; justify-content: space-between; align-items: center; gap: 10px;
-  padding: 9px 14px; background: var(--surface); border-bottom: 1px solid var(--line);
-  font: 600 11.5px var(--mono); letter-spacing: .07em; text-transform: uppercase; color: var(--muted);
+  padding: 11px 16px 9px; background: none; border-bottom: 0;
+  font: 590 12px var(--font); letter-spacing: .035em; text-transform: uppercase; color: var(--muted);
 }
 pre.code {
-  margin: 0; padding: 16px; font: 13.5px/1.7 var(--mono);
+  margin: 0 12px 12px; padding: 16px; font: 13.5px/1.7 var(--mono);
+  background: var(--bg-deep); border-radius: var(--r-sm);
   white-space: pre-wrap; word-break: break-word; overflow: auto; max-height: 520px;
   color: var(--ink-soft);
 }
@@ -835,10 +1007,10 @@ pre.code {
 .attach:hover { background: var(--surface); }
 .attach .ico { width: 20px; height: 20px; color: var(--k, var(--muted)); }
 .attach b { display: block; font-size: 14.5px; color: var(--ink); overflow-wrap: anywhere; }
-.attach small { color: var(--muted); font: 12.5px var(--mono); }
+.attach small { color: var(--muted); font: 12.5px var(--font); }
 .attach .go {
   margin-left: auto; color: var(--accent); white-space: nowrap;
-  font: 600 11.5px var(--mono); letter-spacing: .07em; text-transform: uppercase;
+  font: 590 14px var(--font); letter-spacing: -.01em; text-transform: none;
 }
 .post-actions {
   display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
@@ -866,7 +1038,7 @@ pre.code {
 
 /* Le mode d'emploi d'un skill : trois étapes, numérotées en chasse fixe. */
 .mode-emploi { margin: 26px 0; }
-.mode-emploi h2 { font: 600 11.5px var(--mono); letter-spacing: .09em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+.mode-emploi h2 { font: 600 11.5px var(--font); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
 .etapes { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; counter-reset: etape; border-top: 1px solid var(--line); max-width: var(--mesure); }
 .etapes li {
   display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 14px; align-items: baseline;
@@ -874,7 +1046,7 @@ pre.code {
 }
 .etapes li::before {
   counter-increment: etape; content: counter(etape, decimal-leading-zero);
-  font: 600 11.5px var(--mono); letter-spacing: .05em; color: var(--k, var(--accent));
+  font: 600 11.5px var(--font); letter-spacing: .05em; color: var(--k, var(--accent));
 }
 .etapes b { display: block; margin-bottom: 2px; color: var(--ink); }
 .etapes span { color: var(--muted); }
@@ -936,19 +1108,19 @@ pre.code {
 .poll-opt.mine .poll-bar { background: color-mix(in srgb, var(--k-sondage) 26%, transparent); }
 .poll-text, .poll-num { position: relative; }
 .poll-text { overflow-wrap: anywhere; }
-.poll-num { margin-left: auto; font: 700 13px var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.poll-num { margin-left: auto; font: 700 13px var(--font); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .poll-num small { font-weight: 400; color: var(--muted); margin-left: 7px; }
 .poll-foot { margin: 8px 0 0; font-size: 13.5px; color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { .poll-bar { transition: none; } }
 
 /* Les réponses. */
 .reponses { margin: 44px 0 0; padding-top: 22px; border-top: 1px solid var(--line-strong); max-width: var(--mesure); }
-.reponses h2 { display: flex; align-items: center; gap: 8px; font: 600 11.5px var(--mono); letter-spacing: .09em; text-transform: uppercase; color: var(--muted); margin: 0 0 16px; }
+.reponses h2 { display: flex; align-items: center; gap: 8px; font: 600 11.5px var(--font); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin: 0 0 16px; }
 .reponses h2 .ico { width: 14px; height: 14px; }
 .fil { list-style: none; margin: 0 0 20px; padding: 0; display: flex; flex-direction: column; }
 .reponse { padding: 14px 0; border-bottom: 1px solid var(--line); }
 .reponse:first-child { border-top: 1px solid var(--line); }
-.reponse-tete { display: flex; align-items: center; gap: 10px; font: 12.5px var(--mono); color: var(--muted); margin-bottom: 7px; }
+.reponse-tete { display: flex; align-items: center; gap: 10px; font: 12.5px var(--font); color: var(--muted); margin-bottom: 7px; }
 .reponse-tete .auteur { font: 600 13px var(--font); color: var(--ink); }
 .reponse-sup { margin-left: auto; border: 0; background: none; color: var(--muted); cursor: pointer; padding: 4px; border-radius: 3px; display: inline-flex; }
 .reponse-sup .ico { width: 14px; height: 14px; }
@@ -962,7 +1134,7 @@ pre.code {
 .reponse-invite a { color: var(--accent); font-weight: 600; }
 
 .report { margin-top: 36px; font-size: 13.5px; color: var(--muted); max-width: var(--mesure); }
-.report summary { cursor: pointer; padding: 6px 0; font: 600 11.5px var(--mono); letter-spacing: .07em; text-transform: uppercase; }
+.report summary { cursor: pointer; padding: 6px 0; font: 600 11.5px var(--font); letter-spacing: .04em; text-transform: uppercase; }
 .report form { display: flex; gap: 10px; margin: 12px 0 8px; }
 .report input { flex: 1; }
 .reasons { margin: 8px 0 0; padding-left: 18px; }
@@ -977,18 +1149,22 @@ pre.code {
 .field > label, .field > .lbl { display: block; font: 600 13px var(--font); color: var(--ink); margin-bottom: 6px; }
 .field small { display: block; color: var(--muted); font-size: 13px; margin-top: 7px; line-height: 1.55; }
 input[type=text], input[type=email], input[type=password], input[type=url], input[type=number], textarea, select {
-  width: 100%; padding: 9px 12px; font-size: 15px;
-  border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--surface);
-  transition: border-color .14s, box-shadow .14s;
+  width: 100%; padding: 11px 13px;
+  /* 16 px au minimum : en dessous, un iPhone zoome tout seul sur le champ dès
+     qu'on le touche, et la page reste de travers une fois la saisie finie. */
+  font-size: 16px; letter-spacing: -.012em;
+  border: 1px solid transparent; border-radius: 12px;
+  background: var(--surface-2); color: var(--ink);
+  transition: background-color .18s var(--ease-doux), border-color .16s, box-shadow .16s;
 }
-input:hover, textarea:hover, select:hover { border-color: var(--muted); }
+input:hover, textarea:hover, select:hover { background: var(--surface-3); }
 input[type=text]:focus, input[type=email]:focus, input[type=password]:focus,
 input[type=url]:focus, input[type=number]:focus, textarea:focus, select:focus {
-  border-color: var(--accent); outline: none;
-  box-shadow: 0 0 0 3px var(--accent-subtle);
+  border-color: var(--accent); background: var(--surface); outline: none;
+  box-shadow: 0 0 0 4px var(--accent-subtle);
 }
-textarea { min-height: 124px; resize: vertical; line-height: 1.6; }
-textarea.code { font: 13px/1.6 var(--mono); min-height: 180px; }
+textarea { min-height: 132px; resize: vertical; line-height: 1.6; }
+textarea.code { font: 13.5px/1.6 var(--mono); min-height: 190px; }
 input[type=file] { font-size: 14px; }
 /* Deux champs qui n'en font qu'un : la famille du modèle, puis sa version. */
 .duo { display: flex; gap: 8px; }
@@ -1011,7 +1187,7 @@ input[type=file] { font-size: 14px; }
 }
 .step:first-of-type { margin-top: 0; }
 .step span {
-  font: 600 11.5px var(--mono); letter-spacing: .08em; color: var(--accent);
+  font: 600 11.5px var(--font); letter-spacing: .04em; color: var(--accent);
   flex: none; background: none; width: auto; height: auto; display: inline;
 }
 .typecards { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1px; border: 1px solid var(--line); max-width: none; }
@@ -1024,7 +1200,7 @@ input[type=file] { font-size: 14px; }
 .typecards label:hover { background: var(--surface); }
 .typecards label b { display: block; font-size: 14.5px; color: var(--ink); }
 .typecards label span { display: block; font-size: 13.5px; color: var(--muted); line-height: 1.45; }
-.typecards label em { display: block; font: 12.5px var(--mono); color: var(--muted); font-style: normal; margin-top: 6px; }
+.typecards label em { display: block; font: 12.5px var(--font); color: var(--muted); font-style: normal; margin-top: 6px; }
 .typecards input:checked + label { background: var(--surface); border-left-color: var(--accent); }
 .typecards input:checked + label b { color: var(--accent); }
 .typecards input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: -2px; }
@@ -1049,7 +1225,7 @@ input[type=file] { font-size: 14px; }
 }
 .trop-lourd > b { display: block; color: var(--ink); margin-bottom: 8px; }
 .trop-lourd p { margin: 8px 0; color: var(--muted); }
-.trop-lourd h4 { margin: 16px 0 6px; font: 600 11.5px var(--mono); letter-spacing: .07em; text-transform: uppercase; color: var(--ink); }
+.trop-lourd h4 { margin: 16px 0 6px; font: 600 11.5px var(--font); letter-spacing: .04em; text-transform: uppercase; color: var(--ink); }
 .trop-lourd ul { margin: 6px 0; padding-left: 20px; color: var(--muted); }
 .trop-lourd li { margin-bottom: 6px; }
 .trop-lourd b { color: var(--ink); }
@@ -1081,15 +1257,15 @@ input[type=file] { font-size: 14px; }
 .top-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line-strong); }
 .top-line { display: flex; align-items: center; gap: 14px; padding: 13px 4px; border-bottom: 1px solid var(--line); transition: background-color .13s; }
 .top-line:hover { background: color-mix(in srgb, var(--ink) 3%, transparent); }
-.top-rang { flex: none; width: 24px; font: 700 12px var(--mono); font-variant-numeric: tabular-nums; color: var(--muted); }
+.top-rang { flex: none; width: 24px; font: 700 12px var(--font); font-variant-numeric: tabular-nums; color: var(--muted); }
 .top-line.podium .top-rang { color: var(--rang); }
 .top-main { flex: 1; min-width: 0; }
 .top-titre { font-weight: 700; color: var(--ink); text-decoration: none; overflow-wrap: anywhere; letter-spacing: -.015em; }
 .top-titre:hover { color: var(--accent); }
 .top-main .meta { margin-top: 3px; }
 .top-pts { flex: none; text-align: right; line-height: 1.1; }
-.top-pts b { display: block; font: 700 16px var(--mono); font-variant-numeric: tabular-nums; color: var(--ink); }
-.top-pts small { font: 10.5px var(--mono); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.top-pts b { display: block; font: 700 16px var(--font); font-variant-numeric: tabular-nums; color: var(--ink); }
+.top-pts small { font: 10.5px var(--font); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
 
 .coll-liste { display: flex; flex-direction: column; border-top: 1px solid var(--line-strong); margin-bottom: 26px; }
 .coll-carte { padding: 16px 4px; border-bottom: 1px solid var(--line); transition: background-color .13s; }
@@ -1097,7 +1273,7 @@ input[type=file] { font-size: 14px; }
 .coll-titre { font: 700 17px var(--font); color: var(--ink); text-decoration: none; letter-spacing: -.022em; display: block; margin-bottom: 4px; }
 .coll-titre:hover { color: var(--accent); }
 .coll-desc { margin: 0 0 9px; color: var(--muted); font-size: 14.5px; line-height: 1.55; max-width: var(--mesure); }
-.coll-compte { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 12.5px; }
+.coll-compte { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font); font-size: 12.5px; }
 .coll-compte .ico { width: 13px; height: 13px; }
 
 /* Les étapes d'une collection : la suite numérotée, reliée par un filet.
@@ -1110,7 +1286,7 @@ input[type=file] { font-size: 14px; }
 .coll-num {
   width: 23px; height: 23px; display: grid; place-items: center; border-radius: 3px;
   background: var(--surface-2); border: 1px solid var(--line); color: var(--muted);
-  font: 700 11px var(--mono); z-index: 1;
+  font: 700 11px var(--font); z-index: 1;
 }
 .coll-item { min-width: 0; padding-top: 1px; }
 .coll-note { margin: 6px 0 0; font-size: 14.5px; line-height: 1.6; color: var(--ink-soft); }
@@ -1133,7 +1309,7 @@ input[type=file] { font-size: 14px; }
 .profil-rond {
   flex: none; width: 50px; height: 50px; border-radius: var(--radius); display: grid; place-items: center;
   background: var(--surface-2); border: 1px solid var(--line); color: var(--ink);
-  font: 700 20px var(--mono); letter-spacing: -.02em;
+  font: 700 20px var(--font); letter-spacing: -.02em;
 }
 .profil-nom { min-width: 0; }
 .profil-nom h1 { margin: 0; font-size: 26px; letter-spacing: -.035em; overflow-wrap: anywhere; }
@@ -1147,15 +1323,15 @@ input[type=file] { font-size: 14px; }
 }
 .profil-chiffres div { padding: 14px 16px; border-right: 1px solid var(--line); }
 .profil-chiffres div:last-child { border-right: 0; }
-.profil-chiffres b { display: block; font: 700 21px var(--mono); font-variant-numeric: tabular-nums; color: var(--ink); letter-spacing: -.02em; }
-.profil-chiffres span { display: block; margin-top: 3px; font: 600 10.5px var(--mono); letter-spacing: .07em; text-transform: uppercase; color: var(--muted); line-height: 1.4; }
+.profil-chiffres b { display: block; font: 700 21px var(--font); font-variant-numeric: tabular-nums; color: var(--ink); letter-spacing: -.02em; }
+.profil-chiffres span { display: block; margin-top: 3px; font: 600 10.5px var(--font); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); line-height: 1.4; }
 .profil-tags { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-bottom: 28px; }
 .profil-titre {
   margin: 36px 0 0; padding-bottom: 9px; border-bottom: 1px solid var(--line-strong);
-  font: 600 11.5px var(--mono); letter-spacing: .09em; text-transform: uppercase; color: var(--muted);
+  font: 600 11.5px var(--font); letter-spacing: .04em; text-transform: uppercase; color: var(--muted);
   display: flex; align-items: baseline; gap: 12px;
 }
-.profil-titre small { font: 400 11.5px var(--mono); letter-spacing: .05em; text-transform: none; color: var(--muted); }
+.profil-titre small { font: 400 11.5px var(--font); letter-spacing: .05em; text-transform: none; color: var(--muted); }
 .profil .notice { margin: 18px 0 0; }
 
 /* ===========================================================================
@@ -1175,20 +1351,20 @@ input[type=file] { font-size: 14px; }
 .promo-form input[type="text"] { flex: 1 1 200px; }
 .admin-sous-titre {
   margin: 34px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line-strong);
-  font: 600 11.5px var(--mono); letter-spacing: .09em; text-transform: uppercase; color: var(--muted);
+  font: 600 11.5px var(--font); letter-spacing: .04em; text-transform: uppercase; color: var(--muted);
   display: flex; align-items: baseline; gap: 12px;
 }
-.admin-sous-titre small { font: 400 11.5px var(--mono); text-transform: none; letter-spacing: .04em; }
+.admin-sous-titre small { font: 400 11.5px var(--font); text-transform: none; letter-spacing: .04em; }
 
 .table { width: 100%; border-collapse: collapse; font-size: 14.5px; border: 1px solid var(--line); }
 .table th, .table td { text-align: left; padding: 10px 13px; border-bottom: 1px solid var(--line); }
-.table th { font: 600 10.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--bg-deep); white-space: nowrap; }
+.table th { font: 600 10.5px var(--font); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); background: var(--bg-deep); white-space: nowrap; }
 .table td.mono, .table .mono { font-variant-numeric: tabular-nums; }
 .table tbody tr:hover { background: color-mix(in srgb, var(--ink) 3%, transparent); }
 .table tr:last-child td { border-bottom: 0; }
 .status {
   display: inline-flex; align-items: center; gap: 5px;
-  font: 600 10.5px var(--mono); letter-spacing: .07em; text-transform: uppercase;
+  font: 600 10.5px var(--font); letter-spacing: .04em; text-transform: uppercase;
   color: var(--c, var(--muted));
 }
 .status::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
@@ -1213,26 +1389,26 @@ input[type=file] { font-size: 14px; }
 .legal h2 { font-size: 18px; margin: 36px 0 8px; letter-spacing: -.022em; }
 .legal p, .legal li { font-size: 15.5px; line-height: 1.7; }
 .legal ul { padding-left: 20px; }
-.legal .updated { color: var(--muted); font: 12.5px var(--mono); margin: 0 0 28px; }
+.legal .updated { color: var(--muted); font: 12.5px var(--font); margin: 0 0 28px; }
 .legal .draft { border-left: 2px solid var(--warn); padding: 12px 15px; background: color-mix(in srgb, var(--warn) 9%, transparent); font-size: 14.5px; margin-bottom: 26px; }
 mark.todo { background: color-mix(in srgb, var(--warn) 26%, transparent); color: inherit; padding: 0 5px; border-radius: 3px; }
 
 /* ===========================================================================
    18. Le pied de page
    =========================================================================== */
-.site-footer { border-top: 1px solid var(--line); margin-left: var(--rail); background: var(--bg-deep); }
+.site-footer { border-top: 1px solid var(--line); margin-left: var(--rail); background: none; }
 .foot {
-  padding: 28px 36px 44px; display: flex; gap: 14px 32px;
+  padding: 32px 36px 48px; display: flex; gap: 14px 32px;
   align-items: center; justify-content: space-between; flex-wrap: wrap;
-  font-size: 13.5px; color: var(--muted);
+  font-size: 14px; letter-spacing: -.01em; color: var(--muted);
 }
-.foot .logo { font-size: 16px; color: var(--muted); width: auto; }
-.foot nav { display: flex; flex-wrap: wrap; gap: 6px 20px; }
+.foot .logo { font-size: 17px; color: var(--muted); width: auto; }
+.foot nav { display: flex; flex-wrap: wrap; gap: 6px 22px; }
 .foot a { text-decoration: none; }
 .foot a:hover { color: var(--accent); }
-.credit { flex-basis: 100%; margin: 12px 0 0; font-size: 13px; color: var(--muted); }
-.credit a { color: var(--ink-soft); text-decoration: none; border-bottom: 1px solid var(--line-strong); }
-.credit a:hover { color: var(--accent); border-bottom-color: currentColor; }
+.credit { flex-basis: 100%; margin: 12px 0 0; font-size: 13.5px; color: var(--muted); }
+.credit a { color: var(--accent); text-decoration: none; border: 0; }
+.credit a:hover { text-decoration: underline; }
 
 /* ===========================================================================
    19. La palette de commandes
@@ -1242,17 +1418,20 @@ mark.todo { background: color-mix(in srgb, var(--warn) 26%, transparent); color:
    =========================================================================== */
 .palette-fond {
   position: fixed; inset: 0; z-index: 90; background: var(--voile);
-  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
   display: flex; justify-content: center; align-items: flex-start;
-  padding: 10vh 20px 20px;
-  opacity: 0; transition: opacity .14s ease;
+  padding: 12vh 20px 20px;
+  opacity: 0; transition: opacity .22s var(--ease-doux);
 }
 .palette-fond.on { opacity: 1; }
+/* Une feuille, pas une fenêtre : très arrondie, sans cadre, posée en avant de la
+   page par son ombre et par le flou derrière elle. Elle arrive en montant et en
+   grandissant très légèrement — le geste d'une chose qui se présente. */
 .palette {
-  width: 100%; max-width: 580px; max-height: 70vh; display: flex; flex-direction: column;
-  background: var(--bg); border: 1px solid var(--line-strong); border-radius: var(--r-lg);
-  box-shadow: var(--ombre-3); overflow: hidden;
-  transform: translateY(-6px) scale(.99); transition: transform .16s cubic-bezier(.2,.8,.3,1);
+  width: 100%; max-width: 600px; max-height: 70vh; display: flex; flex-direction: column;
+  background: var(--surface); border: 0; border-radius: var(--r-lg);
+  box-shadow: var(--ombre-3), inset 0 0 0 .5px var(--line-strong); overflow: hidden;
+  transform: translateY(10px) scale(.97); transition: transform .34s var(--ease);
 }
 .palette-fond.on .palette { transform: none; }
 @media (prefers-reduced-motion: reduce) {
@@ -1289,7 +1468,7 @@ mark.todo { background: color-mix(in srgb, var(--warn) 26%, transparent); color:
 .palette-vide { padding: 28px 16px; color: var(--muted); font-size: 14.5px; }
 .palette-pied {
   display: flex; align-items: center; gap: 16px; padding: 9px 14px; flex: none;
-  border-top: 1px solid var(--line); font: 11.5px var(--mono); color: var(--muted);
+  border-top: 1px solid var(--line); font: 11.5px var(--font); color: var(--muted);
 }
 .palette-pied span { display: inline-flex; align-items: center; gap: 5px; }
 
@@ -1321,7 +1500,7 @@ mark.todo { background: color-mix(in srgb, var(--warn) 26%, transparent); color:
   position: absolute; top: -5px; right: -5px; min-width: 16px; height: 16px; padding: 0 4px;
   display: grid; place-items: center; border-radius: var(--r-pill);
   background: var(--accent-emphasis); color: var(--accent-ink);
-  font: 700 10px var(--mono); line-height: 1;
+  font: 700 10px var(--font); line-height: 1;
 }
 
 /* La liste : les mêmes filets que l'index. Ce qui n'a pas été lu porte un repère
@@ -1349,18 +1528,19 @@ mark.todo { background: color-mix(in srgb, var(--warn) 26%, transparent); color:
   font-size: 13.5px; line-height: 1.5; color: var(--muted);
   padding-left: 10px; border-left: 2px solid var(--line-strong);
 }
-.notif-date { font: 12px var(--mono); color: var(--muted); white-space: nowrap; }
+.notif-date { font: 12px var(--font); color: var(--muted); white-space: nowrap; }
 
 /* ===========================================================================
    20. Messages, barre de chargement
    =========================================================================== */
 .toast {
-  position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 10px);
+  position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 14px);
   max-width: min(520px, calc(100vw - 40px)); z-index: 95;
-  background: var(--surface-3); color: var(--ink); border: 1px solid var(--line-strong);
-  box-shadow: var(--ombre-3);
-  padding: 11px 17px; border-radius: var(--radius); font-size: 14.5px;
-  opacity: 0; transition: opacity .18s, transform .18s; pointer-events: none;
+  background: var(--surface-3); color: var(--ink); border: 0;
+  box-shadow: var(--ombre-3), inset 0 0 0 .5px var(--line-strong);
+  -webkit-backdrop-filter: var(--flou); backdrop-filter: var(--flou);
+  padding: 12px 18px; border-radius: var(--r-pill); font-size: 14.5px; letter-spacing: -.012em;
+  opacity: 0; transition: opacity .24s var(--ease-doux), transform .34s var(--ease); pointer-events: none;
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
@@ -1377,9 +1557,9 @@ body.chargement::before { width: 80%; opacity: 1; transition: width 2.5s cubic-b
    l'élément neuf, donc elle part toute seule à chaque page, sans une ligne de
    JavaScript et sans retarder l'affichage d'une seule image. */
 @media (prefers-reduced-motion: no-preference) {
-  #view > * { animation: entree .2s ease both; }
+  #view > * { animation: entree .32s var(--ease) both; }
 }
-@keyframes entree { from { opacity: 0; transform: translateY(5px); } }
+@keyframes entree { from { opacity: 0; transform: translateY(8px) scale(.995); } }
 
 /* ===========================================================================
    21. Écrans moyens : le rail se replie
@@ -1438,19 +1618,26 @@ body.chargement::before { width: 80%; opacity: 1; transition: width 2.5s cubic-b
   /* Le tiroir s'arrête au-dessus de la barre du bas, sinon son pied passe dessous. */
   .rail { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
 
+  /* La barre d'onglets du téléphone : une matière translucide, posée au bord de
+     l'écran, qui laisse deviner le contenu qui défile dessous. Les libellés sont
+     écrits normalement — des petites capitales sur dix pixels ne se lisent pas. */
   .barre-bas {
     display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 35;
-    background: color-mix(in srgb, var(--bar) 94%, transparent);
-    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    background: var(--bar-plein);
     border-top: 1px solid var(--line);
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
-  .barre-bas a {
-    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
-    padding: 9px 2px 8px; text-decoration: none; color: var(--muted);
-    font: 600 10px var(--mono); letter-spacing: .05em; text-transform: uppercase;
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    .barre-bas { background: var(--bar); -webkit-backdrop-filter: var(--flou); backdrop-filter: var(--flou); }
   }
-  .barre-bas a .ico { width: 19px; height: 19px; }
+  .barre-bas a {
+    /* 49 px de haut : c'est la hauteur d'un onglet qu'on atteint sans viser. */
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+    min-height: 49px; padding: 7px 2px 6px; text-decoration: none; color: var(--muted);
+    font: 500 10.5px var(--font); letter-spacing: -.005em; text-transform: none;
+    transition: color .16s var(--ease-doux);
+  }
+  .barre-bas a .ico { width: 23px; height: 23px; }
   .barre-bas a.on { color: var(--accent); }
   .barre-bas a.appoint { color: var(--accent); }
 
@@ -1461,17 +1648,20 @@ body.chargement::before { width: 80%; opacity: 1; transition: width 2.5s cubic-b
   /* Sur un téléphone, l'étiquette passe au-dessus du titre et les faits
      dessous : trois colonnes de 90 px ne tiennent pas dans 360 px de large. */
   .item .kind { grid-column: 1; grid-row: 1; margin: 0 0 3px; }
-  .item-corps { grid-column: 1 / -1; grid-row: 2; }
+  .item-corps { grid-column: 1; grid-row: 2; }
   .item .faits { grid-column: 1 / -1; grid-row: 3; padding-top: 8px; gap: 12px; flex-wrap: wrap; }
   .item .vote-col { grid-column: 2; grid-row: 1; justify-self: end; }
-  .item .thumb { grid-column: 2; grid-row: 2; width: 72px; height: 52px; }
-  .item.has-thumb { grid-template-columns: minmax(0, 1fr) auto; }
-  .item.has-thumb .item-corps { grid-column: 1; }
-  .item.has-thumb .faits { grid-column: 1 / -1; }
+  /* La couverture se range à droite du titre, à la taille d'un pouce. */
+  .item .couv { grid-column: 2; grid-row: 2; width: 74px; height: 48px; align-self: start; }
+  .item .couv-mini .couv-extrait { font-size: 4.6px; padding: 4px 5px; }
+  .item .couv-mini .couv-mot { font-size: 9.5px; }
   .item-title { font-size: 16px; }
   .item-desc { font-size: 14px; -webkit-line-clamp: 2; }
 
+  /* Une seule colonne : un 16/9 plein ferait tenir une carte et demie par écran.
+     La couverture devient un bandeau, assez haut pour qu'on lise la matière. */
   .grille { grid-template-columns: minmax(0, 1fr); }
+  .carte .couv { max-height: 138px; }
   .toolbar { gap: 10px 14px; align-items: baseline; }
   .toolbar h1 { font-size: 19px; width: 100%; }
   .tabs a, .vues button { padding: 4px 9px; font-size: 13px; }

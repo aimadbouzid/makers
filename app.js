@@ -178,6 +178,18 @@ const videCache = () => memo.clear();
 const STATIQUE = typeof window !== 'undefined' && window.MAKERS_STATIQUE === true;
 let fondStatique = null;
 
+// La copie publiée répond aux mêmes adresses que le serveur, et doit renvoyer la
+// même forme : une liste porte un aperçu du contenu, jamais le contenu entier.
+// C'est cet aperçu que la couverture d'un partage affiche ; sans lui, la copie
+// publiée montrerait des couvertures vides là où le site complet montre le début
+// du prompt. (Voir `pourListe` dans src/posts.js, dont ceci est le jumeau.)
+const pourListe = p => {
+  const o = { ...p };
+  o.apercu = (o.content || '').slice(0, 260);
+  delete o.content;
+  return o;
+};
+
 async function chargeStatique() {
   if (fondStatique) return fondStatique;
   const r = await fetch('donnees/site.json');
@@ -272,7 +284,7 @@ async function apiStatique(chemin, method) {
       },
       posts: siens.slice()
         .sort((a, b) => points(b) - points(a) || (b.approvedAt || 0) - (a.approvedAt || 0))
-        .map(p => { const o = { ...p }; delete o.content; return o; }),
+        .map(pourListe),
       collections: collections.filter(c => (c.authorLink || '').toLowerCase() === cherche).map(habille),
     };
   }
@@ -306,7 +318,7 @@ async function apiStatique(chemin, method) {
     const depuis = Math.max(0, Number(q.get('offset')) || 0);
     const page = list.slice(depuis, depuis + n);
     return {
-      posts: page.map(p => { const o = { ...p }; delete o.content; return o; }),
+      posts: page.map(pourListe),
       total: list.length, offset: depuis,
       suite: depuis + page.length < list.length ? depuis + page.length : null,
     };
@@ -759,13 +771,87 @@ function apercu(p) {
   return '';
 }
 
-// Deux façons de voir le fil, au choix du visiteur. La liste est le réglage d'origine :
-// dense, on en voit beaucoup d'un coup. Les cartes montrent moins de partages mais
-// se parcourent à l'œil. Le choix est gardé d'une visite à l'autre.
-const VUES = { liste: 'Liste', cartes: 'Cartes' };
-let vueFil = 'liste';
+// --- Les couvertures ----------------------------------------------------------
+// Une bibliothèque de skills, de prompts et de liens n'a presque jamais d'image :
+// sur les trente-huit partages du catalogue, aucun n'en a. L'index était donc du
+// texte gris sur fond sombre, de haut en bas — une liste de courses, pas une
+// bibliothèque. Chaque partage reçoit maintenant une couverture fabriquée à partir
+// de ce qu'il est vraiment : la couleur de sa catégorie, un motif tiré de son
+// identifiant, et son propre contenu posé dessus en petit. De loin on voit une
+// matière et on distingue les catégories à la couleur ; de près on lit le début du
+// prompt. Rien n'est décoratif : tout ce qui s'affiche sort du partage lui-même.
+
+// Empreinte stable (FNV-1a) : la couverture d'un partage est la même à chaque
+// visite, sur chaque appareil. Un motif tiré au hasard changerait d'un affichage à
+// l'autre, et on ne reconnaîtrait plus un partage à son allure.
+function empreinte(id = '') {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) { h ^= id.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+
+const MOTIFS = 8;
+
+// Ce qu'on pose sur la couverture, par ordre de préférence : le contenu lui-même,
+// puis ce qui en tient lieu. Un partage fermé ne montre rien — son `content` est
+// déjà vide pour qui n'y a pas accès, et on ne fabrique pas un faux aperçu à partir
+// du titre pour remplir le cadre.
+// Quinze liens sur trente-huit partages, et presque tous sur le même site : une
+// couverture qui ne dirait que « github.com » quinze fois ne distinguerait rien.
+// C'est le chemin qui porte le nom du dépôt, donc c'est lui qu'on écrit en grand.
+function adresseCoupee(brut) {
+  try {
+    const u = new URL(brut);
+    return { hote: u.hostname.replace(/^www\./, ''), chemin: decodeURIComponent(u.pathname).replace(/^\/+|\/+$/g, '') };
+  } catch { return { hote: domain(brut), chemin: '' }; }
+}
+
+function couvertureFond(p) {
+  if (p.locked) return '';
+  // `apercu` : les premiers caractères du contenu, envoyés par le serveur avec la
+  // liste. Le contenu entier n'arrive que sur la page du partage — d'où le repli.
+  const texte = (p.apercu || p.content || '').trim();
+  if (texte) return html`<span class="couv-extrait">${texte}</span>`;
+  if (p.url) {
+    const { hote, chemin } = adresseCoupee(p.url);
+    return html`<span class="couv-lien"><small>${hote}</small><b>${chemin || hote}</b></span>`;
+  }
+  if (p.file) return html`<span class="couv-mot">${p.file.ext.toUpperCase()}</span>`;
+  if (p.poll) return html`<span class="couv-mot">${p.poll.total} vote${p.poll.total > 1 ? 's' : ''}</span>`;
+  if (p.treeCount) return html`<span class="couv-mot">${p.treeCount} fichier${p.treeCount > 1 ? 's' : ''}</span>`;
+  // Un partage qui n'a ni contenu, ni lien, ni fichier — une annonce, par exemple.
+  // Plutôt qu'un cadre vide : sa catégorie, en grand. C'est le dernier mot vrai
+  // qui reste à dire sur lui.
+  return html`<span class="couv-mot couv-cote">${TYPES[p.type]?.short || p.type}</span>`;
+}
+
+// Une vraie photo passe toujours devant la couverture fabriquée : quand il y a
+// quelque chose à montrer, on le montre.
+//
+// La couverture est décorative au sens strict : elle répète un lien et un texte
+// qui sont déjà écrits juste à côté. Elle est donc retirée du clavier et des
+// lecteurs d'écran — sinon chaque partage compterait deux fois dans l'index.
+function couverture(p, { mini = false } = {}) {
+  const thumb = p.images?.[0]?.thumb;
+  const classes = `couv${mini ? ' couv-mini' : ''} k-${p.type}`;
+  if (thumb) {
+    return html`<a class="${classes} couv-photo" href="#/p/${p.id}" tabindex="-1" aria-hidden="true"
+      ><img src="${thumb}" alt="" loading="lazy"></a>`;
+  }
+  return html`
+    <a class="${classes}" href="#/p/${p.id}" data-motif="${empreinte(p.id) % MOTIFS}" tabindex="-1" aria-hidden="true"
+      >${couvertureFond(p)}</a>`;
+}
+
+// Deux façons de voir le fil, au choix du visiteur. Les cartes sont le réglage par
+// défaut depuis que chaque partage a une couverture : c'est là qu'elle se voit, et
+// une bibliothèque se parcourt d'abord à l'œil. La liste reste pour qui veut de la
+// densité — elle porte les mêmes couvertures, en vignette. Le choix est gardé d'une
+// visite à l'autre, et celui qui avait déjà choisi la liste la garde.
+const VUES = { cartes: 'Cartes', liste: 'Liste' };
+let vueFil = 'cartes';
 try { if (VUES[localStorage.getItem('mk-vue')]) vueFil = localStorage.getItem('mk-vue'); }
-catch { /* navigation privée ou stockage bloqué : on garde la liste */ }
+catch { /* navigation privée ou stockage bloqué : on garde les cartes */ }
 
 const item = (p, rang = null) => (vueFil === 'cartes' ? carte(p, rang) : ligne(p, rang));
 
@@ -778,11 +864,10 @@ const item = (p, rang = null) => (vueFil === 'cartes' ? carte(p, rang) : ligne(p
 // concurrence avec les titres, pour une navigation qu'on fait trois fois par
 // mois. Ils restent sur la page d'un partage et dans le colophon du bas.
 function ligne(p, rang = null) {
-  const thumb = p.images?.[0]?.thumb;
   const podium = rang && rang <= 3 ? rang : 0;
   const vu = apercu(p);
   return html`
-    <article class="item k-${p.type} ${p.pinned ? 'pinned' : ''} ${thumb ? 'has-thumb' : ''} ${podium ? 'podium rang-' + podium : ''}">
+    <article class="item k-${p.type} ${p.pinned ? 'pinned' : ''} ${podium ? 'podium rang-' + podium : ''}">
       ${kind(p.type)}
       <div class="item-corps">
         <div class="item-top">
@@ -794,7 +879,7 @@ function ligne(p, rang = null) {
         </div>
         <p class="item-desc">${fr(p.description)}</p>
       </div>
-      ${thumb ? html`<a class="thumb" href="#/p/${p.id}" tabindex="-1" aria-hidden="true"><img src="${thumb}" alt="" loading="lazy"></a>` : ''}
+      ${couverture(p, { mini: true })}
       <div class="faits">
         ${modeleBadge(p)}
         ${vu ? html`<span>${vu}</span>` : ''}
@@ -812,26 +897,24 @@ function ligne(p, rang = null) {
 }
 
 // `rang` n'est donné que dans le classement : les trois premiers portent une médaille.
+//
+// La carte a retrouvé une couverture, et cette fois elle dit quelque chose : ce
+// n'est plus l'aplat de couleur vide avec une icône au milieu qui occupait un quart
+// de la carte pour rien, mais le début du prompt, le domaine du lien, l'extension
+// du fichier. La description est revenue dessous, en deux lignes : un titre seul
+// n'a jamais suffi à décider si on ouvre.
 function carte(p, rang = null) {
-  const thumb = p.images?.[0]?.thumb;
   const podium = rang && rang <= 3 ? rang : 0;
   // « PDF » écrit sous une pastille qui dit déjà « PDF » n'apprend rien à personne,
   // et c'est ce mot en trop qui faisait passer le pied de la carte à la ligne.
   const vu = apercu(p);
   const detail = vu.toLowerCase() === (TYPES[p.type]?.short || '').toLowerCase() ? '' : vu;
   return html`
-    <!-- Pas de photo, pas de bande : un aplat de couleur vide avec une icône au milieu
-         occupait un quart de la carte pour ne rien dire. La pastille du type porte déjà
-         sa couleur, et le rang passe sur la même ligne. -->
-    <article class="carte k-${p.type} ${thumb ? '' : 'sans-visuel'} ${p.pinned ? 'pinned' : ''} ${podium ? 'podium rang-' + podium : ''}">
-      ${thumb ? html`
-        <a class="carte-visuel" href="#/p/${p.id}" tabindex="-1" aria-hidden="true">
-          <img src="${thumb}" alt="" loading="lazy">
-          ${podium ? html`<span class="medaille">${rang}</span>` : ''}
-        </a>` : ''}
+    <article class="carte k-${p.type} ${p.pinned ? 'pinned' : ''} ${podium ? 'podium rang-' + podium : ''}">
+      ${couverture(p)}
+      ${podium ? html`<span class="medaille" title="${rang}ᵉ au classement, ${p.points} points">n° ${rang}</span>` : ''}
       <div class="carte-corps">
         <div class="carte-haut">
-          ${!thumb && podium ? html`<span class="medaille plate">${rang}</span>` : ''}
           ${kind(p.type)}
           ${detail ? html`<span class="carte-detail">${detail}</span>` : ''}
           ${p.locked && !p.prix ? html`<span class="pin lock">${ICON.lock}privé</span>` : ''}
@@ -840,6 +923,7 @@ function carte(p, rang = null) {
           ${p.pinned ? html`<span class="pin">${ICON.pin}épinglé</span>` : ''}
         </div>
         <a class="carte-titre" href="#/p/${p.id}">${fr(p.title)}</a>
+        <p class="carte-desc">${fr(p.description)}</p>
         <div class="carte-bas">
           ${gemButton(p, { court: true })}
           ${modeleBadge(p)}

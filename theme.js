@@ -35,7 +35,7 @@ function pose(choix) {
   // La barre d'adresse du téléphone prend la couleur de la page : sans ça, elle
   // reste noire au-dessus d'un site devenu blanc.
   document.querySelector('meta[name="theme-color"]')
-    ?.setAttribute('content', resolu === 'papier' ? '#fffefb' : '#090a0e');
+    ?.setAttribute('content', resolu === 'papier' ? '#fbfbfd' : '#161618');
 }
 
 function choisis(choix) {
