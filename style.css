@@ -1658,10 +1658,30 @@ body.chargement::before { width: 80%; opacity: 1; transition: width 2.5s cubic-b
   .item-title { font-size: 16px; }
   .item-desc { font-size: 14px; -webkit-line-clamp: 2; }
 
-  /* Une seule colonne : un 16/9 plein ferait tenir une carte et demie par écran.
-     La couverture devient un bandeau, assez haut pour qu'on lise la matière. */
-  .grille { grid-template-columns: minmax(0, 1fr); }
-  .carte .couv { max-height: 138px; }
+  /* Deux cartes par ligne, jamais une. Une seule carte par ligne, c'est une
+     carte et demie par écran : on ne voit plus la bibliothèque, on la fait
+     défiler. À deux, on en voit six d'un coup et la couleur des couvertures
+     redevient lisible en descendant. Trois dès que l'écran le permet, plus bas. */
+  .grille { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  /* La couverture reprend sa proportion : sur une carte deux fois plus étroite,
+     un plafond de hauteur en ferait une bande. */
+  .carte .couv { max-height: none; min-height: 0; }
+  .carte-corps { padding: 11px 12px 10px; gap: 6px; }
+  .carte-titre { font-size: 14.5px; line-height: 1.28; -webkit-line-clamp: 3; }
+  .carte-desc { font-size: 12.5px; -webkit-line-clamp: 2; }
+  .carte-haut { gap: 6px; }
+  .kind { font-size: 12px; }
+  /* Le pied passe à la ligne au lieu de se faire couper : sur 155 px, la gemme,
+     les étoiles et le pseudo ne tiennent pas côte à côte. */
+  .carte-bas { flex-wrap: wrap; gap: 6px 10px; padding-top: 9px; font-size: 12px; }
+  .carte-auteur { font-size: 12.5px; }
+  .carte .couv-extrait { font-size: 8px; line-height: 1.55; padding: 9px 10px; }
+  .carte .couv-mot { font-size: 15px; padding: 9px; }
+  .carte .couv-cote { font-size: 18px; letter-spacing: .1em; }
+  .carte .couv-lien { padding: 9px 10px; gap: 3px; }
+  .carte .couv-lien small { font-size: 8.5px; letter-spacing: .05em; }
+  .carte .couv-lien b { font-size: 12.5px; line-height: 1.24; }
+  .medaille { top: 7px; left: 7px; height: 19px; padding: 0 7px; font-size: 10.5px; }
   .toolbar { gap: 10px 14px; align-items: baseline; }
   .toolbar h1 { font-size: 19px; width: 100%; }
   .tabs a, .vues button { padding: 4px 9px; font-size: 13px; }
@@ -1710,6 +1730,15 @@ body.chargement::before { width: 80%; opacity: 1; transition: width 2.5s cubic-b
   .compo-items > li { grid-template-columns: 26px minmax(0, 1fr); }
   .compo-boutons { grid-column: 2; }
   .foot { padding: 24px 16px 36px; }
+}
+
+/* Trois cartes par ligne dès qu'il y a la place : grand téléphone en travers,
+   petite tablette. Au-dessus de 700 px, la règle de l'index reprend la main et
+   en pose autant que la largeur en accepte. */
+@media (min-width: 540px) and (max-width: 700px) {
+  .grille { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .etagere-liste { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .etagere-item { flex-direction: column; align-items: stretch; gap: 8px; }
 }
 
 @media (max-width: 374px) {
