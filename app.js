@@ -571,7 +571,12 @@ const tagLink = t => html`<a class="tag" href="#/?tag=${encodeURIComponent(t)}">
 // auteur n'existe plus (« ancien·ne membre ») : il n'y a rien à ouvrir, donc pas de lien.
 // Un visage, même réduit à une initiale, dit « quelqu'un a partagé ça » bien plus vite
 // qu'un pseudo en gris clair. Même pastille que sur la page de profil, en plus petit.
-const rond = nom => html`<span class="rond" aria-hidden="true">${(nom || '?').slice(0, 1).toUpperCase()}</span>`;
+// La teinte vient du pseudo, donc elle ne change jamais : la même personne porte
+// la même couleur sur toutes les pages, à toutes les visites, sur tous les
+// appareils. C'est ce qui fait qu'on finit par reconnaître quelqu'un avant
+// d'avoir lu son nom. (`empreinte` est déclarée plus bas — une fonction, donc
+// disponible ici.)
+const rond = nom => html`<span class="rond" data-teinte="${empreinte(nom || '?') % 10}" aria-hidden="true">${(nom || '?').slice(0, 1).toUpperCase()}</span>`;
 
 // Une place payée se signale, partout où le partage apparaît. Sans cette mention,
 // ce serait de la publicité déguisée — et le fil ne vaudrait plus rien.
@@ -1083,10 +1088,15 @@ async function feedView(q) {
   render(html`
     <div>
       ${S.me || !nu ? '' : html`
+        <!-- Le premier bloc que quelqu'un lit en arrivant. Il disait « Tu peux
+             tout lire sans compte / Un compte sert à partager, noter et voter » :
+             deux règles d'usage, exactes et froides, qui décrivaient un système
+             et pas un endroit. Ce qu'on a envie de savoir en poussant une porte,
+             c'est qui est là et pourquoi. -->
         <section class="start" aria-label="Bienvenue">
-          <div><b>Bienvenue. Tu peux tout lire sans compte.</b>
-          <span>Un compte sert à partager, noter et voter.</span></div>
-          ${STATIQUE ? '' : html`<a class="btn primary" href="#/rejoindre">Créer mon compte</a>`}
+          <div><b>Bienvenue. Ici, des gens rangent ce qui leur a vraiment servi.</b>
+          <span>Des skills, des prompts, des agents, des techniques — essayés pour de vrai, et relus un par un avant d’être publiés. Tout se lit librement.</span></div>
+          ${STATIQUE ? '' : html`<a class="btn primary" href="#/rejoindre">Nous rejoindre</a>`}
         </section>`}
 
       <!-- L'étagère : la sélection de la semaine, posée à l'entrée. Dans une
@@ -1132,7 +1142,12 @@ async function feedView(q) {
           return posts.map(p => item(p, classe && !p.pinned && !p.promo ? ++rang : null));
         })() : html`
           <div class="empty">
-            ${query ? html`Aucun résultat pour « ${query} ».<br>Essaie un mot plus court, ou parcours les catégories.<br>` : html`Rien ici pour l’instant.<br>`}
+            <!-- Une rubrique vide disait « Rien ici pour l'instant » : un constat,
+                 et une impression de site mort. Elle dit maintenant à qui arrive
+                 que la place est libre, ce qui est à la fois vrai et accueillant. -->
+            ${query ? html`Aucun résultat pour « ${query} ».<br>Essaie un mot plus court, ou parcours les rubriques.<br>`
+              : t ? html`${TYPES[t].plural} : personne n’a encore rien posé ici.<br>Tu peux être la première personne à le faire.<br>`
+                : html`Rien ici pour l’instant.<br>`}
             ${stats.tags.length && query ? html`<div class="tagcloud center">${stats.tags.slice(0, 8).map(x => tagLink(x.tag))}</div>` : ''}
             <a class="btn primary" href="${S.me ? '#/partager' : '#/rejoindre'}">${S.me ? 'Partager quelque chose' : 'Rejoindre pour partager'}</a></div>`}
       </div>
@@ -1144,8 +1159,8 @@ async function feedView(q) {
       <div class="colophon">
         <section>
           <h3>Cette bibliothèque</h3>
-          <p>${stats.members} membre${stats.members > 1 ? 's' : ''} · ${stats.posts} partages · ${stats.gems} gemmes données.
-            Tout ce qui s’affiche ici a été relu avant publication.</p>
+          <p>Elle est faite par les gens qui s’en servent. Chaque partage a été lu par quelqu’un avant d’être publié, chaque réponse est signée, et personne ici n’est un chiffre : derrière chaque pseudo, quelqu’un a pris le temps de ranger ce qui lui avait servi.</p>
+          <p class="muted">${stats.members} membre${stats.members > 1 ? 's' : ''} · ${stats.posts} partages · ${stats.gems} gemmes données.</p>
           ${colls?.collections?.length ? html`<p><a href="#/collections">${stats.collections} parcours composés par des membres →</a></p>` : ''}
         </section>
         <section>
@@ -1256,7 +1271,7 @@ async function profilView(pseudo) {
     <div class="narrow profil">
       <a class="back" href="#/">← Tous les partages</a>
       <header class="profil-tete">
-        <span class="profil-rond" aria-hidden="true">${profil.pseudo.slice(0, 1).toUpperCase()}</span>
+        <span class="profil-rond rond" data-teinte="${empreinte(profil.pseudo) % 10}" aria-hidden="true">${profil.pseudo.slice(0, 1).toUpperCase()}</span>
         <div class="profil-nom">
           <h1>@${profil.pseudo}</h1>
           <p class="muted">${mois ? `Membre depuis ${mois}` : 'Membre de la communauté'}${

@@ -48,54 +48,61 @@
 :root {
   color-scheme: dark;
 
-  /* Les surfaces, par étages. Le fond est un noir vrai : sur un écran OLED,
-     ces pixels sont éteints, et tout ce qui est posé dessus paraît flotter. */
-  --bg: #000000;              /* la page */
-  --bar: rgb(22 22 24 / .68); /* la barre du haut et le rail : une matière, pas une couleur */
-  --bar-plein: #161618;       /* la même, pour les navigateurs sans flou */
-  --bg-deep: #0a0a0c;         /* ce qui est en creux : code, arborescences */
-  --surface: #1c1c1e;         /* ce qui est posé dessus : panneaux, cartes */
-  --surface-2: #2c2c2e;       /* boutons au repos, pastilles, pistes de segments */
-  --surface-3: #3a3a3c;       /* survol */
+  /* Les surfaces, par étages. Le fond n'est plus un noir absolu : du blanc pur
+     sur du noir pur, c'est le contraste le plus dur qu'un écran sache produire,
+     et au bout de deux minutes de lecture ça pique. Un gris très sombre, à peine
+     bleuté, garde la profondeur et rend la page accueillante. */
+  --bg: #0e0f13;              /* la page */
+  --bar: rgb(25 26 32 / .72); /* la barre du haut et le rail : une matière, pas une couleur */
+  --bar-plein: #191a20;       /* la même, pour les navigateurs sans flou */
+  --bg-deep: #121319;         /* ce qui est en creux : code, arborescences */
+  --surface: #1b1c23;         /* ce qui est posé dessus : panneaux, cartes */
+  --surface-2: #272931;       /* boutons au repos, pastilles, pistes de segments */
+  --surface-3: #343742;       /* survol */
 
-  /* L'encre. Du blanc franc pour les titres, puis deux niveaux de retrait
-     obtenus en laissant passer le fond — c'est ce qui garde le gris juste quelle
-     que soit la surface en dessous. */
-  --ink: #ffffff;
-  --ink-soft: rgb(235 235 245 / .86);
-  --muted: rgb(235 235 245 / .55);
-  --line: rgb(235 235 245 / .11);
-  --line-strong: rgb(235 235 245 / .22);
+  /* L'encre. Un blanc cassé plutôt qu'un blanc franc : on reste à plus de 15:1
+     sur le fond, donc on ne perd rien, et l'œil cesse de se crisper. */
+  --ink: #eef0f5;
+  --ink-soft: rgb(235 237 245 / .84);
+  --muted: rgb(235 237 245 / .56);
+  --line: rgb(235 237 245 / .1);
+  --line-strong: rgb(235 237 245 / .2);
 
-  /* Une seule couleur d'action, et c'est le bleu. */
-  --brand: #0a84ff;
-  --accent: #0a84ff;
-  --accent-emphasis: #409cff;
-  --accent-subtle: rgb(10 132 255 / .18);
+  /* Une seule couleur d'action, et c'est le bleu. Deux valeurs, et c'est voulu :
+     un bleu clair pour ce qui s'écrit (liens, icônes), un bleu profond pour ce
+     qui se remplit (les boutons), afin que le blanc posé dessus reste lisible.
+     Le bleu d'Apple en aplat plafonne à 3,2:1 sous du texte blanc — en dessous
+     du seuil. Celui-ci est à 5:1. */
+  --brand: #6aa9f5;
+  --accent: #6aa9f5;
+  --accent-plein: #2a6fd4;
+  --accent-emphasis: #3f84e8;
+  --accent-subtle: rgb(106 169 245 / .16);
   --accent-ink: #ffffff;
 
-  --ok: #30d158;
-  --warn: #ffd60a;
-  --bad: #ff453a;
+  --ok: #5bd99a;
+  --warn: #f2cf5c;
+  --bad: #f58078;
 
-  /* Une couleur par catégorie, prise dans la même gamme que le reste. Elles ne
-     peignent plus de grandes surfaces : elles tiennent dans un mot, un point et
-     une couverture. Un lien est bleu parce qu'un lien est bleu. */
-  --k-skill: #30d158;         /* vert */
-  --k-agent: #bf5af2;         /* violet */
-  --k-mcp: #40c8e0;           /* bleu-vert : de la plomberie */
-  --k-prompt: #64d2ff;        /* cyan */
-  --k-idee: #ffd60a;          /* jaune */
-  --k-sondage: #ff375f;       /* rose */
-  --k-pdf: #ff453a;           /* rouge */
-  --k-lien: #0a84ff;          /* bleu */
-  --k-info: #5e5ce6;          /* indigo */
-  --k-montage: #ff9f0a;       /* orange */
+  /* Une couleur par catégorie, d'un cran moins saturée que les couleurs système.
+     Elles ne peignent plus de grandes surfaces : elles tiennent dans un mot, un
+     point, une icône et une couverture. Un lien est bleu parce qu'un lien est
+     bleu. */
+  --k-skill: #5bd99a;         /* vert */
+  --k-agent: #c48bf0;         /* violet */
+  --k-mcp: #6fc9da;           /* bleu-vert : de la plomberie */
+  --k-prompt: #86d4f5;        /* cyan */
+  --k-idee: #f2cf5c;          /* jaune */
+  --k-sondage: #f58aa0;       /* rose */
+  --k-pdf: #f58078;           /* rouge */
+  --k-lien: #7fb0f7;          /* bleu */
+  --k-info: #a09eef;          /* indigo */
+  --k-montage: #f2b25f;       /* orange */
 
-  --star: #ffd60a;
-  --or: #ffd60a;
-  --argent: #d1d1d6;
-  --bronze: #ff9f0a;
+  --star: #f2cf5c;
+  --or: #f2cf5c;
+  --argent: #cfd2da;
+  --bronze: #e8a868;
 
   /* Des angles larges, et la pilule pour ce sur quoi on appuie. */
   --radius: 14px;
@@ -148,7 +155,9 @@
   --surface-2: #e9e9ef;
   --surface-3: #dedee3;
 
-  --ink: #000000;
+  /* Pas de noir absolu non plus sur du papier : une encre très sombre se lit
+     aussi bien et cesse de vibrer sur le fond clair. */
+  --ink: #16171c;
   --ink-soft: rgb(60 60 67 / .88);
   /* Un cran plus sombre que le gris secondaire d'Apple, qui plafonne à 3,3:1 sur
      du blanc. Les descriptions de l'index sont écrites dans cette couleur : ce
@@ -157,10 +166,13 @@
   --line: rgb(60 60 67 / .14);
   --line-strong: rgb(60 60 67 / .29);
 
-  --brand: #007aff;
-  --accent: #007aff;
-  --accent-emphasis: #0062cc;
-  --accent-subtle: rgb(0 122 255 / .14);
+  /* Même règle que pour la nuit : le bleu système sur du blanc plafonne à
+     3,6:1 pour du texte courant. Celui-ci est à 5,7:1, et il reste un bleu. */
+  --brand: #0b63cc;
+  --accent: #0b63cc;
+  --accent-plein: #0a6ad9;
+  --accent-emphasis: #084fa6;
+  --accent-subtle: rgb(11 99 204 / .12);
   --accent-ink: #ffffff;
 
   --ok: #248a3d;
@@ -169,7 +181,7 @@
 
   /* Les mêmes couleurs, assombries exprès : celles du thème nuit sont faites
      pour du noir et deviennent illisibles sur du blanc. */
-  --k-skill: #248a3d;
+  --k-skill: #1d7a35;
   --k-agent: #8944ab;
   --k-mcp: #008299;
   --k-prompt: #0071a4;
@@ -453,7 +465,9 @@ body.page-seule .logo { width: auto; }
    soit reçu : pas une animation, une réponse. */
 .btn:active { transform: scale(.96); }
 @media (prefers-reduced-motion: reduce) { .btn:active { transform: none; opacity: .72; } }
-.btn.primary { background: var(--accent); color: var(--accent-ink); }
+/* Le bouton plein prend le bleu profond, pas le bleu du texte : c'est la seule
+   façon qu'un libellé blanc reste lisible dessus. */
+.btn.primary { background: var(--accent-plein); color: var(--accent-ink); }
 .btn.primary:hover { background: var(--accent-emphasis); }
 /* Le bouton discret, c'est du texte bleu. Rien d'autre : pas de cadre à dessiner
    autour d'une action secondaire. */
@@ -692,12 +706,28 @@ body.page-seule .logo { width: auto; }
 /* La pastille à initiale de l'auteur : elle dit « quelqu'un a partagé ça ». */
 .auteur { color: var(--ink-soft); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
 .auteur:hover { color: var(--accent); }
+/* L'initiale d'un membre porte sa propre couleur, tirée de son pseudo : la même
+   à chaque visite, sur chaque page, sur chaque appareil. Une colonne de pastilles
+   grises dit « des données » ; une colonne de pastilles colorées dit « des gens ».
+   Les dix teintes sont celles des catégories : rien de nouveau à entretenir, et
+   elles sont déjà réglées pour les deux thèmes. */
 .rond {
-  flex: none; width: 20px; height: 20px; border-radius: 50%;
+  flex: none; width: 21px; height: 21px; border-radius: 50%;
   display: grid; place-items: center;
-  background: var(--surface-3); color: var(--ink-soft);
+  background: color-mix(in srgb, var(--t, var(--muted)) 24%, transparent);
+  color: var(--t, var(--ink-soft));
   font: 650 10.5px var(--font); letter-spacing: -.01em;
 }
+.rond[data-teinte="0"] { --t: var(--k-skill); }
+.rond[data-teinte="1"] { --t: var(--k-lien); }
+.rond[data-teinte="2"] { --t: var(--k-montage); }
+.rond[data-teinte="3"] { --t: var(--k-prompt); }
+.rond[data-teinte="4"] { --t: var(--k-sondage); }
+.rond[data-teinte="5"] { --t: var(--k-info); }
+.rond[data-teinte="6"] { --t: var(--k-idee); }
+.rond[data-teinte="7"] { --t: var(--k-mcp); }
+.rond[data-teinte="8"] { --t: var(--k-agent); }
+.rond[data-teinte="9"] { --t: var(--k-pdf); }
 .auteur:hover .rond { background: var(--accent-subtle); color: var(--accent); }
 
 .empty {
@@ -781,15 +811,15 @@ body.page-seule .logo { width: auto; }
      page : sinon la couverture est plus sombre que la carte sur laquelle elle
      est posée, et la carte a l'air d'avoir un trou en haut. */
   background: linear-gradient(152deg,
-    color-mix(in srgb, var(--k, var(--accent)) 30%, var(--surface)),
-    color-mix(in srgb, var(--k, var(--accent)) 7%, var(--surface)));
+    color-mix(in srgb, var(--k, var(--accent)) 22%, var(--surface)),
+    color-mix(in srgb, var(--k, var(--accent)) 6%, var(--surface)));
   border-bottom: 1px solid var(--line);
 }
 /* Le motif. Un seul pseudo-élément, huit dessins, choisis par l'empreinte du
    partage. Débordant de 20 % pour qu'aucun motif ne s'arrête sur un bord. */
 .couv::before {
   content: ''; position: absolute; inset: -20%; z-index: 0;
-  color: var(--k, var(--accent)); opacity: .34;
+  color: var(--k, var(--accent)); opacity: .24;
   --trait: color-mix(in srgb, currentColor 72%, transparent);
   transition: opacity .16s ease;
 }
@@ -815,7 +845,7 @@ body.page-seule .logo { width: auto; }
                     repeating-linear-gradient(0deg, var(--trait) 0 1px, transparent 1px 15px);
 }
 .carte:hover .couv::before, .carte:focus-within .couv::before,
-.item:hover .couv::before, .item:focus-within .couv::before { opacity: .46; }
+.item:hover .couv::before, .item:focus-within .couv::before { opacity: .34; }
 
 /* L'extrait : le vrai contenu du partage, en petit, fondu vers le bas. Ce n'est
    pas un faux-texte — c'est le prompt qu'on va copier, lisible si on s'approche. */
@@ -1306,10 +1336,13 @@ input[type=file] { font-size: 14px; }
 
 /* Le profil : l'identité, quatre chiffres, puis ce qui a été publié. */
 .profil-tete { display: flex; align-items: center; gap: 15px; margin-bottom: 4px; }
+/* La même pastille que partout ailleurs, en grand : on arrive sur un profil et
+   on retrouve la couleur qu'on a vue sous ses partages. */
 .profil-rond {
-  flex: none; width: 50px; height: 50px; border-radius: var(--radius); display: grid; place-items: center;
-  background: var(--surface-2); border: 1px solid var(--line); color: var(--ink);
-  font: 700 20px var(--font); letter-spacing: -.02em;
+  flex: none; width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--t, var(--muted)) 22%, transparent);
+  border: 0; color: var(--t, var(--ink));
+  font: 700 21px var(--font); letter-spacing: -.02em;
 }
 .profil-nom { min-width: 0; }
 .profil-nom h1 { margin: 0; font-size: 26px; letter-spacing: -.035em; overflow-wrap: anywhere; }
