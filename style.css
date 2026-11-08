@@ -669,6 +669,9 @@ body.page-seule .logo { width: auto; }
 }
 .vote .ico { width: 13px; height: 13px; }
 .vote b { font: 650 13px var(--font); font-variant-numeric: tabular-nums; }
+/* Tant que personne n'a donné de gemme, le chiffre n'existe pas — mais la balise
+   reste, pour que le premier clic ait où écrire. */
+.vote b:empty { display: none; }
 .vote-mot { font-size: 12.5px; font-weight: 400; }
 .vote:hover { background: var(--surface-3); color: var(--ink); }
 .vote:active { transform: scale(.94); }

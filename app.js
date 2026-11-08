@@ -475,7 +475,10 @@ function railHTML(stats, path, q) {
     const s = n.toString();
     return '#/' + (s ? '?' + s : '');
   };
-  const compte = n => (n == null ? '' : html`<span>${n}</span>`);
+  // Même règle que pour les gemmes : une rubrique vide reste visible — elle dit ce
+  // que la bibliothèque accueille — mais elle n'écrit pas son zéro. Quatre « 0 »
+  // alignés dans la colonne de gauche, sur chaque page, annoncent un site mort.
+  const compte = n => (!n ? '' : html`<span>${n}</span>`);
   const total = stats ? Object.values(stats.byType).reduce((a, b) => a + b, 0) : null;
   const rien = !t && !tag && !mot && !prem && !mod && surFil;
 
@@ -608,11 +611,16 @@ const auteurLien = p => p.authorLink
 // Trois tailles : la colonne étroite de la liste (compacte), la pastille courte du pied
 // d'une carte (court), et la version en toutes lettres partout où il y a la place.
 // Le mot disparaît de l'affichage, jamais de l'étiquette lue à voix haute.
+// Le chiffre n'est écrit que s'il y a quelque chose à compter. Un « 0 » répété
+// trente fois sur la première page dit « personne n'est jamais passé ici », et
+// c'est la première chose qu'un visiteur lit. Le <b> reste dans la page, vide :
+// le gestionnaire du clic y écrit le nouveau total, et le CSS le cache tant
+// qu'il est vide. Sans lui, la première gemme donnée ferait planter l'affichage.
 function gemButton(p, { compact = false, court = false } = {}) {
   const title = p.gemmed ? 'Reprendre ma gemme' : 'Donner une gemme';
   const mot = !compact && !court;
   return html`<button class="vote ${compact ? 'compacte' : ''} ${court ? 'court' : ''} ${p.gemmed ? 'on' : ''}" data-action="gem" data-id="${p.id}"
-    aria-pressed="${String(p.gemmed)}" aria-label="${title}" title="${title}">${ICON.gem}<b>${p.gems}</b>${mot ? html`<span class="vote-mot">gemme${p.gems > 1 ? 's' : ''}</span>`: ''}</button>`;
+    aria-pressed="${String(p.gemmed)}" aria-label="${title}" title="${title}">${ICON.gem}<b>${p.gems || ''}</b>${mot ? html`<span class="vote-mot">${p.gems ? `gemme${p.gems > 1 ? 's' : ''}` : 'Donner une gemme'}</span>` : ''}</button>`;
 }
 
 // Note : dans la liste, une étoile et le chiffre ; sur la page d'un partage, cinq étoiles cliquables.
@@ -1094,8 +1102,8 @@ async function feedView(q) {
              et pas un endroit. Ce qu'on a envie de savoir en poussant une porte,
              c'est qui est là et pourquoi. -->
         <section class="start" aria-label="Bienvenue">
-          <div><b>Bienvenue. Ici, des gens rangent ce qui leur a vraiment servi.</b>
-          <span>Des skills, des prompts, des agents, des techniques — essayés pour de vrai, et relus un par un avant d’être publiés. Tout se lit librement.</span></div>
+          <div><b>Bienvenue. Ici, on range ce qui marche vraiment avec l’IA.</b>
+          <span>Des skills, des prompts, des agents, des techniques — essayés pour de vrai, et relus un par un avant d’être publiés. Le catalogue de départ a été réuni par la maison, pour que les étagères ne soient pas vides le jour de l’ouverture ; à partir de maintenant, ça s’écrit à plusieurs.</span></div>
           ${STATIQUE ? '' : html`<a class="btn primary" href="#/rejoindre">Nous rejoindre</a>`}
         </section>`}
 
@@ -1159,7 +1167,7 @@ async function feedView(q) {
       <div class="colophon">
         <section>
           <h3>Cette bibliothèque</h3>
-          <p>Elle est faite par les gens qui s’en servent. Chaque partage a été lu par quelqu’un avant d’être publié, chaque réponse est signée, et personne ici n’est un chiffre : derrière chaque pseudo, quelqu’un a pris le temps de ranger ce qui lui avait servi.</p>
+          <p>Le catalogue de départ a été réuni par la maison — le compte <b>@makers.si</b> — pour que la bibliothèque ne soit pas vide à l’ouverture. Tout ce qui s’ajoute ensuite vient des membres, relu un par un avant d’être publié, et chaque réponse est signée.</p>
           <p class="muted">${stats.members} membre${stats.members > 1 ? 's' : ''} · ${stats.posts} partages · ${stats.gems} gemmes données.</p>
           ${colls?.collections?.length ? html`<p><a href="#/collections">${stats.collections} parcours composés par des membres →</a></p>` : ''}
         </section>
@@ -2253,6 +2261,9 @@ document.addEventListener('click', async (e) => {
       $('h2', section).lastChild.textContent = titreFil(reste);
       toast('Commentaire supprimé.');
     } else if (action === 'gem') {
+      // La copie publiée ne sait rien écrire : le dire tout de suite vaut mieux que
+      // d'envoyer quelqu'un vers une page d'inscription qui lui répondra la même chose.
+      if (STATIQUE) { toast('Cette copie du site est en lecture seule.'); return; }
       if (!S.me) { toast('Rejoins la communauté pour donner une gemme.'); return go('#/rejoindre'); }
       const r = await api(`/posts/${id}/gem`, { method: 'POST' });
       $$(`.vote[data-id="${id}"]`).forEach(b => {

@@ -7,6 +7,14 @@
   <meta name="description" content="makers.si : skills Claude, prompts, idées, sondages et PDF partagés par la communauté des vibe codeurs et de l’IA. Chaque partage est relu avant publication.">
   <meta name="color-scheme" content="dark light">
   <meta name="theme-color" content="#000000">
+  <!-- La même politique de sécurité que celle posée par le serveur, mais écrite
+       dans la page. Sans elle, la copie publiée tournait sans aucune protection :
+       GitHub Pages ne pose pas d'en-tête, et toute la défense du site tient dans
+       cette ligne-là. `frame-ancestors` est le seul morceau qui ne marche qu'en
+       en-tête : un hébergeur de fichiers ne peut donc pas empêcher qu'on affiche
+       le site dans le cadre d'un autre. C'est connu et assumé tant que la copie
+       publiée ne sait rien écrire. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; font-src 'self'; base-uri 'none'; form-action 'self'">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <!-- Sans cette ligne, le manifeste existait mais aucun navigateur ne le lisait :
        le site n'était pas installable, malgré ses icônes et son service worker. -->
@@ -54,7 +62,7 @@
   <!-- Sur un téléphone, les quatre destinations qu'on atteint vraiment au doigt. -->
   <nav id="barre-bas" class="barre-bas" aria-label="Accès rapide"></nav>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script>window.MAKERS_STATIQUE = true;</script>
+  <script src="statique.js"></script>
   <script type="module" src="app.js"></script>
   <!-- La palette de commandes et le clavier. Si ce fichier manque, le site
        fonctionne exactement comme sans lui : rien ici n'est indispensable. -->
