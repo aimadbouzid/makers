@@ -679,6 +679,10 @@ body.page-seule .logo { width: auto; }
 .vote.on { color: var(--accent); background: var(--accent-subtle); }
 .vote.compacte, .vote.court { padding: 5px 11px; }
 .vote.compacte .vote-mot, .vote.court .vote-mot { display: none; }
+/* Le compteur figé de la copie publiée : la même pastille, mais c'est un constat,
+   pas un bouton — il ne réagit ni au survol ni au clic. */
+.vote.fige { cursor: default; background: transparent; padding-left: 0; color: var(--muted); }
+.vote.fige:hover { background: transparent; }
 
 /* Les étoiles en lecture. */
 .stars { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); }

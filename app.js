@@ -506,7 +506,11 @@ function railHTML(stats, path, q) {
       <h3 class="cote">Parcours</h3>
       <a href="#/collections" class="${path === '/collections' || path.startsWith('/c/') ? 'on' : ''}">
         ${ICON.lignes}Collections ${compte(stats?.collections)}</a>
-      <a href="#/top" class="${path === '/top' ? 'on' : ''}">${ICON.cup}Top 5 ${compte(null)}</a>
+      <!-- Le Top ne s'affiche que s'il a quelque chose à classer. Tant que personne
+           n'a donné de gemme, il mène à une page vide depuis chaque page du site,
+           et annonce le vide plus sûrement que n'importe quel compteur. La première
+           gemme le fait réapparaître toute seule. -->
+      ${stats?.gems ? html`<a href="#/top" class="${path === '/top' ? 'on' : ''}">${ICON.cup}Top 5</a>` : ''}
       ${stats?.premium ? html`
         <a href="#/?p=1" class="${prem ? 'on' : ''}">${ICON.lock}Espace privé ${compte(stats.premium)}</a>` : ''}
     </section>
@@ -548,7 +552,7 @@ function barreBasHTML(path) {
     ${STATIQUE
       ? html`<a href="#/aide" class="${on('/aide')}">${ICON.ampoule}Aide</a>`
       : html`<a href="${S.me ? '#/partager' : '#/rejoindre'}" class="appoint ${on('/partager')}">${ICON.plus}Partager</a>`}
-    <a href="#/top" class="${on('/top')}">${ICON.cup}Top</a>
+    ${S.stats?.gems ? html`<a href="#/top" class="${on('/top')}">${ICON.cup}Top</a>` : ''}
     <a href="${S.me ? '#/mes-partages' : '#/connexion'}" class="${on('/mes-partages')}">${ICON.perso}${S.me ? 'Moi' : 'Entrer'}</a>`;
 }
 
@@ -617,6 +621,13 @@ const auteurLien = p => p.authorLink
 // le gestionnaire du clic y écrit le nouveau total, et le CSS le cache tant
 // qu'il est vide. Sans lui, la première gemme donnée ferait planter l'affichage.
 function gemButton(p, { compact = false, court = false } = {}) {
+  // Sur la copie publiée, personne ne peut voter : un bouton qui ne sait pas répondre
+  // n'a rien à faire là. On garde le compte quand il y a quelque chose à compter, et
+  // rien du tout sinon — trente boutons morts, c'est trente promesses non tenues.
+  if (STATIQUE) {
+    return p.gems ? html`<span class="vote fige" title="${p.gems} gemme${p.gems > 1 ? 's' : ''}"
+      >${ICON.gem}<b>${p.gems}</b></span>` : '';
+  }
   const title = p.gemmed ? 'Reprendre ma gemme' : 'Donner une gemme';
   const mot = !compact && !court;
   return html`<button class="vote ${compact ? 'compacte' : ''} ${court ? 'court' : ''} ${p.gemmed ? 'on' : ''}" data-action="gem" data-id="${p.id}"
@@ -1101,9 +1112,14 @@ async function feedView(q) {
              deux règles d'usage, exactes et froides, qui décrivaient un système
              et pas un endroit. Ce qu'on a envie de savoir en poussant une porte,
              c'est qui est là et pourquoi. -->
+        <!-- Le site s'est longtemps annoncé comme « la bibliothèque de la communauté ».
+             C'était une promesse qu'il ne tenait pas : tout le catalogue vient d'une
+             seule personne. Un visiteur ouvre trois cartes, voit le même auteur partout,
+             et cesse de croire le reste. Un auteur assumé, lui, est un produit complet
+             dès le premier jour — et le jour où des membres publient, la phrase change. -->
         <section class="start" aria-label="Bienvenue">
-          <div><b>Bienvenue. Ici, on range ce qui marche vraiment avec l’IA.</b>
-          <span>Des skills, des prompts, des agents, des techniques — essayés pour de vrai, et relus un par un avant d’être publiés. Le catalogue de départ a été réuni par la maison, pour que les étagères ne soient pas vides le jour de l’ouverture ; à partir de maintenant, ça s’écrit à plusieurs.</span></div>
+          <div><b>Ici, je range ce qui marche vraiment avec l’IA.</b>
+          <span>Des skills, des prompts, des agents, des techniques, des dépôts à connaître. Triés un par un, et relus avant d’être publiés : ce n’est pas une liste de plus, c’est ce qui a une raison d’être gardé. Tout se lit librement.</span></div>
           ${STATIQUE ? '' : html`<a class="btn primary" href="#/rejoindre">Nous rejoindre</a>`}
         </section>`}
 
@@ -1167,7 +1183,7 @@ async function feedView(q) {
       <div class="colophon">
         <section>
           <h3>Cette bibliothèque</h3>
-          <p>Le catalogue de départ a été réuni par la maison — le compte <b>@makers.si</b> — pour que la bibliothèque ne soit pas vide à l’ouverture. Tout ce qui s’ajoute ensuite vient des membres, relu un par un avant d’être publié, et chaque réponse est signée.</p>
+          <p>Elle est tenue par une personne, pas par un algorithme : tout ce qui est ici a été trié et relu avant d’être publié, et rien n’y entre parce qu’un robot l’a trouvé populaire. Le catalogue est signé <b>@makers.si</b>. Les partages des membres s’y ajouteront, relus de la même façon, et signés de leur nom.</p>
           <p class="muted">${stats.members} membre${stats.members > 1 ? 's' : ''} · ${stats.posts} partages · ${stats.gems} gemmes données.</p>
           ${colls?.collections?.length ? html`<p><a href="#/collections">${stats.collections} parcours composés par des membres →</a></p>` : ''}
         </section>
@@ -1334,15 +1350,19 @@ async function postView(id) {
       <div class="post-meta">${auteurLien(p)}<span>${ago(p.approvedAt || p.createdAt)}</span>${
         p.modele ? html`<span class="modele-ligne">essayé sur ${modeleBadge(p)}</span>` : ''}${p.tags.map(tagLink)}</div>
       ${postBody(p, { howto: true })}
-      ${p.status === 'approved' || !p.status ? html`<div class="post-actions">
+      <!-- Sur la copie publiée, la barre d'actions ne contient que ce qui a quelque
+           chose à dire : pas d'étoiles cliquables qui ne noteront rien, pas de
+           « Pas encore noté » répété sous chaque partage. -->
+      ${p.status === 'approved' || !p.status ? html`${STATIQUE && !p.gems && !p.starsCount ? '' : html`<div class="post-actions">
           ${gemButton(p)}
-          <span class="muted">${p.gems} gemme${p.gems > 1 ? 's' : ''}</span>
-          <span class="sep"></span>
-          ${starsView(p, { interactive: true })}
-          <span class="muted" data-stars-label="${p.id}">${p.starsCount
-            ? `${String(p.stars).replace('.', ',')} sur 5 · ${p.starsCount} note${p.starsCount > 1 ? 's' : ''}`
-            : 'Pas encore noté'}</span>
-        </div>
+          ${STATIQUE ? '' : html`<span class="muted">${p.gems} gemme${p.gems > 1 ? 's' : ''}</span>`}
+          ${STATIQUE && !p.starsCount ? '' : html`
+            <span class="sep"></span>
+            ${starsView(p, { interactive: !STATIQUE })}
+            <span class="muted" data-stars-label="${p.id}">${p.starsCount
+              ? `${String(p.stars).replace('.', ',')} sur 5 · ${p.starsCount} note${p.starsCount > 1 ? 's' : ''}`
+              : 'Pas encore noté'}</span>`}
+        </div>`}
         ${reponsesView(p, reponses)}
         <details class="report"><summary>Signaler ce partage</summary>
           <form data-form="report" data-id="${p.id}">
@@ -2175,7 +2195,7 @@ async function adminView(q) {
 const LEGAL = ['confidentialite', 'conditions', 'cookies', 'charte', 'mentions-legales'];
 
 async function route() {
-  document.title = 'makers.si – la bibliothèque de la communauté';
+  document.title = 'makers.si — ce qui marche vraiment avec l’IA';
   const [path, qs] = (location.hash.slice(1) || '/').split('?');
   const q = new URLSearchParams(qs || '');
   header();

@@ -1,7 +1,7 @@
 {
-  "name": "makers.si — la bibliothèque de la communauté",
+  "name": "makers.si — ce qui marche vraiment avec l’IA",
   "short_name": "makers.si",
-  "description": "Skills Claude, agents, serveurs MCP, prompts, techniques de montage, PDF et liens partagés par la communauté.",
+  "description": "Des skills Claude, des prompts, des agents, des serveurs MCP, des techniques de montage et des dépôts à connaître : triés un par un, et relus avant d’être publiés.",
   "lang": "fr",
   "dir": "ltr",
   "start_url": "./",
