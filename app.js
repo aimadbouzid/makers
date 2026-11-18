@@ -136,6 +136,8 @@ const ICON = {
   // Le modèle sur lequel c'est essayé.
   etincelle: svg('<path d="M8 2.2v11.6M2.2 8h11.6M4.2 4.2l7.6 7.6M11.8 4.2l-7.6 7.6"/>'),
   // Ce qui s'est passé pendant ton absence.
+  etiquette: svg('<path d="M8.6 1.8H14.2v5.6L7.6 14 2 8.4z"/><circle cx="11.3" cy="4.7" r="1"/>'),
+  cadeau: svg('<rect x="2.4" y="6.2" width="11.2" height="7.6" rx="1"/><path d="M1.8 6.2h12.4M8 6.2v7.6M8 6.2C7 3.4 4.2 3.2 4.2 4.8S8 6.2 8 6.2zm0 0c1-2.8 3.8-3 3.8-1.4S8 6.2 8 6.2z"/>'),
   cloche: svg('<path d="M4 6.6a4 4 0 0 1 8 0c0 3 1 4.2 1 4.2H3s1-1.2 1-4.2z"/><path d="M6.6 13a1.6 1.6 0 0 0 2.8 0"/>'),
 };
 
@@ -301,9 +303,13 @@ async function apiStatique(chemin, method) {
     const mot = (q.get('q') || '').toLowerCase().trim();
     const fam = (q.get('m') || '').toLowerCase();
     const tri = q.get('s') || 'top';
+    // Le même filtre de vitrine que le serveur, pour que les deux copies répondent pareil.
+    const prix = q.get('prix') || '';
     let list = ouverts.filter(p => (!t || p.type === t)
       && (!fam || p.modele?.famille === fam)
-      && (!tag || p.tags.includes(tag)));
+      && (!tag || p.tags.includes(tag))
+      && (prix !== 'payant' || p.prix > 0)
+      && (prix !== 'gratuit' || !(p.prix > 0)));
     if (mot) {
       list = list.filter(p => [p.title, p.description, p.content, p.author, p.tags.join(' ')]
         .join(' ').toLowerCase().includes(mot));
@@ -463,6 +469,7 @@ function railHTML(stats, path, q) {
   const mot = surFil ? (q.get('q') || '') : '';
   const prem = surFil && q.get('p') === '1';
   const mod = surFil ? (q.get('m') || '') : '';
+  const prix = surFil ? (q.get('prix') || '') : '';
   const tri = q.get('s');
   // Changer de catégorie remet à zéro la recherche et le tag, mais garde le tri :
   // quelqu'un qui lit « les mieux notés » veut continuer à les lire ailleurs.
@@ -480,9 +487,17 @@ function railHTML(stats, path, q) {
   // alignés dans la colonne de gauche, sur chaque page, annoncent un site mort.
   const compte = n => (!n ? '' : html`<span>${n}</span>`);
   const total = stats ? Object.values(stats.byType).reduce((a, b) => a + b, 0) : null;
-  const rien = !t && !tag && !mot && !prem && !mod && surFil;
+  const rien = !t && !tag && !mot && !prem && !mod && !prix && surFil;
 
+  // La boutique passe en tête : vendre des produits digitaux est ce que fait ce site.
+  // Les deux rayons restent visibles même vides — « À vendre » est la raison d'être du
+  // site, le cacher tant qu'il est vide cacherait le site lui-même.
   return html`
+    <section>
+      <h3 class="cote">La boutique</h3>
+      <a href="${vers('prix', 'payant')}" class="k-vente ${prix === 'payant' ? 'on' : ''}">${ICON.etiquette}À vendre ${compte(stats?.aVendre)}</a>
+      <a href="${vers('prix', 'gratuit')}" class="k-gratuit ${prix === 'gratuit' ? 'on' : ''}">${ICON.cadeau}Offert ${compte(stats?.gratuits)}</a>
+    </section>
     <section>
       <h3 class="cote">La bibliothèque</h3>
       <a href="${vers('t', '')}" class="${rien ? 'on' : ''}">Tout ${compte(total)}</a>
@@ -546,14 +561,18 @@ function railHTML(stats, path, q) {
 // à la couleur de la maison : c'est le geste qu'on vient faire.
 function barreBasHTML(path) {
   const on = p => (path === p ? 'on' : '');
+  // La boutique a sa case : sur un téléphone, c'est cette barre qu'on utilise, et ce
+  // que le site vend ne doit pas se trouver seulement au fond d'un menu.
+  const enBoutique = path === '/' && new URLSearchParams(location.hash.split('?')[1] || '').get('prix') === 'payant';
   return html`
-    <a href="#/" class="${on('/')}">${ICON.maison}Biblio</a>
+    <a href="#/" class="${path === '/' && !enBoutique ? 'on' : ''}">${ICON.maison}Biblio</a>
+    <a href="#/?prix=payant" class="${enBoutique ? 'on' : ''}">${ICON.etiquette}Boutique</a>
     <a href="#/collections" class="${on('/collections')}">${ICON.lignes}Parcours</a>
     ${STATIQUE
       ? html`<a href="#/aide" class="${on('/aide')}">${ICON.ampoule}Aide</a>`
       : html`<a href="${S.me ? '#/partager' : '#/rejoindre'}" class="appoint ${on('/partager')}">${ICON.plus}Partager</a>`}
     ${S.stats?.gems ? html`<a href="#/top" class="${on('/top')}">${ICON.cup}Top</a>` : ''}
-    <a href="${S.me ? '#/mes-partages' : '#/connexion'}" class="${on('/mes-partages')}">${ICON.perso}${S.me ? 'Moi' : 'Entrer'}</a>`;
+    ${STATIQUE ? '' : html`<a href="${S.me ? '#/mes-partages' : '#/connexion'}" class="${on('/mes-partages')}">${ICON.perso}${S.me ? 'Moi' : 'Entrer'}</a>`}`;
 }
 
 // Le rail se dessine tout de suite avec les chiffres qu'on a déjà, puis se
@@ -592,8 +611,10 @@ const sponsoBadge = p => (p.promo
   : '');
 // Un partage en vente le dit partout où il apparaît : le prix fait partie de ce qu'on
 // regarde pour décider d'ouvrir, au même titre que le titre.
+// « 2500 » se lit mal, « 2 500 » se lit d'un coup : l'espace fine des milliers.
+const prixLisible = n => Number(n).toLocaleString('fr-FR');
 const prixBadge = p => (p.prix
-  ? html`<span class="pin vente" title="Le contenu de ce partage s’achète">${p.prix} ${p.devise || ''}</span>`
+  ? html`<span class="pin vente" title="Le contenu de ce partage s’achète">${prixLisible(p.prix)} ${p.devise || ''}</span>`
   : '');
 // Le modèle sur lequel ça a été essayé. Cliquable : c'est aussi un filtre, parce
 // que « montre-moi tout ce qui tourne sur Claude » est une vraie question.
@@ -935,14 +956,21 @@ function carte(p, rang = null) {
   const detail = vu.toLowerCase() === (TYPES[p.type]?.short || '').toLowerCase() ? '' : vu;
   return html`
     <article class="carte k-${p.type} ${p.pinned ? 'pinned' : ''} ${podium ? 'podium rang-' + podium : ''}">
-      ${couverture(p)}
-      ${podium ? html`<span class="medaille" title="${rang}ᵉ au classement, ${p.points} points">n° ${rang}</span>` : ''}
+      <!-- La couverture et ce qui est posé dessus : la médaille en haut à gauche, le prix
+           en bas à droite. Le prix n'est plus une petite pastille perdue entre la
+           catégorie et le titre — dans une boutique, c'est la première chose qu'on
+           cherche du regard. Il reste hors du lien de la couverture (masqué aux
+           lecteurs d'écran) : c'est une information, pas une décoration. -->
+      <div class="couv-cadre">
+        ${couverture(p)}
+        ${podium ? html`<span class="medaille" title="${rang}ᵉ au classement, ${p.points} points">n° ${rang}</span>` : ''}
+        ${p.prix ? html`<span class="prix-couv" title="Le contenu de ce produit s’achète">${prixLisible(p.prix)} ${p.devise || ''}</span>` : ''}
+      </div>
       <div class="carte-corps">
         <div class="carte-haut">
           ${kind(p.type)}
           ${detail ? html`<span class="carte-detail">${detail}</span>` : ''}
           ${p.locked && !p.prix ? html`<span class="pin lock">${ICON.lock}privé</span>` : ''}
-          ${prixBadge(p)}
           ${sponsoBadge(p)}
           ${p.pinned ? html`<span class="pin">${ICON.pin}épinglé</span>` : ''}
         </div>
@@ -1027,9 +1055,13 @@ function lockedBox(p) {
         <p>Ce partage contient ${dedans}. Le contenu s’ouvre une fois l’achat confirmé ; le titre, la description et les tags restent publics.</p>
         ${STATIQUE
           ? html`<p class="muted">Cette copie du site se lit seulement : l’achat se fait sur le site complet.</p>`
+          // Pas de coordonnées de paiement réglées : on ne propose pas d'acheter. Un
+          // bouton qui mène à une commande impayable, c'est pire qu'un bouton absent.
+          : !S.marche?.ouvert
+            ? html`<p class="muted">La vente n’est pas encore ouverte. Ce produit pourra s’acheter bientôt.</p>`
           : S.me
             ? html`<button class="btn primary" data-action="acheter" data-id="${p.id}" data-prix="${p.prix} ${p.devise || ''}">Acheter pour ${p.prix} ${p.devise || ''}</button>
-              <p class="muted">Le paiement se règle avec nous, hors du site. Ta commande nous prévient, et l’accès s’ouvre dès qu’elle est confirmée.</p>`
+              <p class="muted">Tu commandes, tu reçois une référence et l’adresse où envoyer le paiement. Le contenu s’ouvre dès que le versement est vérifié.</p>`
             : html`<a class="btn primary" href="#/rejoindre">Créer mon compte pour acheter</a>`}
       </div>`;
   }
@@ -1077,7 +1109,8 @@ async function feedView(q) {
   const sort = SORTS[q.get('s')] ? q.get('s') : 'top';
   const prem = q.get('p') === '1' ? '1' : '';
   const mod = q.get('m') || '';
-  const params = new URLSearchParams({ t, tag, q: query, s: sort, p: prem, m: mod });
+  const prix = ['payant', 'gratuit'].includes(q.get('prix')) ? q.get('prix') : '';
+  const params = new URLSearchParams({ t, tag, q: query, s: sort, p: prem, m: mod, prix });
   const cle = 'fil:' + params;
   const vu = duCache(cle);
   const frais = Promise.all([api('/posts?' + params), api('/stats'), api('/top?periode=semaine'), api('/collections?limit=3')])
@@ -1087,7 +1120,7 @@ async function feedView(q) {
   const { posts, total: combien, suite } = liste;
   const link = (over) => {
     const n = new URLSearchParams();
-    const merged = { t, tag, q: query, s: sort, p: prem, m: mod, ...over };
+    const merged = { t, tag, q: query, s: sort, p: prem, m: mod, prix, ...over };
     for (const [k, v] of Object.entries(merged)) if (v && !(k === 's' && v === 'top')) n.set(k, v);
     const s = n.toString();
     return '#/' + (s ? '?' + s : '');
@@ -1095,14 +1128,16 @@ async function feedView(q) {
   const nomModele = mod ? (S.modeles[mod] || mod) : '';
   const title = query ? `Résultats pour « ${query} »` : tag ? `#${tag}`
     : prem ? 'Espace privé'
-      : t && mod ? `${TYPES[t].plural} essayés sur ${nomModele}`
-        : mod ? `Essayé sur ${nomModele}`
-          : t ? TYPES[t].plural : 'Tous les partages';
+      : prix === 'payant' ? (t ? `${TYPES[t].plural} à vendre` : 'À vendre')
+        : prix === 'gratuit' ? (t ? `${TYPES[t].plural} offerts` : 'Offert')
+          : t && mod ? `${TYPES[t].plural} essayés sur ${nomModele}`
+            : mod ? `Essayé sur ${nomModele}`
+              : t ? TYPES[t].plural : 'Tous les partages';
   // Le rail affiche les mêmes compteurs sur toutes les pages : il les prend ici
   // plutôt que de redemander la même chose au serveur.
   S.stats = stats;
   rail();
-  const nu = !t && !tag && !query && !prem && !mod;
+  const nu = !t && !tag && !query && !prem && !mod && !prix;
 
   render(html`
     <div>
@@ -1117,9 +1152,15 @@ async function feedView(q) {
              seule personne. Un visiteur ouvre trois cartes, voit le même auteur partout,
              et cesse de croire le reste. Un auteur assumé, lui, est un produit complet
              dès le premier jour — et le jour où des membres publient, la phrase change. -->
+        <!-- Ce que le site est : une boutique de produits digitaux, et ce que ses membres
+             offrent. La deuxième phrase suit les chiffres réels : tant que rien n'a de
+             prix, elle le dit, au lieu d'annoncer une boutique pleine. -->
         <section class="start" aria-label="Bienvenue">
-          <div><b>Ici, je range ce qui marche vraiment avec l’IA.</b>
-          <span>Des skills, des prompts, des agents, des techniques, des dépôts à connaître. Triés un par un, et relus avant d’être publiés : ce n’est pas une liste de plus, c’est ce qui a une raison d’être gardé. Tout se lit librement.</span></div>
+          <div><b>Des skills, des prompts et des produits digitaux pour travailler avec l’IA.</b>
+          <span>Certains s’achètent, d’autres sont offerts, et tout passe la même relecture avant d’être publié.
+            ${stats.aVendre
+              ? html`<a href="#/?prix=payant">${stats.aVendre} à vendre</a>, <a href="#/?prix=gratuit">${stats.gratuits} offert${stats.gratuits > 1 ? 's' : ''}</a>.`
+              : html`Pour l’instant, tout ce qui est ici est <a href="#/?prix=gratuit">offert</a>.`}</span></div>
           ${STATIQUE ? '' : html`<a class="btn primary" href="#/rejoindre">Nous rejoindre</a>`}
         </section>`}
 
@@ -1143,7 +1184,7 @@ async function feedView(q) {
         </section>` : ''}
 
       <div class="toolbar">
-        <h1>${title}<small>${combien} ${combien > 1 ? 'partages' : 'partage'}</small></h1>
+        <h1>${title}${combien ? html`<small>${combien} ${prix === 'payant' ? (combien > 1 ? 'produits' : 'produit') : (combien > 1 ? 'partages' : 'partage')}</small>` : ''}</h1>
         <div class="tabs">
           ${Object.entries(SORTS).map(([k, label]) => html`<a href="${link({ s: k })}" class="${sort === k ? 'on' : ''}">${label}</a>`)}
         </div>
@@ -1152,7 +1193,9 @@ async function feedView(q) {
             class="${vueFil === k ? 'on' : ''}" aria-pressed="${String(vueFil === k)}">${ICON[k === 'liste' ? 'lignes' : 'grille']}${label}</button>`)}
         </div>
       </div>
-      ${prem ? html`<p class="about-type">${ICON.lock} Partages réservés. Tu vois le sujet de chacun ; le contenu demande l’accès à l’espace privé.</p>`
+      ${prix === 'payant' && !query && !tag ? html`<p class="about-type">${ICON.etiquette} Des produits digitaux fabriqués par des membres : skills, prompts, agents, guides. Le titre, la description et le prix se lisent librement ; le contenu s’ouvre une fois acheté. Chaque produit passe la même relecture que le reste avant d’être mis en vente.</p>`
+        : prix === 'gratuit' && !query && !tag ? html`<p class="about-type">${ICON.cadeau} Tout ce qui est offert : à lire, à copier, à installer, sans rien payer et sans créer de compte.</p>`
+        : prem ? html`<p class="about-type">${ICON.lock} Partages réservés. Tu vois le sujet de chacun ; le contenu demande l’accès à l’espace privé.</p>`
         : mod ? html`<p class="about-type">${ICON.etincelle} Ce que des membres ont essayé sur ${nomModele}, et qui a marché chez eux. On range les familles, pas les versions : la version exacte est écrite à côté de chaque partage.</p>`
           : t && !query && !tag ? html`<p class="about-type">${TYPES[t].about}</p>` : ''}
       <div class="${vueFil === 'cartes' ? 'grille' : 'list'}">
@@ -1163,17 +1206,26 @@ async function feedView(q) {
           // à gagner — exactement ce que la charte promet qui n'arrive pas.
           const classe = sort === 'top' && !query && !tag;
           let rang = 0;
-          return posts.map(p => item(p, classe && !p.pinned && !p.promo ? ++rang : null));
+          // Et seulement ce qui a des points : sans une gemme ni une étoile, « n° 1 » ne
+          // classe rien, il invente un gagnant. Même règle que le Top 5, mis en sommeil
+          // tant que rien n'est classé.
+          return posts.map(p => item(p, classe && !p.pinned && !p.promo && p.points > 0 ? ++rang : null));
         })() : html`
           <div class="empty">
             <!-- Une rubrique vide disait « Rien ici pour l'instant » : un constat,
                  et une impression de site mort. Elle dit maintenant à qui arrive
                  que la place est libre, ce qui est à la fois vrai et accueillant. -->
             ${query ? html`Aucun résultat pour « ${query} ».<br>Essaie un mot plus court, ou parcours les rubriques.<br>`
+              // Le rayon « À vendre » vide : pas de faux « bientôt », mais une invitation
+              // à ceux qui fabriquent, avec la règle du jeu écrite en clair.
+              : prix === 'payant' ? html`<b>Rien n’est encore en vente.</b><br>Si tu fabriques des skills, des prompts ou des guides, tu peux vendre les tiens ici : tu fixes le prix, et tu reçois ce qui est vendu, moins ${S.marche?.commission ?? 5} % pour la plateforme.<br>`
               : t ? html`${TYPES[t].plural} : personne n’a encore rien posé ici.<br>Tu peux être la première personne à le faire.<br>`
                 : html`Rien ici pour l’instant.<br>`}
             ${stats.tags.length && query ? html`<div class="tagcloud center">${stats.tags.slice(0, 8).map(x => tagLink(x.tag))}</div>` : ''}
-            <a class="btn primary" href="${S.me ? '#/partager' : '#/rejoindre'}">${S.me ? 'Partager quelque chose' : 'Rejoindre pour partager'}</a></div>`}
+            <!-- Sur la copie publiée, personne ne peut s'inscrire : pas de bouton qui y mène. -->
+            ${STATIQUE ? '' : prix === 'payant'
+              ? html`<a class="btn primary" href="${S.me ? '#/partager' : '#/rejoindre'}">${ICON.etiquette}${S.me ? 'Mettre un produit en vente' : 'Rejoindre pour vendre'}</a>`
+              : html`<a class="btn primary" href="${S.me ? '#/partager' : '#/rejoindre'}">${S.me ? 'Partager quelque chose' : 'Rejoindre pour partager'}</a>`}</div>`}
       </div>
       ${suite ? html`<div class="plus"><button class="btn" data-action="plus" data-suite="${suite}" data-params="${params}">Voir plus<span class="muted"> · ${combien - posts.length} restants</span></button></div>` : ''}
 
@@ -1182,8 +1234,8 @@ async function feedView(q) {
            qu'on double à chaque défilement. -->
       <div class="colophon">
         <section>
-          <h3>Cette bibliothèque</h3>
-          <p>Elle est tenue par une personne, pas par un algorithme : tout ce qui est ici a été trié et relu avant d’être publié, et rien n’y entre parce qu’un robot l’a trouvé populaire. Le catalogue est signé <b>@makers.si</b>. Les partages des membres s’y ajouteront, relus de la même façon, et signés de leur nom.</p>
+          <h3>Ce site</h3>
+          <p>Ce qui est ici est trié et relu par une personne avant d’être publié, à vendre ou offert : rien n’y entre parce qu’un robot l’a trouvé populaire. Le catalogue de départ est signé <b>@makers.si</b>. Les membres y ajoutent leurs propres produits — vendus à leur prix, ou offerts — relus de la même façon et signés de leur nom.</p>
           <p class="muted">${stats.members} membre${stats.members > 1 ? 's' : ''} · ${stats.posts} partages · ${stats.gems} gemmes données.</p>
           ${colls?.collections?.length ? html`<p><a href="#/collections">${stats.collections} parcours composés par des membres →</a></p>` : ''}
         </section>
@@ -1523,7 +1575,8 @@ function shareView(q) {
           <small>Si tu mets un prix, le <b>contenu</b> ne s’ouvre qu’après l’achat ; le titre, la description et les tags restent publics, sinon personne ne saurait ce qu’il achète.
             De ${S.marche?.prixMin ?? 100} à ${S.marche?.prixMax ?? 100000} ${S.marche?.devise || 'DA'}.
             La plateforme retient <b>${S.marche?.commission ?? 5} %</b> sur chaque vente ; le reste te revient.
-            Le prix passe la relecture comme le reste : l’équipe peut refuser une vente.</small></div>
+            Le prix passe la relecture comme le reste : l’équipe peut refuser une vente.
+            Pense à dire <a href="#/mes-ventes">où te payer</a> : sans ça, ce qui t’est dû ne peut pas t’être versé.</small></div>
         <p class="form-error" role="alert"></p>
         <button class="btn primary" type="submit">Envoyer pour validation</button>
       </form>
@@ -1927,6 +1980,7 @@ async function ventesView() {
         <div><b>${d.commission} ${d.devise}</b><span>retenus par la plateforme</span></div>
         <div><b>${d.du} ${d.devise}</b><span>à te reverser</span></div>
       </div>
+      ${blocVersement(d)}
       ${d.ventes.length
         ? html`<table class="table"><thead><tr><th>Partage</th><th>Acheteur</th><th>Prix</th><th>Pour toi</th><th>État</th></tr></thead><tbody>
             ${d.ventes.map(v => html`<tr>
@@ -1941,22 +1995,90 @@ async function ventesView() {
     </div>`);
 }
 
+// Où le vendeur veut être payé. Placé sur sa page de ventes, là où il regarde ce qui
+// lui est dû. S'il a de l'argent à recevoir et rien de renseigné, on le lui dit
+// franchement : sans ces coordonnées, il ne peut pas être payé.
+function blocVersement(d) {
+  const v = d.versement || {};
+  const manque = !d.versement;
+  return html`
+    <section class="versement ${manque && d.du ? 'urgent' : ''}" aria-label="Où te payer">
+      <h2>Où te payer</h2>
+      ${manque && d.du
+        ? html`<p class="notice bad">${d.du} ${d.devise} t’attendent, mais on ne sait pas où te les verser. Indique ton compte ci-dessous.</p>`
+        : manque
+          ? html`<p class="muted">Indique où recevoir l’argent de tes ventes. Tu peux le faire avant ta première vente : rien ne part tant qu’il n’y a rien à te verser.</p>`
+          : html`<p class="muted">Seuls toi et l’administrateur voyez ces coordonnées, au moment de te régler. Elles n’apparaissent nulle part ailleurs.</p>`}
+      <form data-form="versement" class="versement-form">
+        <div class="field"><label for="v-titulaire">Titulaire du compte</label>
+          <input id="v-titulaire" name="titulaire" type="text" maxlength="80" autocomplete="name" value="${v.titulaire || ''}" placeholder="Le nom tel qu’il figure à la poste">
+        </div>
+        <div class="duo">
+          <div class="field"><label for="v-ccp">CCP</label>
+            <input id="v-ccp" name="ccp" type="text" maxlength="40" inputmode="numeric" value="${v.ccp || ''}" placeholder="0012345678 clé 99">
+          </div>
+          <div class="field"><label for="v-baridimob">RIP BaridiMob</label>
+            <input id="v-baridimob" name="baridimob" type="text" maxlength="40" inputmode="numeric" value="${v.baridimob || ''}" placeholder="20 chiffres">
+          </div>
+        </div>
+        <small class="muted">Un des deux suffit. Pour retirer tes coordonnées, vide les trois champs.</small>
+        <p class="form-error" role="alert"></p>
+        <button class="btn primary" type="submit">${d.versement ? 'Mettre à jour' : 'Enregistrer'}</button>
+      </form>
+    </section>`;
+}
+
+// Comment payer une commande. Écrit pour être suivi sur un téléphone, une étape à la
+// fois, avec un bouton pour copier ce qu'on recopierait mal : la référence et le compte.
+// Si les coordonnées manquent (vente fermée depuis la commande), on le dit au lieu de
+// laisser un bloc vide.
+function blocPaiement(paiement, commandes) {
+  const copier = (texte, libelle) => html`<button class="btn small" data-action="copier-texte" data-texte="${texte}">${ICON.copy}${libelle}</button>`;
+  if (!paiement) {
+    return html`<div class="notice">Ta commande est enregistrée, mais les coordonnées de paiement ne sont pas disponibles pour l’instant. Reviens sur cette page un peu plus tard.</div>`;
+  }
+  const total = commandes.reduce((n, a) => n + a.prix, 0);
+  const devise = commandes[0]?.devise || '';
+  return html`
+    <section class="paiement" aria-label="Comment payer">
+      <h2>Pour recevoir ${commandes.length > 1 ? 'tes produits' : 'ton produit'}</h2>
+      <ol class="paiement-etapes">
+        <li>
+          <b>Envoie ${total} ${devise}</b>${commandes.length > 1 ? html` <span class="muted">(${commandes.length} commandes)</span>` : ''}
+          ${paiement.ccp ? html`<div class="paiement-ligne"><span>CCP</span><code>${paiement.ccp}</code>${copier(paiement.ccp, 'Copier')}</div>` : ''}
+          ${paiement.baridimob ? html`<div class="paiement-ligne"><span>BaridiMob</span><code>${paiement.baridimob}</code>${copier(paiement.baridimob, 'Copier')}</div>` : ''}
+          ${paiement.titulaire ? html`<div class="paiement-ligne"><span>Au nom de</span><b>${paiement.titulaire}</b></div>` : ''}
+        </li>
+        <li>
+          <b>Écris ${commandes.length > 1 ? 'tes références' : 'ta référence'} dans le motif du versement</b>
+          ${commandes.map(a => html`<div class="paiement-ligne"><span>${a.titre}</span><code class="ref">${a.ref}</code>${copier(a.ref, 'Copier')}</div>`)}
+          <small class="muted">${commandes.length > 1 ? 'Ce sont elles qui permettent' : 'C’est elle qui permet'} de savoir que l’argent vient de toi.</small>
+        </li>
+        <li>
+          <b>Envoie la capture du versement, avec ${commandes.length > 1 ? 'tes références' : 'ta référence'}, à</b>
+          <div class="paiement-ligne"><code>${paiement.contact}</code>${copier(paiement.contact, 'Copier')}</div>
+        </li>
+      </ol>
+      <p class="muted">Le contenu s’ouvre dès que le versement est vérifié. La cloche, en haut, s’allume pour te prévenir.</p>
+    </section>`;
+}
+
 async function achatsView() {
   if (!S.me) { go('#/connexion'); return; }
-  const { achats } = await api('/me/achats');
+  const { achats, paiement } = await api('/me/achats');
   document.title = 'Mes achats – makers.si';
+  const attente = achats.filter(a => a.status === 'en-attente');
   render(html`
     <div class="narrow">
       <div class="admin-head"><h1 class="page-title">Mes achats</h1>
         <div><a class="btn ghost" href="#/mes-ventes">Mes ventes</a> <a class="btn ghost" href="#/mes-partages">Mes partages</a></div></div>
-      ${achats.some(a => a.status === 'en-attente')
-        ? html`<div class="notice">Une commande attend son paiement. Il se règle avec nous, hors du site : le contenu s’ouvre dès qu’elle est confirmée.</div>`
-        : ''}
+      ${attente.length ? blocPaiement(paiement, attente) : ''}
       ${achats.length
-        ? html`<table class="table"><thead><tr><th>Partage</th><th>Vendeur</th><th>Prix</th><th>État</th></tr></thead><tbody>
+        ? html`<table class="table"><thead><tr><th>Référence</th><th>Produit</th><th class="col-large">Vendeur</th><th>Prix</th><th>État</th></tr></thead><tbody>
             ${achats.map(a => html`<tr>
+              <td class="mono nowrap">${a.ref}</td>
               <td><a href="#/p/${a.postId}">${a.titre}</a></td>
-              <td class="muted">@${a.vendeur}</td>
+              <td class="muted col-large">@${a.vendeur}</td>
               <td class="mono">${a.prix} ${a.devise}</td>
               <td><span class="status ${a.status === 'paye' ? 'approved' : 'pending'}">${ETAT_VENTE[a.status] || a.status}</span></td></tr>`)}
           </tbody></table>`
@@ -2039,7 +2161,7 @@ async function adminView(q) {
         <p class="page-sub">Valide ou refuse les partages avant qu’ils soient publiés.</p>
         <form data-form="admin-login" novalidate>
           <div class="field"><label for="a-pw">Mot de passe admin</label><input id="a-pw" type="password" name="password" autocomplete="current-password" required>
-            <small>Il est dans <span class="mono">data/config.json</span> au premier lancement.</small></div>
+            <small>Il est dans <span class="mono">.env</span>, à la ligne <span class="mono">ADMIN_PASSWORD</span>. Sans <span class="mono">.env</span>, le serveur en génère un dans <span class="mono">data/config.json</span>.</small></div>
           <p class="form-error" role="alert"></p>
           <button class="btn primary" type="submit">Entrer</button>
         </form>
@@ -2138,8 +2260,9 @@ async function adminView(q) {
 
             <h3 class="admin-sous-titre">Commandes à confirmer</h3>
             ${data.attente.length
-              ? html`<table class="table"><thead><tr><th>Date</th><th>Partage</th><th>Acheteur</th><th>Prix</th><th></th></tr></thead><tbody>
+              ? html`<table class="table"><thead><tr><th>Référence</th><th>Date</th><th>Partage</th><th>Acheteur</th><th>Prix</th><th></th></tr></thead><tbody>
                   ${data.attente.map(a => html`<tr>
+                    <td class="mono nowrap"><b>${a.ref}</b></td>
                     <td>${new Date(a.at).toLocaleDateString('fr-FR')}</td>
                     <td><a href="#/p/${a.postId}">${a.titre}</a><br><small class="muted">vendu par @${a.sellerPseudo}</small></td>
                     <td class="muted">@${a.buyerPseudo}</td>
@@ -2151,9 +2274,17 @@ async function adminView(q) {
 
             <h3 class="admin-sous-titre">Ce que tu dois aux vendeurs</h3>
             ${data.vendeurs.length
-              ? html`<table class="table"><thead><tr><th>Vendeur</th><th>Ventes</th><th>Encaissé</th><th>À reverser</th><th></th></tr></thead><tbody>
+              ? html`<table class="table"><thead><tr><th>Vendeur</th><th>Où le payer</th><th>Ventes</th><th>Encaissé</th><th>À reverser</th><th></th></tr></thead><tbody>
                   ${data.vendeurs.map(v => html`<tr>
-                    <td>@${v.pseudo}</td><td class="mono">${v.ventes}</td>
+                    <td>@${v.pseudo}</td>
+                    <td>${v.versement
+                      ? html`<b>${v.versement.titulaire}</b>
+                          ${v.versement.ccp ? html`<br><small class="muted">CCP</small> <code>${v.versement.ccp}</code>` : ''}
+                          ${v.versement.baridimob ? html`<br><small class="muted">BaridiMob</small> <code>${v.versement.baridimob}</code>` : ''}`
+                      : v.du
+                        ? html`<span class="status rejected">rien d’indiqué</span><br><small class="muted">à lui demander</small>`
+                        : html`<span class="muted">—</span>`}</td>
+                    <td class="mono">${v.ventes}</td>
                     <td class="mono">${v.brut} ${data.devise}</td>
                     <td class="mono">${v.du} ${data.devise}${v.regle ? html`<br><small class="muted">${v.regle} déjà reversés</small>` : ''}</td>
                     <td>${v.du && v.id ? html`<button class="btn small" data-action="vendeur-regler" data-id="${v.id}" data-pseudo="${v.pseudo}" data-du="${v.du} ${data.devise}">Marquer reversé</button>` : ''}</td></tr>`)}
@@ -2195,7 +2326,7 @@ async function adminView(q) {
 const LEGAL = ['confidentialite', 'conditions', 'cookies', 'charte', 'mentions-legales'];
 
 async function route() {
-  document.title = 'makers.si — ce qui marche vraiment avec l’IA';
+  document.title = 'makers.si — skills, prompts et produits digitaux pour l’IA';
   const [path, qs] = (location.hash.slice(1) || '/').split('?');
   const q = new URLSearchParams(qs || '');
   header();
@@ -2331,7 +2462,7 @@ document.addEventListener('click', async (e) => {
         // On repart du nombre de rangs déjà affichés, pas du nombre de partages : les épingles
         // et les places payées n'en portent pas, et décaleraient toute la numérotation.
         let rang = $$('.rang, .rang-n, .medaille').length;
-        liste.insertAdjacentHTML('beforeend', posts.map(p => item(p, classe && !p.pinned && !p.promo ? ++rang : null).s).join(''));
+        liste.insertAdjacentHTML('beforeend', posts.map(p => item(p, classe && !p.pinned && !p.promo && p.points > 0 ? ++rang : null).s).join(''));
         applyBars(liste);
         if (suite) {
           el.dataset.suite = suite;
@@ -2377,6 +2508,11 @@ document.addEventListener('click', async (e) => {
     } else if (action === 'copy') {
       const text = $(`[data-copy="${id}"]`).textContent;
       await navigator.clipboard.writeText(text);
+      confirme(el);
+    } else if (action === 'copier-texte') {
+      // Une référence ou un numéro de compte : sur un téléphone, les recopier à la main
+      // dans l'application de la banque, c'est la faute de frappe assurée.
+      await navigator.clipboard.writeText(el.dataset.texte);
       confirme(el);
     } else if (action === 'reessayer') {
       videCache();
@@ -2481,10 +2617,12 @@ document.addEventListener('click', async (e) => {
     } else if (action === 'acheter') {
       // On ne prend pas d'argent ici : on enregistre une commande. Le dire clairement
       // avant de cliquer évite que quelqu'un attende un formulaire de carte bancaire.
-      if (!confirm(`Commander ce partage pour ${el.dataset.prix} ?\n\nLe paiement se règle avec nous, hors du site. Ta commande nous prévient, et l’accès s’ouvre dès qu’elle est confirmée.`)) return;
+      if (!confirm(`Commander ce produit pour ${el.dataset.prix} ?\n\nTu vas recevoir une référence et l’adresse où envoyer le paiement. Le contenu s’ouvre dès que le versement est vérifié.`)) return;
       await api(`/posts/${id}/acheter`, { method: 'POST' });
-      toast('Commande enregistrée. On te recontacte pour le paiement.');
-      route();
+      // « On te recontacte » : le site n'envoie aucun email, personne ne recontactait.
+      // On emmène l'acheteur là où sont écrites la référence et l'adresse de paiement.
+      toast('Commande enregistrée. Voici comment payer.');
+      go('#/mes-achats');
     } else if (action === 'promo-open') {
       $(`[data-card="${id}"] .promo-form`).classList.toggle('hidden');
       $(`[data-card="${id}"] .promo-form input`).focus();
@@ -2588,6 +2726,12 @@ document.addEventListener('submit', async (e) => {
       $('h2', section).lastChild.textContent = titreFil(ol.children.length);
       form.reset();
       toast('Réponse publiée.');
+    } else if (kindOf === 'versement') {
+      const r = await api('/me/versement', { method: 'POST', body: {
+        titulaire: fd.get('titulaire'), ccp: fd.get('ccp'), baridimob: fd.get('baridimob'),
+      } });
+      toast(r.versement ? 'Coordonnées enregistrées.' : 'Coordonnées retirées.');
+      route();
     } else if (kindOf === 'report') {
       if (!S.me) { toast('Rejoins la communauté pour signaler.'); return go('#/rejoindre'); }
       await api(`/posts/${form.dataset.id}/report`, { method: 'POST', body: { reason: fd.get('reason') } });

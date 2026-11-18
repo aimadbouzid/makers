@@ -1,7 +1,7 @@
 {
-  "name": "makers.si — ce qui marche vraiment avec l’IA",
+  "name": "makers.si — skills, prompts et produits digitaux pour l’IA",
   "short_name": "makers.si",
-  "description": "Des skills Claude, des prompts, des agents, des serveurs MCP, des techniques de montage et des dépôts à connaître : triés un par un, et relus avant d’être publiés.",
+  "description": "Une boutique de produits digitaux pour travailler avec l’IA — skills Claude, prompts, agents, guides — et tout ce que les membres offrent gratuitement. Chaque produit est relu avant d’être publié.",
   "lang": "fr",
   "dir": "ltr",
   "start_url": "./",
