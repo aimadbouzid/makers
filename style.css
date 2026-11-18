@@ -612,6 +612,8 @@ body.page-seule .logo { width: auto; }
 .k-agent { --k: var(--k-agent); } .k-mcp { --k: var(--k-mcp); }
 /* Les deux rayons de la boutique : le vert de ce qui rapporte, le bleu de ce qui est offert. */
 .k-vente { --k: var(--ok); } .k-gratuit { --k: var(--accent); }
+/* De l'argent attend une confirmation : le chiffre se voit, en vert, gras. */
+.rail a span.a-faire { color: var(--ok); font-weight: 700; }
 
 /* Le modèle sur lequel un partage a été essayé. Encadré plutôt que coloré : il
    ne doit pas entrer en concurrence avec l'étiquette de la catégorie, qui porte

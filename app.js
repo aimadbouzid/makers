@@ -433,7 +433,7 @@ function header() {
         <!-- Sur téléphone, la modération quitte la barre du haut : elle ne sert qu'à
              une personne, et la place revient à la cloche, qui sert tous les jours.
              Elle reste atteignable par le rail et par la palette. -->
-        ${S.admin ? html`<a class="btn small hide-sm" href="#/admin">À valider${S.pending ? html`<span class="badge">${S.pending}</span>` : ''}</a>` : ''}
+        ${S.admin ? html`<a class="btn small hide-sm" href="#/admin" title="Partages à relire et commandes à confirmer">À valider${S.pending + (S.aConfirmer || 0) ? html`<span class="badge">${S.pending + (S.aConfirmer || 0)}</span>` : ''}</a>` : ''}
         ${S.me && !STATIQUE ? html`
           <a class="cloche ${S.nonLues ? 'neuve' : ''}" href="#/notifications"
             aria-label="${S.nonLues ? `${S.nonLues} nouveauté${S.nonLues > 1 ? 's' : ''} depuis ta dernière visite` : 'Ce qui s’est passé'}"
@@ -539,6 +539,10 @@ function railHTML(stats, path, q) {
             <a href="#/notifications" class="${path === '/notifications' ? 'on' : ''}">
               ${ICON.cloche}Ce qui s’est passé ${S.nonLues ? html`<span>${S.nonLues}</span>` : ''}</a>
             <a href="#/mes-partages" class="${path === '/mes-partages' ? 'on' : ''}">${ICON.dossier}Mes partages</a>
+            <!-- C'est sur « Mes achats » qu'est écrit où payer. Elle n'était accessible
+                 qu'en passant par « Mes ventes », où un acheteur n'a aucune raison
+                 d'aller. Le chiffre rappelle qu'une commande attend son versement. -->
+            <a href="#/mes-achats" class="${path === '/mes-achats' ? 'on' : ''}">${ICON.etiquette}Mes achats ${S.commandes ? html`<span>${S.commandes}</span>` : ''}</a>
             <a href="#/mes-ventes" class="${path === '/mes-ventes' ? 'on' : ''}">${ICON.file}Mes ventes</a>
             <a href="#/membre/${encodeURIComponent(S.me.pseudo)}">${ICON.perso}Mon profil</a>`
           : html`
@@ -547,7 +551,8 @@ function railHTML(stats, path, q) {
         <!-- Hors du choix ci-dessus : une session d'administration est indépendante
              d'un compte membre. On peut modérer sans être connecté comme membre. -->
         ${S.admin ? html`<a href="#/admin" class="${path === '/admin' ? 'on' : ''}">
-          ${ICON.vote}Modération ${S.pending ? html`<span>${S.pending}</span>` : ''}</a>` : ''}
+          ${ICON.vote}Modération ${S.pending ? html`<span>${S.pending}</span>` : ''}</a>
+          <a href="#/admin?s=marche">${ICON.etiquette}Commandes à confirmer ${S.aConfirmer ? html`<span class="a-faire">${S.aConfirmer}</span>` : ''}</a>` : ''}
       </section>`}
 
     <div class="rail-bas">
@@ -2176,7 +2181,9 @@ async function adminView(q) {
         : tab === 'marche' ? api('/admin/marche')
           : tab === 'reports' ? api('/admin/reports') : api('/admin/posts?status=' + tab),
   ]);
-  S.pending = counts.pending; header();
+  // Les deux compteurs de l'admin suivent ce qu'il vient de faire : confirmer une
+  // commande doit faire baisser son badge tout de suite, pas au prochain rechargement.
+  S.pending = counts.pending; S.aConfirmer = counts.marche; header(); rail();
   const tabs = [['pending', 'À valider', counts.pending], ['reports', 'Signalés', counts.reported], ['approved', 'Publiés', counts.approved], ['rejected', 'Refusés', counts.rejected], ['promos', 'Mises en avant', counts.promos], ['collections', 'Collections', counts.collections], ['marche', 'Marché', counts.marche], ['members', 'Membres', counts.members]];
   const privateNote = tab === 'members'
     ? html`<p class="about-type">L’accès à l’espace privé se donne à la main, un membre à la fois. Il n’y a pas encore de paiement : c’est toi qui décides qui entre.</p>`
@@ -2387,7 +2394,8 @@ async function route() {
 async function refreshMe() {
   try {
     const r = await api('/me');
-    Object.assign(S, { me: r.member, admin: r.admin, pending: r.pending, nonLues: r.nonLues || 0 });
+    Object.assign(S, { me: r.member, admin: r.admin, pending: r.pending, nonLues: r.nonLues || 0,
+      commandes: r.commandes || 0, aConfirmer: r.aConfirmer || 0 });
     if (r.limits) S.limits = r.limits;
     if (r.promo) S.promo = r.promo;
     if (r.marche) S.marche = r.marche;
