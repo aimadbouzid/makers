@@ -744,6 +744,10 @@ body.page-seule .logo { width: auto; }
   font-size: 15.5px; line-height: 1.7; border-bottom: 0;
 }
 .empty .btn { margin-top: 18px; }
+/* Dans la grille des cartes, le message d'une rubrique vide occupait une seule case :
+   sur un téléphone à deux colonnes, il s'écrasait sur 120 pixels de large, un mot
+   par ligne. Il prend toute la largeur de la grille. */
+.grille > .empty { grid-column: 1 / -1; }
 
 /* ===========================================================================
    11. La vue en cartes
