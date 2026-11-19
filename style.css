@@ -827,14 +827,16 @@ body.page-seule .logo { width: auto; }
 }
 
 /* ---------------------------------------------------------------------------
-   Les couvertures
-   Dans ce catalogue, presque rien n'a de photo : un skill, un prompt, un lien
-   n'en ont pas, et on ne va pas en inventer. L'index était donc un mur de texte
-   gris. Chaque partage porte maintenant une couverture faite de trois choses
-   qui lui appartiennent : la couleur de sa catégorie, un motif tiré de son
-   identifiant — toujours le même, jamais tiré au sort — et son propre contenu
-   posé dessus en chasse fixe. De loin, une matière et une couleur ; de près, le
-   début du prompt. C'est la différence entre décorer et montrer.
+   La boîte
+   Chaque produit se présente comme l'emballage de ce qu'on achète : une boîte en
+   trois dimensions, posée directement sur la carte, sans décor derrière. Son nom est
+   sur la face, sa catégorie sur la tranche, la marque en bas. Dans un magasin, on
+   reconnaît un produit à sa boîte avant d'en avoir lu le nom.
+
+   Aucune image : tout est en transformations 3D. La boîte ne pèse rien, se
+   redessine dans les deux thèmes, et se dimensionne sur la hauteur de sa scène
+   (unités de conteneur, cqh) — la même règle fait une grande boîte sur une carte
+   de bureau et une petite dans la vignette d'une liste.
    --------------------------------------------------------------------------- */
 .couv {
   position: relative; display: block; overflow: hidden; isolation: isolate;
@@ -842,105 +844,135 @@ body.page-seule .logo { width: auto; }
      poussait le titre sous la ligne de flottaison. */
   aspect-ratio: 16 / 9; max-height: 172px; min-height: 108px;
   text-decoration: none;
-  /* Le dégradé part de la surface qui porte la couverture, pas du fond de la
-     page : sinon la couverture est plus sombre que la carte sur laquelle elle
-     est posée, et la carte a l'air d'avoir un trou en haut. */
-  background: linear-gradient(152deg,
-    color-mix(in srgb, var(--k, var(--accent)) 22%, var(--surface)),
-    color-mix(in srgb, var(--k, var(--accent)) 6%, var(--surface)));
-  border-bottom: 1px solid var(--line);
+  /* Pas de décor derrière la boîte : elle est posée sur la carte elle-même, avec
+     son ombre pour seul appui. La couleur du produit est sur la boîte, pas autour. */
+  background: transparent;
 }
-/* Le motif. Un seul pseudo-élément, huit dessins, choisis par l'empreinte du
-   partage. Débordant de 20 % pour qu'aucun motif ne s'arrête sur un bord. */
-.couv::before {
-  content: ''; position: absolute; inset: -20%; z-index: 0;
-  color: var(--k, var(--accent)); opacity: .24;
-  --trait: color-mix(in srgb, currentColor 72%, transparent);
-  transition: opacity .16s ease;
-}
-.couv[data-motif="0"]::before { background-image: repeating-linear-gradient(135deg, var(--trait) 0 1px, transparent 1px 9px); }
-.couv[data-motif="1"]::before { background-image: radial-gradient(currentColor .9px, transparent 1.4px); background-size: 12px 12px; }
-.couv[data-motif="2"]::before { background-image: repeating-linear-gradient(0deg, var(--trait) 0 1px, transparent 1px 8px); }
-.couv[data-motif="3"]::before {
-  background-image: repeating-linear-gradient(90deg, var(--trait) 0 1px, transparent 1px 12px),
-                    repeating-linear-gradient(0deg, var(--trait) 0 1px, transparent 1px 12px);
-}
-.couv[data-motif="4"]::before { background-image: repeating-radial-gradient(circle at 14% 116%, transparent 0 15px, var(--trait) 15px 16px); }
-.couv[data-motif="5"]::before {
-  background-image: repeating-linear-gradient(45deg, var(--trait) 0 1px, transparent 1px 11px),
-                    repeating-linear-gradient(-45deg, var(--trait) 0 1px, transparent 1px 11px);
-}
-.couv[data-motif="6"]::before {
-  background-image: radial-gradient(circle at 84% 14%, currentColor 0 13%, transparent 14%),
-                    radial-gradient(circle at 84% 14%, transparent 0 26%, var(--trait) 26% 27%, transparent 28%),
-                    radial-gradient(circle at 84% 14%, transparent 0 40%, var(--trait) 40% 41%, transparent 42%);
-}
-.couv[data-motif="7"]::before {
-  background-image: repeating-linear-gradient(135deg, var(--trait) 0 2px, transparent 2px 7px),
-                    repeating-linear-gradient(0deg, var(--trait) 0 1px, transparent 1px 15px);
-}
-.carte:hover .couv::before, .carte:focus-within .couv::before,
-.item:hover .couv::before, .item:focus-within .couv::before { opacity: .34; }
 
-/* L'extrait : le vrai contenu du partage, en petit, fondu vers le bas. Ce n'est
-   pas un faux-texte — c'est le prompt qu'on va copier, lisible si on s'approche. */
-.couv-extrait {
-  position: absolute; inset: 0; z-index: 1; padding: 12px 14px;
-  font: 10.5px/1.6 var(--mono); white-space: pre-wrap; word-break: break-word;
-  color: color-mix(in srgb, var(--k, var(--accent)) 46%, var(--ink));
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(180deg, #000 38%, transparent 94%);
-  mask-image: linear-gradient(180deg, #000 38%, transparent 94%);
+/* La scène sert de conteneur : la boîte et son ombre se mesurent sur sa hauteur.
+   Les dimensions sont posées ici et résolues chez les enfants, qui seuls peuvent
+   utiliser les unités de leur conteneur. */
+.boite-scene {
+  position: absolute; inset: 0; z-index: 1;
+  display: grid; place-items: center;
+  container-type: size;
+  perspective: 900px;
+  --h: 74cqh;
+  --w: calc(var(--h) * .74);
+  --d: calc(var(--h) * .2);
 }
-/* Le mot : ce qui tient lieu de contenu quand il n'y en a pas à montrer — le
-   domaine d'un lien, l'extension d'un fichier, le nombre de votes. */
-.couv-mot {
-  position: absolute; inset: 0; z-index: 1; padding: 12px;
-  display: grid; place-items: center; text-align: center; word-break: break-word;
-  font: 700 20px/1.2 var(--mono); letter-spacing: -.025em;
-  color: color-mix(in srgb, var(--k, var(--accent)) 64%, var(--ink));
+.boite {
+  position: relative; width: var(--w); height: var(--h);
+  transform-style: preserve-3d;
+  transform: rotateX(-9deg) rotateY(26deg);
+  /* Un peu vers la droite : la tranche, à gauche, prend sa place. */
+  translate: calc(var(--d) * .45) calc(var(--h) * -.03);
+  transition: transform .55s var(--ease);
 }
-/* La catégorie en grand, quand c'est tout ce qu'il y a à montrer. */
-.couv-cote {
-  font-size: 26px; letter-spacing: .14em; text-transform: uppercase;
-  color: color-mix(in srgb, var(--k, var(--accent)) 76%, var(--ink));
-  opacity: .78;
+/* Au survol, la boîte se tourne vers celui qui la regarde, comme prise en main. */
+.carte:hover .boite, .carte:focus-within .boite,
+.item:hover .boite, .item:focus-within .boite { transform: rotateX(-5deg) rotateY(12deg) translateZ(8px); }
+@media (prefers-reduced-motion: reduce) {
+  .boite { transition: none; }
+  .carte:hover .boite, .carte:focus-within .boite,
+  .item:hover .boite, .item:focus-within .boite { transform: rotateX(-9deg) rotateY(26deg); }
 }
-/* L'adresse d'un lien. Le domaine en petit au-dessus, le chemin en grand : sur
-   quinze liens dont douze vers le même site, c'est le chemin qui dit lequel. */
-.couv-lien {
-  position: absolute; inset: 0; z-index: 1; padding: 13px 15px;
-  display: flex; flex-direction: column; justify-content: flex-end; gap: 5px; min-width: 0;
-}
-.couv-lien small {
-  font: 600 10.5px var(--mono); letter-spacing: .08em; text-transform: uppercase;
-  color: color-mix(in srgb, var(--k, var(--accent)) 50%, var(--ink)); opacity: .8;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.couv-lien b {
-  font: 700 17px/1.26 var(--mono); letter-spacing: -.03em; word-break: break-word;
-  color: color-mix(in srgb, var(--k, var(--accent)) 70%, var(--ink));
-  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
-}
-.couv-photo { background: var(--bg-deep); }
-.couv-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.boite > span { position: absolute; backface-visibility: hidden; }
 
-/* La vignette de l'index : la même couverture, à la taille d'une cote. L'extrait
-   n'y est plus lisible et ce n'est pas le but — il y fait une trame, et c'est à
-   ça qu'on reconnaît un prompt d'un lien en descendant la page. */
+/* La face. Ses couleurs sont celles du produit, pas du thème : une vraie boîte ne
+   change pas de couleur quand on éteint la lumière. Texte blanc sur une teinte
+   assombrie, au-dessus de 4,5:1 pour toutes les catégories. */
+.boite-face {
+  inset: 0;
+  transform: translateZ(calc(var(--d) / 2));
+  display: flex; flex-direction: column; gap: 5%;
+  padding: 10% 10% 9%;
+  border-radius: 2px 3px 3px 2px;
+  color: #fff; overflow: hidden;
+  background:
+    linear-gradient(122deg, rgb(255 255 255 / .24), transparent 36%),
+    linear-gradient(168deg,
+      color-mix(in srgb, var(--k, var(--accent)) 58%, #000),
+      color-mix(in srgb, var(--k, var(--accent)) 34%, #000));
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / .14);
+}
+.boite-face.photo { padding: 0; background: var(--bg-deep); }
+.boite-face.photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.boite-kind {
+  font: 700 max(8px, calc(var(--h) * .066)) var(--font);
+  letter-spacing: .1em; text-transform: uppercase; opacity: .85;
+}
+.boite-titre {
+  font: 700 max(9px, calc(var(--h) * .094))/1.14 var(--font); letter-spacing: -.02em;
+  text-wrap: balance;
+  /* Une face de boîte est étroite : un mot long s'y coupe, comme sur un vrai
+     emballage, plutôt que de déborder sur la tranche. */
+  hyphens: auto; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
+}
+.boite-marque {
+  margin-top: auto;
+  font: 700 max(7px, calc(var(--h) * .062)) var(--font); letter-spacing: -.03em; opacity: .82;
+}
+.boite-marque i { font-style: normal; color: color-mix(in srgb, var(--k, var(--accent)) 45%, #fff); }
+
+/* La tranche, à gauche : plus sombre, la catégorie écrite de bas en haut, comme sur
+   le dos d'une boîte rangée debout. */
+.boite-tranche {
+  width: var(--d); height: var(--h);
+  left: calc((var(--w) - var(--d)) / 2);
+  transform: rotateY(-90deg) translateZ(calc(var(--w) / 2));
+  display: grid; place-items: center;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--k, var(--accent)) 40%, #000),
+    color-mix(in srgb, var(--k, var(--accent)) 24%, #000));
+}
+.boite-tranche span {
+  writing-mode: vertical-rl; rotate: 180deg; white-space: nowrap;
+  font: 700 calc(var(--d) * .4) var(--font); letter-spacing: .16em; text-transform: uppercase;
+  color: rgb(255 255 255 / .72);
+}
+/* Le dessus : la face qui prend la lumière. */
+.boite-dessus {
+  width: var(--w); height: var(--d);
+  top: calc((var(--h) - var(--d)) / 2);
+  transform: rotateX(90deg) translateZ(calc(var(--h) / 2));
+  background: color-mix(in srgb, var(--k, var(--accent)) 70%, #fff);
+}
+/* L'ombre au sol : ce qui pose la boîte sur la scène au lieu de la faire flotter. */
+.boite-sol {
+  position: absolute; z-index: 0; left: 50%;
+  bottom: calc(50% - var(--h) * .58);
+  width: calc(var(--w) * 1.5); height: calc(var(--h) * .14);
+  translate: -42% 0;
+  background: radial-gradient(closest-side, rgb(0 0 0 / .42), transparent);
+  filter: blur(2px);
+}
+.boite-scene .boite { z-index: 1; }
+
+/* Une petite boîte ne garde que ce qui se lit encore : sous 120 px de scène le titre
+   tombe, sous 72 px tout le texte. Il reste une boîte à la couleur du produit —
+   c'est elle qu'on reconnaît en descendant une liste. */
+@container (max-height: 120px) {
+  .boite-titre, .boite-marque { display: none; }
+  .boite-face { justify-content: center; align-items: center; text-align: center; }
+}
+@container (max-height: 72px) {
+  .boite-kind, .boite-tranche span { display: none; }
+}
+
+/* Une scène étroite (deux cartes par ligne sur téléphone) n'a pas la place pour la
+   boîte ET l'étiquette de prix côte à côte : la boîte se pousse vers la gauche, son
+   ombre avec elle, et le prix se pose à côté au lieu de cacher la marque. */
+@container (max-width: 300px) {
+  .couv-cadre:has(.prix-couv) .boite { translate: calc(var(--w) * -.58) calc(var(--h) * -.03); }
+  .couv-cadre:has(.prix-couv) .boite-sol { translate: calc(-42% - var(--w) * .58) 0; }
+}
+
+/* La vignette de l'index : la même boîte, à la taille d'une cote. */
 .couv-mini {
   width: 94px; height: 60px; aspect-ratio: auto; max-height: none; min-height: 0; flex: none;
-  border: 1px solid var(--line); border-radius: var(--r-sm); border-bottom-color: var(--line);
 }
-.couv-mini .couv-extrait { padding: 5px 6px; font-size: 5.6px; line-height: 1.5; }
-.couv-mini .couv-mot { padding: 5px; font-size: 11px; letter-spacing: -.02em; }
-.couv-mini .couv-cote { font-size: 12px; letter-spacing: .1em; }
-.couv-mini .couv-lien { padding: 6px 7px; gap: 2px; }
-/* À la taille d'une vignette, le domaine est déjà écrit dans la ligne à côté :
-   seul le chemin reste, et il y fait une trame plutôt qu'une légende. */
-.couv-mini .couv-lien small { display: none; }
-.couv-mini .couv-lien b { font-size: 8px; line-height: 1.34; -webkit-line-clamp: 3; }
-.couv-mini::before { inset: -30%; }
 .carte-bas {
   display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; overflow: hidden;
   margin-top: auto; padding-top: 11px; border-top: 1px solid var(--line);
@@ -1721,8 +1753,6 @@ body.chargement::before { width: 80%; opacity: 1; transition: width 2.5s cubic-b
   .item .vote-col { grid-column: 2; grid-row: 1; justify-self: end; }
   /* La couverture se range à droite du titre, à la taille d'un pouce. */
   .item .couv { grid-column: 2; grid-row: 2; width: 74px; height: 48px; align-self: start; }
-  .item .couv-mini .couv-extrait { font-size: 4.6px; padding: 4px 5px; }
-  .item .couv-mini .couv-mot { font-size: 9.5px; }
   .item-title { font-size: 16px; }
   .item-desc { font-size: 14px; -webkit-line-clamp: 2; }
 
@@ -1733,7 +1763,7 @@ body.chargement::before { width: 80%; opacity: 1; transition: width 2.5s cubic-b
   .grille { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   /* La couverture reprend sa proportion : sur une carte deux fois plus étroite,
      un plafond de hauteur en ferait une bande. */
-  .carte .couv { max-height: none; min-height: 0; }
+  .carte .couv { max-height: none; min-height: 0; aspect-ratio: 4 / 3; }
   .carte-corps { padding: 11px 12px 10px; gap: 6px; }
   .carte-titre { font-size: 14.5px; line-height: 1.28; -webkit-line-clamp: 3; }
   .carte-desc { font-size: 12.5px; -webkit-line-clamp: 2; }
@@ -1743,13 +1773,8 @@ body.chargement::before { width: 80%; opacity: 1; transition: width 2.5s cubic-b
      les étoiles et le pseudo ne tiennent pas côte à côte. */
   .carte-bas { flex-wrap: wrap; gap: 6px 10px; padding-top: 9px; font-size: 12px; }
   .carte-auteur { font-size: 12.5px; }
-  .carte .couv-extrait { font-size: 8px; line-height: 1.55; padding: 9px 10px; }
-  .carte .couv-mot { font-size: 15px; padding: 9px; }
-  .carte .couv-cote { font-size: 18px; letter-spacing: .1em; }
-  .carte .couv-lien { padding: 9px 10px; gap: 3px; }
-  .carte .couv-lien small { font-size: 8.5px; letter-spacing: .05em; }
-  .carte .couv-lien b { font-size: 12.5px; line-height: 1.24; }
   .medaille { top: 7px; left: 7px; height: 19px; padding: 0 7px; font-size: 10.5px; }
+  .prix-couv { right: 7px; bottom: 7px; height: 23px; padding: 0 8px; font-size: 12px; }
   .toolbar { gap: 10px 14px; align-items: baseline; }
   .toolbar h1 { font-size: 19px; width: 100%; }
   .tabs a, .vues button { padding: 4px 9px; font-size: 13px; }

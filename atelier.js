@@ -59,17 +59,17 @@ function commandes() {
     { groupe: 'Aller à', mot: 'Le Top 5', hash: '#/top', icone: 'cup' },
     { groupe: 'Aller à', mot: 'Comment ça marche', hash: '#/aide', icone: 'ampoule' },
     { groupe: 'Aller à', mot: 'La charte de la communauté', hash: '#/charte', icone: 'doc' },
-    { groupe: 'Aller à', mot: 'Mettre un partage en avant', hash: '#/mise-en-avant', icone: 'megaphone' },
+    { groupe: 'Aller à', mot: 'Mettre un drop en avant', hash: '#/mise-en-avant', icone: 'megaphone' },
   ];
   if (!statique) {
     if (moi) {
       liste.unshift(
-        { groupe: 'Faire', mot: 'Partager quelque chose', hash: '#/partager', icone: 'plus' },
+        { groupe: 'Faire', mot: 'New drop', hash: '#/partager', icone: 'plus' },
         { groupe: 'Faire', mot: 'Composer une collection', hash: '#/collection', icone: 'plus' },
       );
       liste.push(
         { groupe: 'Mon compte', mot: 'Ce qui s’est passé', hash: '#/notifications', icone: 'cloche' },
-        { groupe: 'Mon compte', mot: 'Mes partages', hash: '#/mes-partages', icone: 'dossier' },
+        { groupe: 'Mon compte', mot: 'Mes drops', hash: '#/mes-partages', icone: 'dossier' },
         { groupe: 'Mon compte', mot: 'Mes ventes', hash: '#/mes-ventes', icone: 'doc' },
         { groupe: 'Mon compte', mot: 'Mes achats', hash: '#/mes-achats', icone: 'doc' },
         { groupe: 'Mon compte', mot: `Mon profil public (@${moi.pseudo})`, hash: '#/membre/' + encodeURIComponent(moi.pseudo), icone: 'file' },
@@ -113,7 +113,7 @@ function construis() {
         <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="4.6"/><path d="M10.6 10.6 14 14"/></svg>
         <input type="text" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true"
           aria-controls="palette-res" aria-autocomplete="list"
-          placeholder="Chercher un partage, ou taper une commande…" aria-label="Chercher ou commander">
+          placeholder="Chercher un drop, ou taper une commande…" aria-label="Chercher ou commander">
       </div>
       <div class="palette-res" id="palette-res" role="listbox" aria-label="Résultats"></div>
       <div class="palette-pied">
@@ -191,7 +191,7 @@ function dessine(mot, cmds, posts) {
   const bouts = [];
 
   if (posts?.length) {
-    bouts.push('<div class="palette-groupe cote">Partages</div>');
+    bouts.push('<div class="palette-groupe cote">Drops</div>');
     for (const p of posts) {
       lignes.push({ hash: '#/p/' + p.id });
       bouts.push(`<a class="palette-ligne" role="option" aria-selected="false" data-i="${lignes.length - 1}" href="#/p/${esc(p.id)}">
@@ -267,18 +267,18 @@ const RACCOURCIS = [
     ['Échap', 'Fermer, ou revenir à la bibliothèque'],
   ]],
   ['Dans l’index', [
-    ['j  ou  ↓', 'Partage suivant'],
-    ['k  ou  ↑', 'Partage précédent'],
-    ['Entrée', 'Ouvrir le partage'],
+    ['j  ou  ↓', 'Drop suivant'],
+    ['k  ou  ↑', 'Drop précédent'],
+    ['Entrée', 'Ouvrir le drop'],
   ]],
-  ['Sur un partage', [
+  ['Sur un drop', [
     ['c', 'Copier le contenu'],
   ]],
   ['Sauter', [
     ['g puis b', 'La bibliothèque'],
     ['g puis c', 'Les collections'],
     ['g puis t', 'Le Top 5'],
-    ['g puis p', 'Partager'],
+    ['g puis p', 'New drop'],
     ['g puis a', 'Comment ça marche'],
   ]],
 ];

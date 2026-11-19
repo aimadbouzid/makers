@@ -18,7 +18,7 @@
     { "src": "icons/icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "Partager quelque chose", "short_name": "Partager", "url": "./#/partager" },
+    { "name": "New drop", "short_name": "New drop", "url": "./#/partager" },
     { "name": "Les collections", "short_name": "Collections", "url": "./#/collections" },
     { "name": "Le Top 5", "short_name": "Top 5", "url": "./#/top" }
   ]

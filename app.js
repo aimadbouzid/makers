@@ -181,13 +181,10 @@ const STATIQUE = typeof window !== 'undefined' && window.MAKERS_STATIQUE === tru
 let fondStatique = null;
 
 // La copie publiée répond aux mêmes adresses que le serveur, et doit renvoyer la
-// même forme : une liste porte un aperçu du contenu, jamais le contenu entier.
-// C'est cet aperçu que la couverture d'un partage affiche ; sans lui, la copie
-// publiée montrerait des couvertures vides là où le site complet montre le début
-// du prompt. (Voir `pourListe` dans src/posts.js, dont ceci est le jumeau.)
+// même forme : une liste ne porte jamais le contenu d'un partage, seulement sa
+// fiche. (Voir `pourListe` dans src/posts.js, dont ceci est le jumeau.)
 const pourListe = p => {
   const o = { ...p };
-  o.apercu = (o.content || '').slice(0, 260);
   delete o.content;
   return o;
 };
@@ -236,7 +233,7 @@ async function apiStatique(chemin, method) {
   const sesReponses = base.match(/^\/posts\/([a-f0-9]+)\/comments$/);
   if (sesReponses) {
     const post = posts.find(p => p.id === sesReponses[1]);
-    if (!post) throw Object.assign(new Error('Partage introuvable.'), { status: 404 });
+    if (!post) throw Object.assign(new Error('Drop introuvable.'), { status: 404 });
     return { comments: post.comments || [] };
   }
 
@@ -294,7 +291,7 @@ async function apiStatique(chemin, method) {
   const unPost = base.match(/^\/posts\/([a-f0-9]+)$/);
   if (unPost) {
     const p = posts.find(x => x.id === unPost[1]);
-    if (!p) throw Object.assign(new Error('Partage introuvable.'), { status: 404 });
+    if (!p) throw Object.assign(new Error('Drop introuvable.'), { status: 404 });
     return { post: p };
   }
 
@@ -421,7 +418,7 @@ function header() {
     <div class="bar">
       <button class="menu-btn" type="button" data-action="menu" aria-label="Ouvrir les sections" aria-expanded="false">${ICON.menu}</button>
       <a class="logo" href="#/" aria-label="makers.si, accueil">makers<i>.</i>si</a>
-      <button class="cmd" type="button" data-action="palette" aria-label="Chercher un partage ou taper une commande">
+      <button class="cmd" type="button" data-action="palette" aria-label="Chercher un drop ou taper une commande">
         ${ICON.loupe}<span>Chercher, ou taper une commande…</span><kbd>⌘K</kbd>
       </button>
       <div class="bar-end">
@@ -433,7 +430,7 @@ function header() {
         <!-- Sur téléphone, la modération quitte la barre du haut : elle ne sert qu'à
              une personne, et la place revient à la cloche, qui sert tous les jours.
              Elle reste atteignable par le rail et par la palette. -->
-        ${S.admin ? html`<a class="btn small hide-sm" href="#/admin" title="Partages à relire et commandes à confirmer">À valider${S.pending + (S.aConfirmer || 0) ? html`<span class="badge">${S.pending + (S.aConfirmer || 0)}</span>` : ''}</a>` : ''}
+        ${S.admin ? html`<a class="btn small hide-sm" href="#/admin" title="Drops à relire et commandes à confirmer">À valider${S.pending + (S.aConfirmer || 0) ? html`<span class="badge">${S.pending + (S.aConfirmer || 0)}</span>` : ''}</a>` : ''}
         ${S.me && !STATIQUE ? html`
           <a class="cloche ${S.nonLues ? 'neuve' : ''}" href="#/notifications"
             aria-label="${S.nonLues ? `${S.nonLues} nouveauté${S.nonLues > 1 ? 's' : ''} depuis ta dernière visite` : 'Ce qui s’est passé'}"
@@ -507,7 +504,7 @@ function railHTML(stats, path, q) {
     </section>
 
     <!-- « Montre-moi ce qui tourne sur Claude. » La rubrique n'apparaît que
-         lorsqu'au moins un partage dit sur quoi il a été essayé : une liste de
+         lorsqu'au moins un drop dit sur quoi il a été essayé : une liste de
          modèles sans rien derrière ne ferait que promettre du vide. -->
     ${Object.keys(stats?.byModele || {}).length ? html`
       <section>
@@ -535,10 +532,10 @@ function railHTML(stats, path, q) {
         <h3 class="cote">${S.me ? 'Chez moi' : 'Participer'}</h3>
         ${S.me
           ? html`
-            <a class="btn primary" href="#/partager">${ICON.plus}Partager</a>
+            <a class="btn primary" href="#/partager">${ICON.plus}New drop</a>
             <a href="#/notifications" class="${path === '/notifications' ? 'on' : ''}">
               ${ICON.cloche}Ce qui s’est passé ${S.nonLues ? html`<span>${S.nonLues}</span>` : ''}</a>
-            <a href="#/mes-partages" class="${path === '/mes-partages' ? 'on' : ''}">${ICON.dossier}Mes partages</a>
+            <a href="#/mes-partages" class="${path === '/mes-partages' ? 'on' : ''}">${ICON.dossier}Mes drops</a>
             <!-- C'est sur « Mes achats » qu'est écrit où payer. Elle n'était accessible
                  qu'en passant par « Mes ventes », où un acheteur n'a aucune raison
                  d'aller. Le chiffre rappelle qu'une commande attend son versement. -->
@@ -556,7 +553,7 @@ function railHTML(stats, path, q) {
       </section>`}
 
     <div class="rail-bas">
-      <p>Chaque partage est relu avant publication.
+      <p>Chaque drop est relu avant publication.
         <a href="#/aide">Comment ça marche</a> · <a href="#/charte">la charte</a>.</p>
       <p class="hide-sm">Tape <kbd>?</kbd> pour les raccourcis.</p>
     </div>`;
@@ -575,7 +572,7 @@ function barreBasHTML(path) {
     <a href="#/collections" class="${on('/collections')}">${ICON.lignes}Parcours</a>
     ${STATIQUE
       ? html`<a href="#/aide" class="${on('/aide')}">${ICON.ampoule}Aide</a>`
-      : html`<a href="${S.me ? '#/partager' : '#/rejoindre'}" class="appoint ${on('/partager')}">${ICON.plus}Partager</a>`}
+      : html`<a href="${S.me ? '#/partager' : '#/rejoindre'}" class="appoint ${on('/partager')}">${ICON.plus}New drop</a>`}
     ${S.stats?.gems ? html`<a href="#/top" class="${on('/top')}">${ICON.cup}Top</a>` : ''}
     ${STATIQUE ? '' : html`<a href="${S.me ? '#/mes-partages' : '#/connexion'}" class="${on('/mes-partages')}">${ICON.perso}${S.me ? 'Moi' : 'Entrer'}</a>`}`;
 }
@@ -619,7 +616,7 @@ const sponsoBadge = p => (p.promo
 // « 2500 » se lit mal, « 2 500 » se lit d'un coup : l'espace fine des milliers.
 const prixLisible = n => Number(n).toLocaleString('fr-FR');
 const prixBadge = p => (p.prix
-  ? html`<span class="pin vente" title="Le contenu de ce partage s’achète">${prixLisible(p.prix)} ${p.devise || ''}</span>`
+  ? html`<span class="pin vente" title="Le contenu de ce drop s’achète">${prixLisible(p.prix)} ${p.devise || ''}</span>`
   : '');
 // Le modèle sur lequel ça a été essayé. Cliquable : c'est aussi un filtre, parce
 // que « montre-moi tout ce qui tourne sur Claude » est une vraie question.
@@ -673,7 +670,7 @@ function starsView(p, { interactive = false } = {}) {
     return html`<span class="stars" title="${label}" aria-label="${label}"
       ><i class="on">${ICON.star}</i><b>${String(p.stars).replace('.', ',')}</b></span>`;
   }
-  return html`<span class="stars big ${p.myStars ? 'mine' : ''}" role="group" aria-label="Noter ce partage">
+  return html`<span class="stars big ${p.myStars ? 'mine' : ''}" role="group" aria-label="Noter ce drop">
     ${[1, 2, 3, 4, 5].map(n => html`<button type="button" data-action="star" data-id="${p.id}" data-n="${n}"
       class="${n <= shown ? 'on' : ''}" aria-label="${n} étoile${n > 1 ? 's' : ''}" title="${n} sur 5">${ICON.star}</button>`)}
   </span>`;
@@ -821,76 +818,56 @@ function apercu(p) {
   return '';
 }
 
-// --- Les couvertures ----------------------------------------------------------
-// Une bibliothèque de skills, de prompts et de liens n'a presque jamais d'image :
-// sur les trente-huit partages du catalogue, aucun n'en a. L'index était donc du
-// texte gris sur fond sombre, de haut en bas — une liste de courses, pas une
-// bibliothèque. Chaque partage reçoit maintenant une couverture fabriquée à partir
-// de ce qu'il est vraiment : la couleur de sa catégorie, un motif tiré de son
-// identifiant, et son propre contenu posé dessus en petit. De loin on voit une
-// matière et on distingue les catégories à la couleur ; de près on lit le début du
-// prompt. Rien n'est décoratif : tout ce qui s'affiche sort du partage lui-même.
+// --- Les boîtes ---------------------------------------------------------------
+// Une bibliothèque de skills, de prompts et de liens n'a presque jamais d'image.
+// Chaque partage se présente donc comme l'emballage de ce qu'on achète : une boîte
+// en 3D (CSS seul, voir « La boîte » dans style.css) à la couleur de sa catégorie,
+// son titre sur la face, sa catégorie sur la tranche, posée directement sur la carte,
+// sans décor derrière. Une vraie photo, s'il y en a, devient la face.
 
-// Empreinte stable (FNV-1a) : la couverture d'un partage est la même à chaque
-// visite, sur chaque appareil. Un motif tiré au hasard changerait d'un affichage à
-// l'autre, et on ne reconnaîtrait plus un partage à son allure.
+// Empreinte stable (FNV-1a) : la couleur de l'initiale d'un membre est la même à
+// chaque visite, sur chaque appareil. Tirée au hasard, elle changerait d'un
+// affichage à l'autre, et on ne reconnaîtrait plus quelqu'un à sa couleur.
 function empreinte(id = '') {
   let h = 2166136261;
   for (let i = 0; i < id.length; i++) { h ^= id.charCodeAt(i); h = Math.imul(h, 16777619); }
   return h >>> 0;
 }
 
-const MOTIFS = 8;
 
-// Ce qu'on pose sur la couverture, par ordre de préférence : le contenu lui-même,
-// puis ce qui en tient lieu. Un partage fermé ne montre rien — son `content` est
-// déjà vide pour qui n'y a pas accès, et on ne fabrique pas un faux aperçu à partir
-// du titre pour remplir le cadre.
-// Quinze liens sur trente-huit partages, et presque tous sur le même site : une
-// couverture qui ne dirait que « github.com » quinze fois ne distinguerait rien.
-// C'est le chemin qui porte le nom du dépôt, donc c'est lui qu'on écrit en grand.
-function adresseCoupee(brut) {
-  try {
-    const u = new URL(brut);
-    return { hote: u.hostname.replace(/^www\./, ''), chemin: decodeURIComponent(u.pathname).replace(/^\/+|\/+$/g, '') };
-  } catch { return { hote: domain(brut), chemin: '' }; }
-}
-
-function couvertureFond(p) {
-  if (p.locked) return '';
-  // `apercu` : les premiers caractères du contenu, envoyés par le serveur avec la
-  // liste. Le contenu entier n'arrive que sur la page du partage — d'où le repli.
-  const texte = (p.apercu || p.content || '').trim();
-  if (texte) return html`<span class="couv-extrait">${texte}</span>`;
-  if (p.url) {
-    const { hote, chemin } = adresseCoupee(p.url);
-    return html`<span class="couv-lien"><small>${hote}</small><b>${chemin || hote}</b></span>`;
-  }
-  if (p.file) return html`<span class="couv-mot">${p.file.ext.toUpperCase()}</span>`;
-  if (p.poll) return html`<span class="couv-mot">${p.poll.total} vote${p.poll.total > 1 ? 's' : ''}</span>`;
-  if (p.treeCount) return html`<span class="couv-mot">${p.treeCount} fichier${p.treeCount > 1 ? 's' : ''}</span>`;
-  // Un partage qui n'a ni contenu, ni lien, ni fichier — une annonce, par exemple.
-  // Plutôt qu'un cadre vide : sa catégorie, en grand. C'est le dernier mot vrai
-  // qui reste à dire sur lui.
-  return html`<span class="couv-mot couv-cote">${TYPES[p.type]?.short || p.type}</span>`;
-}
-
-// Une vraie photo passe toujours devant la couverture fabriquée : quand il y a
-// quelque chose à montrer, on le montre.
+// La boîte. Chaque produit se présente comme l'emballage de ce qu'on achète : une
+// boîte en trois dimensions, posée sur la carte sans décor derrière, avec son
+// nom sur la face, sa catégorie sur la tranche, et la marque en bas. C'est ce qu'on
+// voit dans un magasin de logiciels — on reconnaît un produit à sa boîte avant d'en
+// avoir lu le nom.
 //
-// La couverture est décorative au sens strict : elle répète un lien et un texte
-// qui sont déjà écrits juste à côté. Elle est donc retirée du clavier et des
-// lecteurs d'écran — sinon chaque partage compterait deux fois dans l'index.
+// Tout est en CSS (transformations 3D, aucune image, aucune bibliothèque) : la boîte
+// ne coûte rien à télécharger, se redessine dans les deux thèmes, et s'adapte à la
+// taille de la carte grâce aux unités de conteneur. Une vraie photo, quand il y en a
+// une, devient la face de la boîte.
+//
+// La boîte est décorative au sens strict : elle répète un lien et un titre déjà écrits
+// juste à côté. Elle est donc retirée du clavier et des lecteurs d'écran — sinon chaque
+// partage compterait deux fois dans l'index.
 function couverture(p, { mini = false } = {}) {
   const thumb = p.images?.[0]?.thumb;
-  const classes = `couv${mini ? ' couv-mini' : ''} k-${p.type}`;
-  if (thumb) {
-    return html`<a class="${classes} couv-photo" href="#/p/${p.id}" tabindex="-1" aria-hidden="true"
-      ><img src="${thumb}" alt="" loading="lazy"></a>`;
-  }
+  const court = TYPES[p.type]?.short || p.type;
   return html`
-    <a class="${classes}" href="#/p/${p.id}" data-motif="${empreinte(p.id) % MOTIFS}" tabindex="-1" aria-hidden="true"
-      >${couvertureFond(p)}</a>`;
+    <a class="couv${mini ? ' couv-mini' : ''} k-${p.type}" href="#/p/${p.id}" tabindex="-1" aria-hidden="true">
+      <span class="boite-scene">
+        <span class="boite">
+          <span class="boite-face${thumb ? ' photo' : ''}">
+            ${thumb ? html`<img src="${thumb}" alt="" loading="lazy">` : html`
+              <span class="boite-kind">${court}</span>
+              <span class="boite-titre">${fr(p.title)}</span>
+              <span class="boite-marque">makers<i>.</i>si</span>`}
+          </span>
+          <span class="boite-tranche"><span>${court}</span></span>
+          <span class="boite-dessus"></span>
+        </span>
+        <span class="boite-sol"></span>
+      </span>
+    </a>`;
 }
 
 // Deux façons de voir le fil, au choix du visiteur. Les cartes sont le réglage par
@@ -1038,7 +1015,7 @@ function reponsesView(p, liste) {
           </div>
           <p class="form-error" role="alert"></p>
         </form>`
-        : html`<p class="reponse-invite">Tu as un retour sur ce partage ? <a href="#/rejoindre">Crée un compte</a> pour répondre.</p>`}
+        : html`<p class="reponse-invite">Tu as un retour sur ce drop ? <a href="#/rejoindre">Crée un compte</a> pour répondre.</p>`}
     </section>`;
 }
 
@@ -1057,9 +1034,11 @@ function lockedBox(p) {
     return html`
       <div class="locked">
         <div class="locked-head">${ICON.lock}<b>En vente · ${p.prix} ${p.devise || ''}</b></div>
-        <p>Ce partage contient ${dedans}. Le contenu s’ouvre une fois l’achat confirmé ; le titre, la description et les tags restent publics.</p>
+        <p>Ce drop contient ${dedans}. Le contenu s’ouvre une fois l’achat confirmé ; le titre, la description et les tags restent publics.</p>
         ${STATIQUE
-          ? html`<p class="muted">Cette copie du site se lit seulement : l’achat se fait sur le site complet.</p>`
+          // Le site complet n'est pas encore en ligne : renvoyer vers lui serait renvoyer
+          // vers rien. On dit ce qui est vrai, sans date qu'on ne peut pas tenir.
+          ? html`<p class="muted">Ce produit ne s’achète pas encore en ligne : la vente n’est pas ouverte.</p>`
           // Pas de coordonnées de paiement réglées : on ne propose pas d'acheter. Un
           // bouton qui mène à une commande impayable, c'est pire qu'un bouton absent.
           : !S.marche?.ouvert
@@ -1073,7 +1052,7 @@ function lockedBox(p) {
   return html`
     <div class="locked">
       <div class="locked-head">${ICON.lock}<b>Contenu réservé à l’espace privé</b></div>
-      <p>Ce partage contient ${dedans}, visible seulement avec l’accès à l’espace privé.</p>
+      <p>Ce drop contient ${dedans}, visible seulement avec l’accès à l’espace privé.</p>
       ${S.me
         ? html`<p class="muted">Ton compte n’a pas encore cet accès. Écris-nous pour le demander.</p>`
         : html`<a class="btn primary" href="#/rejoindre">Créer mon compte</a>`}
@@ -1086,7 +1065,7 @@ function postBody(p, { howto = false } = {}) {
     ${p.locked ? lockedBox(p) : ''}
     ${pollView(p)}
     ${treeView(p)}
-    ${p.images?.length ? html`<div class="gallery">${p.images.map(i => html`<a href="${i.src}" target="_blank" rel="noopener"><img src="${i.src}" width="${i.w}" height="${i.h}" alt="Photo du partage : ${p.title}" loading="lazy"></a>`)}</div>` : ''}
+    ${p.images?.length ? html`<div class="gallery">${p.images.map(i => html`<a href="${i.src}" target="_blank" rel="noopener"><img src="${i.src}" width="${i.w}" height="${i.h}" alt="Photo du drop : ${p.title}" loading="lazy"></a>`)}</div>` : ''}
     ${p.imagesProcessing ? html`<div class="notice">${p.imagesProcessing} photo${p.imagesProcessing > 1 ? 's' : ''} en cours de compression. Recharge la page dans quelques secondes.</div>` : ''}
     ${p.content ? html`
       ${howto && p.type === 'skill' ? etapesSkill(slugDe(p.title), false) : ''}
@@ -1137,7 +1116,7 @@ async function feedView(q) {
         : prix === 'gratuit' ? (t ? `${TYPES[t].plural} offerts` : 'Offert')
           : t && mod ? `${TYPES[t].plural} essayés sur ${nomModele}`
             : mod ? `Essayé sur ${nomModele}`
-              : t ? TYPES[t].plural : 'Tous les partages';
+              : t ? TYPES[t].plural : 'Tous les drops';
   // Le rail affiche les mêmes compteurs sur toutes les pages : il les prend ici
   // plutôt que de redemander la même chose au serveur.
   S.stats = stats;
@@ -1189,7 +1168,7 @@ async function feedView(q) {
         </section>` : ''}
 
       <div class="toolbar">
-        <h1>${title}${combien ? html`<small>${combien} ${prix === 'payant' ? (combien > 1 ? 'produits' : 'produit') : (combien > 1 ? 'partages' : 'partage')}</small>` : ''}</h1>
+        <h1>${title}${combien ? html`<small>${combien} ${prix === 'payant' ? (combien > 1 ? 'produits' : 'produit') : (combien > 1 ? 'drops' : 'drop')}</small>` : ''}</h1>
         <div class="tabs">
           ${Object.entries(SORTS).map(([k, label]) => html`<a href="${link({ s: k })}" class="${sort === k ? 'on' : ''}">${label}</a>`)}
         </div>
@@ -1200,8 +1179,8 @@ async function feedView(q) {
       </div>
       ${prix === 'payant' && !query && !tag ? html`<p class="about-type">${ICON.etiquette} Des produits digitaux fabriqués par des membres : skills, prompts, agents, guides. Le titre, la description et le prix se lisent librement ; le contenu s’ouvre une fois acheté. Chaque produit passe la même relecture que le reste avant d’être mis en vente.</p>`
         : prix === 'gratuit' && !query && !tag ? html`<p class="about-type">${ICON.cadeau} Tout ce qui est offert : à lire, à copier, à installer, sans rien payer et sans créer de compte.</p>`
-        : prem ? html`<p class="about-type">${ICON.lock} Partages réservés. Tu vois le sujet de chacun ; le contenu demande l’accès à l’espace privé.</p>`
-        : mod ? html`<p class="about-type">${ICON.etincelle} Ce que des membres ont essayé sur ${nomModele}, et qui a marché chez eux. On range les familles, pas les versions : la version exacte est écrite à côté de chaque partage.</p>`
+        : prem ? html`<p class="about-type">${ICON.lock} Drops réservés. Tu vois le sujet de chacun ; le contenu demande l’accès à l’espace privé.</p>`
+        : mod ? html`<p class="about-type">${ICON.etincelle} Ce que des membres ont essayé sur ${nomModele}, et qui a marché chez eux. On range les familles, pas les versions : la version exacte est écrite à côté de chaque drop.</p>`
           : t && !query && !tag ? html`<p class="about-type">${TYPES[t].about}</p>` : ''}
       <div class="${vueFil === 'cartes' ? 'grille' : 'list'}">
         ${posts.length ? (() => {
@@ -1230,7 +1209,7 @@ async function feedView(q) {
             <!-- Sur la copie publiée, personne ne peut s'inscrire : pas de bouton qui y mène. -->
             ${STATIQUE ? '' : prix === 'payant'
               ? html`<a class="btn primary" href="${S.me ? '#/partager' : '#/rejoindre'}">${ICON.etiquette}${S.me ? 'Mettre un produit en vente' : 'Rejoindre pour vendre'}</a>`
-              : html`<a class="btn primary" href="${S.me ? '#/partager' : '#/rejoindre'}">${S.me ? 'Partager quelque chose' : 'Rejoindre pour partager'}</a>`}</div>`}
+              : html`<a class="btn primary" href="${S.me ? '#/partager' : '#/rejoindre'}">${S.me ? 'New drop' : 'Rejoindre pour faire un drop'}</a>`}</div>`}
       </div>
       ${suite ? html`<div class="plus"><button class="btn" data-action="plus" data-suite="${suite}" data-params="${params}">Voir plus<span class="muted"> · ${combien - posts.length} restants</span></button></div>` : ''}
 
@@ -1241,17 +1220,17 @@ async function feedView(q) {
         <section>
           <h3>Ce site</h3>
           <p>Ce qui est ici est trié et relu par une personne avant d’être publié, à vendre ou offert : rien n’y entre parce qu’un robot l’a trouvé populaire. Le catalogue de départ est signé <b>@makers.si</b>. Les membres y ajoutent leurs propres produits — vendus à leur prix, ou offerts — relus de la même façon et signés de leur nom.</p>
-          <p class="muted">${stats.members} membre${stats.members > 1 ? 's' : ''} · ${stats.posts} partages · ${stats.gems} gemmes données.</p>
+          <p class="muted">${stats.members} membre${stats.members > 1 ? 's' : ''} · ${stats.posts} drops · ${stats.gems} gemmes données.</p>
           ${colls?.collections?.length ? html`<p><a href="#/collections">${stats.collections} parcours composés par des membres →</a></p>` : ''}
         </section>
         <section>
           <h3>Le classement</h3>
-          <p>Tu reçois quelques gemmes par semaine. Donne-les à ce qui t’a vraiment servi : une gemme pèse lourd, une étoile un peu. C’est ce qui fait monter un partage dans le <a href="#/top">Top 5</a>.</p>
+          <p>Tu reçois quelques gemmes par semaine. Donne-les à ce qui t’a vraiment servi : une gemme pèse lourd, une étoile un peu. C’est ce qui fait monter un drop dans le <a href="#/top">Top 5</a>.</p>
         </section>
         <section>
           <h3>Les règles</h3>
           <ol>
-            <li>Chaque partage est validé avant publication.</li>
+            <li>Chaque drop est validé avant publication.</li>
             <li>Les réponses paraissent tout de suite, signées.</li>
             <li>Pas de vidéo importée : colle le lien.</li>
             <li>Cite ta source si ce n’est pas toi.</li>
@@ -1319,11 +1298,11 @@ async function topView() {
   document.title = 'Top 5 – makers.si';
   render(html`
     <div class="narrow top-page">
-      <a class="back" href="#/">← Tous les partages</a>
+      <a class="back" href="#/">← Tous les drops</a>
       <h1 class="page-title">${ICON.cup}Le Top 5</h1>
       <p class="page-sub">Les points viennent des gemmes et des étoiles : une gemme vaut dix points, et chaque étoile donnée en vaut deux. Les gemmes sont rares (${S.me ? S.me.gemsLeft + ' restantes cette semaine pour toi' : 'quelques-unes par membre et par semaine'}), c’est ce qui rend le classement difficile à truquer.</p>
       ${Object.keys(PERIODES).map(k => topBloc(k, data[k]))}
-      <div class="post-actions"><a class="btn primary" href="${S.me ? '#/partager' : '#/rejoindre'}">${S.me ? 'Partager quelque chose' : 'Créer mon compte'}</a><a class="btn" href="#/">Voir la bibliothèque</a></div>
+      <div class="post-actions"><a class="btn primary" href="${S.me ? '#/partager' : '#/rejoindre'}">${S.me ? 'New drop' : 'Créer mon compte'}</a><a class="btn" href="#/">Voir la bibliothèque</a></div>
     </div>`);
 }
 
@@ -1336,7 +1315,7 @@ async function profilView(pseudo) {
   try { data = await api('/membres/' + encodeURIComponent(pseudo)); }
   catch {
     return render(html`
-      <div class="narrow"><a class="back" href="#/">← Tous les partages</a>
+      <div class="narrow"><a class="back" href="#/">← Tous les drops</a>
         <div class="empty">Ce membre n’existe pas.<br><a class="btn" href="#/">Voir la bibliothèque</a></div></div>`);
   }
   const { profil, posts } = data;
@@ -1350,20 +1329,20 @@ async function profilView(pseudo) {
   const pluriel = (n, un, suffixe = 's') => `${n} ${un}${n > 1 ? suffixe : ''}`;
   render(html`
     <div class="narrow profil">
-      <a class="back" href="#/">← Tous les partages</a>
+      <a class="back" href="#/">← Tous les drops</a>
       <header class="profil-tete">
         <span class="profil-rond rond" data-teinte="${empreinte(profil.pseudo) % 10}" aria-hidden="true">${profil.pseudo.slice(0, 1).toUpperCase()}</span>
         <div class="profil-nom">
           <h1>@${profil.pseudo}</h1>
           <p class="muted">${mois ? `Membre depuis ${mois}` : 'Membre de la communauté'}${
-            profil.premium ? html` · ${ICON.lock}${pluriel(profil.premium, 'partage')} dans l’espace privé` : ''}</p>
+            profil.premium ? html` · ${ICON.lock}${pluriel(profil.premium, 'drop')} dans l’espace privé` : ''}</p>
         </div>
-        ${moi && !STATIQUE ? html`<a class="btn ghost" href="#/mes-partages">Gérer mes partages</a>` : ''}
+        ${moi && !STATIQUE ? html`<a class="btn ghost" href="#/mes-partages">Gérer mes drops</a>` : ''}
       </header>
       ${moi ? html`<div class="notice">C’est ce que les autres membres voient de toi. Ton email n’y est jamais.</div>` : ''}
 
       <div class="profil-chiffres">
-        <div><b>${profil.posts}</b><span>${profil.posts > 1 ? 'partages' : 'partage'}</span></div>
+        <div><b>${profil.posts}</b><span>${profil.posts > 1 ? 'drops' : 'drop'}</span></div>
         <div><b>${profil.gems}</b><span>${profil.gems > 1 ? 'gemmes reçues' : 'gemme reçue'}</span></div>
         <div><b>${profil.starsCount ? String(profil.stars).replace('.', ',') : '—'}</b>
           <span>${profil.starsCount ? `sur 5 · ${pluriel(profil.starsCount, 'note')}` : 'pas encore noté'}</span></div>
@@ -1377,30 +1356,34 @@ async function profilView(pseudo) {
         <div class="coll-liste">${data.collections.map(collCarte)}</div>` : ''}
 
       ${posts.length ? html`
-        <h2 class="profil-titre">${profil.posts > 1 ? 'Ses partages' : 'Son partage'}<small>le mieux élu d’abord</small></h2>
+        <h2 class="profil-titre">${profil.posts > 1 ? 'Ses drops' : 'Son drop'}<small>le mieux élu d’abord</small></h2>
         <div class="${vueFil === 'cartes' ? 'grille' : 'list'}">${posts.map(p => item(p))}</div>`
         : html`<div class="empty">${moi
-            ? html`Tu n’as encore rien de publié.<br><a class="btn primary" href="#/partager">Partager quelque chose</a>`
+            ? html`Tu n’as encore rien de publié.<br><a class="btn primary" href="#/partager">New drop</a>`
             : 'Rien de publié pour l’instant.'}</div>`}
     </div>`);
 }
 
 async function postView(id) {
   let p;
-  try { p = (await api('/posts/' + id)).post; } catch { return render(html`<div class="narrow"><a class="back" href="#/">← Retour</a><div class="empty">Ce partage n’existe pas ou n’est pas encore publié.</div></div>`); }
+  try { p = (await api('/posts/' + id)).post; } catch { return render(html`<div class="narrow"><a class="back" href="#/">← Retour</a><div class="empty">Ce drop n’existe pas ou n’est pas encore publié.</div></div>`); }
   document.title = p.title + ' – makers.si';
   // Les réponses ne doivent pas empêcher le partage de s'afficher : si elles ne
   // viennent pas (copie consultable, partage réservé), la page se contente du reste.
   let reponses = [];
-  try { reponses = (await api(`/posts/${id}/comments`)).comments || []; } catch { reponses = []; }
+  // Un partage fermé (vendu, privé) n'ouvre pas ses réponses : inutile de les demander
+  // pour recevoir un refus qui s'inscrit en erreur dans la console.
+  if (!p.locked) {
+    try { reponses = (await api(`/posts/${id}/comments`)).comments || []; } catch { reponses = []; }
+  }
   // La classe du type porte la couleur de la catégorie à toute la page : les
   // numéros des étapes, l'icône d'une pièce jointe, le filet du dossier. Une
   // page de skill est verte, une page de prompt est cyan — chaque type a son
   // identité au lieu d'un violet unique partout.
   render(html`
     <div class="narrow post k-${p.type}">
-      <a class="back" href="#/">← Tous les partages</a>
-      ${p.status === 'pending' ? html`<div class="notice">En attente de validation. Toi seul(e) vois ce partage pour l’instant.</div>` : ''}
+      <a class="back" href="#/">← Tous les drops</a>
+      ${p.status === 'pending' ? html`<div class="notice">En attente de validation. Toi seul(e) vois ce drop pour l’instant.</div>` : ''}
       ${p.status === 'rejected' ? html`<div class="notice bad">Refusé${p.rejectReason ? ' : ' + p.rejectReason : '.'}</div>` : ''}
       <div>${kind(p.type)}${p.premium ? html` <span class="pin lock">${ICON.lock}espace privé</span>` : ''}${p.prix ? html` ${prixBadge(p)}` : ''}${p.promo ? html` ${sponsoBadge(p)}` : ''}</div>
       <h1>${fr(p.title)}</h1>
@@ -1409,7 +1392,7 @@ async function postView(id) {
       ${postBody(p, { howto: true })}
       <!-- Sur la copie publiée, la barre d'actions ne contient que ce qui a quelque
            chose à dire : pas d'étoiles cliquables qui ne noteront rien, pas de
-           « Pas encore noté » répété sous chaque partage. -->
+           « Pas encore noté » répété sous chaque drop. -->
       ${p.status === 'approved' || !p.status ? html`${STATIQUE && !p.gems && !p.starsCount ? '' : html`<div class="post-actions">
           ${gemButton(p)}
           ${STATIQUE ? '' : html`<span class="muted">${p.gems} gemme${p.gems > 1 ? 's' : ''}</span>`}
@@ -1421,7 +1404,7 @@ async function postView(id) {
               : 'Pas encore noté'}</span>`}
         </div>`}
         ${reponsesView(p, reponses)}
-        <details class="report"><summary>Signaler ce partage</summary>
+        <details class="report"><summary>Signaler ce drop</summary>
           <form data-form="report" data-id="${p.id}">
             <input type="text" name="reason" maxlength="300" placeholder="Qu’est-ce qui ne va pas ? (contenu copié, dangereux, publicité…)" aria-label="Motif du signalement" required>
             <button class="btn small" type="submit">Envoyer</button>
@@ -1443,19 +1426,19 @@ function accountView() {
   if (!S.me) { go('#/connexion'); return; }
   render(html`
     <div class="narrow">
-      <div class="admin-head"><h1 class="page-title">Mon compte</h1><a class="btn ghost" href="#/mes-partages">← Mes partages</a></div>
+      <div class="admin-head"><h1 class="page-title">Mon compte</h1><a class="btn ghost" href="#/mes-partages">← Mes drops</a></div>
       <div class="block"><div class="attach"><div><b>@${S.me.pseudo}</b><small>${S.me.email}</small></div></div></div>
 
       <h2 class="faq-title">Mes données</h2>
-      <p class="muted">Télécharge tout ce que le site garde sur toi (compte, partages, votes) dans un fichier lisible.</p>
+      <p class="muted">Télécharge tout ce que le site garde sur toi (compte, drops, votes) dans un fichier lisible.</p>
       <a class="btn" href="/api/me/export" download>Télécharger mes données</a>
       <p class="switch">Détails dans la <a href="#/confidentialite">politique de confidentialité</a>.</p>
 
       <h2 class="faq-title">Supprimer mon compte</h2>
-      <p class="muted">C’est définitif. Tes partages en attente ou refusés sont supprimés. Pour tes partages publiés, tu choisis.</p>
+      <p class="muted">C’est définitif. Tes drops en attente ou refusés sont supprimés. Pour tes drops publiés, tu choisis.</p>
       <form data-form="delete-account" novalidate>
         <div class="field"><label for="d-pw">Mot de passe</label><input id="d-pw" type="password" name="password" autocomplete="current-password" required></div>
-        <div class="field"><label class="check"><input type="checkbox" name="deletePosts"><span>Supprimer aussi mes partages publiés (sinon ils restent, sans mon pseudo).</span></label></div>
+        <div class="field"><label class="check"><input type="checkbox" name="deletePosts"><span>Supprimer aussi mes drops publiés (sinon ils restent, sans mon pseudo).</span></label></div>
         <p class="form-error" role="alert"></p>
         <button class="btn bad" type="submit">Supprimer mon compte</button>
       </form>
@@ -1501,7 +1484,7 @@ function authView(mode) {
       ${join ? html`
         <ul class="steps">
           <li><b>Lire</b> : skills Claude, prompts, idées, PDF, liens.</li>
-          <li><b>Partager</b> : tes trouvailles, relues avant publication.</li>
+          <li><b>Faire un drop</b> : tes trouvailles, relues avant publication.</li>
           <li><b>Voter</b> : gemmes, étoiles et sondages, pour faire remonter le meilleur.</li>
         </ul>` : ''}
       <form data-form="${join ? 'join' : 'login'}" novalidate>
@@ -1531,8 +1514,8 @@ function shareView(q) {
   const first = TYPES[q.get('type')] ? q.get('type') : 'skill';
   render(html`
     <div class="narrow">
-      <h1 class="page-title">Partager</h1>
-      <p class="page-sub">Trois minutes. Ton partage sera relu avant d’apparaître dans la bibliothèque.</p>
+      <h1 class="page-title">New drop</h1>
+      <p class="page-sub">Trois minutes. Ton drop sera relu avant d’apparaître dans la bibliothèque.</p>
       <form data-form="share" enctype="multipart/form-data" novalidate>
         <h2 class="step"><span>1</span>Qu’est-ce que tu partages ?</h2>
         <div class="typecards">
@@ -1574,7 +1557,7 @@ function shareView(q) {
           </div>
           <small>La famille d’abord, la version à côté si tu la connais. C’est la première chose qu’on se demande devant un prompt : <b>« ça marche sur quoi ? »</b> On range les familles, jamais les versions : une version est périmée en deux mois, une famille dure des années.</small></div>
         <div class="field" data-field="tags"><label for="s-tags">Tags <span class="muted">(facultatif)</span></label><input id="s-tags" type="text" name="tags" placeholder="claude-code, sous-titres">
-          <small>5 maximum, séparés par des virgules. Ils aident à retrouver ton partage.</small></div>
+          <small>5 maximum, séparés par des virgules. Ils aident à retrouver ton drop.</small></div>
         <div class="field" data-field="prix"><label for="s-prix">Prix <span class="muted">(facultatif — laisse vide pour offrir)</span></label>
           <input id="s-prix" type="number" name="prix" min="0" step="1" placeholder="0" inputmode="numeric">
           <small>Si tu mets un prix, le <b>contenu</b> ne s’ouvre qu’après l’achat ; le titre, la description et les tags restent publics, sinon personne ne saurait ce qu’il achète.
@@ -1657,7 +1640,7 @@ function verifiePdf(input) {
       </ul>
 
       <h4>3. Ne pas l’envoyer du tout</h4>
-      <p>Mets-le sur Drive, Dropbox ou ton site, et colle son adresse dans le champ <b>Lien</b> ci-dessus. Un partage « PDF » accepte très bien un lien à la place du fichier.</p>
+      <p>Mets-le sur Drive, Dropbox ou ton site, et colle son adresse dans le champ <b>Lien</b> ci-dessus. Un drop « PDF » accepte très bien un lien à la place du fichier.</p>
     </div>`.s;
 }
 
@@ -1700,11 +1683,11 @@ function sentView(p) {
   render(html`
     <div class="narrow">
       <h1 class="page-title">Bien reçu</h1>
-      <p class="page-sub">« ${p.title} » est en attente de validation. Tu le retrouves dans « Mes partages » avec son statut.</p>
-      <ul class="steps"><li><b>Maintenant</b> : ton partage est enregistré${p.imagesProcessing ? ' et tes photos sont compressées en arrière-plan' : ''}.</li>
+      <p class="page-sub">« ${p.title} » est en attente de validation. Tu le retrouves dans « Mes drops » avec son statut.</p>
+      <ul class="steps"><li><b>Maintenant</b> : ton drop est enregistré${p.imagesProcessing ? ' et tes photos sont compressées en arrière-plan' : ''}.</li>
         <li><b>Ensuite</b> : il est relu. Si tout est bon il apparaît dans la bibliothèque.</li>
-        <li><b>Si refusé</b> : tu vois le motif dans « Mes partages ».</li></ul>
-      <div class="post-actions"><a class="btn primary" href="#/mes-partages">Mes partages</a><a class="btn" href="#/partager">Partager autre chose</a></div>
+        <li><b>Si refusé</b> : tu vois le motif dans « Mes drops ».</li></ul>
+      <div class="post-actions"><a class="btn primary" href="#/mes-partages">Mes drops</a><a class="btn" href="#/partager">Un autre drop</a></div>
     </div>`);
 }
 
@@ -1717,10 +1700,10 @@ function welcomeView() {
       <div class="tiles wide">
         <a class="tile" href="#/?t=skill"><b>Installer un skill Claude</b><span>Ouvre-le, clique « Copier », colle-le dans ton projet.</span></a>
         <a class="tile" href="#/?t=prompt"><b>Prendre un prompt</b><span>Des prompts déjà testés, prêts à coller.</span></a>
-        <a class="tile" href="#/partager"><b>Partager ma première trouvaille</b><span>Un skill, un prompt, une idée : ça prend trois minutes.</span></a>
+        <a class="tile" href="#/partager"><b>Mon premier drop</b><span>Un skill, un prompt, une idée : ça prend trois minutes.</span></a>
         <a class="tile" href="#/top"><b>Voir le Top 5</b><span>Semaine, mois, depuis le début.</span></a>
       </div>
-      <p class="muted">Tout partage est relu avant publication. Pas de vidéo importée : colle le lien.</p>
+      <p class="muted">Tout drop est relu avant publication. Pas de vidéo importée : colle le lien.</p>
     </div>`);
 }
 
@@ -1735,32 +1718,32 @@ function promoView() {
   document.title = 'Mise en avant – makers.si';
   render(html`
     <div class="narrow">
-      <a class="back" href="#/">← Tous les partages</a>
-      <h1 class="page-title">${ICON.megaphone}Mettre un partage en avant</h1>
+      <a class="back" href="#/">← Tous les drops</a>
+      <h1 class="page-title">${ICON.megaphone}Mettre un drop en avant</h1>
       <p class="page-sub">Une place en haut du fil, pour quelques jours. ${prix}.</p>
 
       <div class="notice">
-        <b>Ce qui s’achète est la place, jamais la publication.</b> Un partage sponsorisé passe
+        <b>Ce qui s’achète est la place, jamais la publication.</b> Un drop sponsorisé passe
         exactement la même relecture que les autres, et il est refusé s’il ne respecte pas
         la <a href="#/charte">charte</a>. Payer n’achète ni gemme, ni étoile, ni point :
         le <a href="#/top">Top 5</a> reste décidé par la communauté seule.
       </div>
 
       <ol class="steps">
-        <li><b>Publie ton partage normalement.</b> Il est relu comme les autres. Un partage
+        <li><b>Publie ton drop normalement.</b> Il est relu comme les autres. Un drop
           refusé ne peut pas être mis en avant, et l’argent n’y change rien.</li>
-        <li><b>Écris-nous</b> avec l’adresse du partage et le nombre de jours voulus.</li>
+        <li><b>Écris-nous</b> avec l’adresse du drop et le nombre de jours voulus.</li>
         <li><b>Tu paies</b> (virement ou lien de paiement), puis la place est posée à la main.</li>
         <li><b>Elle s’arrête toute seule</b> à la date prévue. Rien à résilier.</li>
       </ol>
 
       <h2 class="faq-title">Les règles, en clair</h2>
       <ul class="guide">
-        <li>Le partage porte la mention <span class="pin sponso">${ICON.megaphone}sponsorisé</span> tant que la place dure. Elle n’est jamais cachée.</li>
+        <li>Le drop porte la mention <span class="pin sponso">${ICON.megaphone}sponsorisé</span> tant que la place dure. Elle n’est jamais cachée.</li>
         <li>Il y a <b>${o?.places ?? 2} places</b> au maximum en même temps${o && typeof o.libres === 'number' ? html` (${o.libres} libre${o.libres > 1 ? 's' : ''} en ce moment)` : ''}, pour que le haut du fil reste lisible.</li>
         <li>Les épingles de l’équipe passent devant : ce que le site tient à montrer ne se fait pas doubler.</li>
-        <li>Un partage de l’espace privé ne peut pas être mis en avant : il n’est pas dans le fil.</li>
-        <li>Si un partage est retiré après un signalement, sa place s’arrête. On en reparle au cas par cas.</li>
+        <li>Un drop de l’espace privé ne peut pas être mis en avant : il n’est pas dans le fil.</li>
+        <li>Si un drop est retiré après un signalement, sa place s’arrête. On en reparle au cas par cas.</li>
       </ul>
 
       <div class="post-actions">
@@ -1778,32 +1761,32 @@ function helpView() {
       <ol class="guide">
         <li><b>Cherche.</b> Tape un mot dans la barre en haut (« sous-titres », « git », « musique ») ou choisis une catégorie à gauche. Tu n’as pas besoin de compte pour lire.</li>
         <li><b>Utilise.</b> Sur un skill ou une technique, clique « Copier ». Sur un PDF, clique « Ouvrir ». Sur un lien, il s’ouvre dans un nouvel onglet.</li>
-        <li><b>Récompense ce qui t’a servi.</b> La gemme à gauche de chaque partage le fait remonter dans le classement. Tu en reçois quelques-unes par semaine : donne-les à ce qui le mérite vraiment. Les étoiles, de 1 à 5, disent la qualité et ne coûtent rien.</li>
-        <li><b>Partage.</b> Crée ton compte, clique « Partager », choisis ce que tu apportes et remplis le formulaire. Il est relu puis publié.</li>
+        <li><b>Récompense ce qui t’a servi.</b> La gemme à gauche de chaque drop le fait remonter dans le classement. Tu en reçois quelques-unes par semaine : donne-les à ce qui le mérite vraiment. Les étoiles, de 1 à 5, disent la qualité et ne coûtent rien.</li>
+        <li><b>Drop.</b> Crée ton compte, clique « New drop », choisis ce que tu apportes et remplis le formulaire. Il est relu puis publié.</li>
       </ol>
-      <div class="post-actions"><a class="btn primary" href="${S.me ? '#/partager' : '#/rejoindre'}">${S.me ? 'Partager quelque chose' : 'Créer mon compte'}</a><a class="btn" href="#/">Voir la bibliothèque</a></div>
+      <div class="post-actions"><a class="btn primary" href="${S.me ? '#/partager' : '#/rejoindre'}">${S.me ? 'New drop' : 'Créer mon compte'}</a><a class="btn" href="#/">Voir la bibliothèque</a></div>
 
       <h2 class="faq-title">Questions fréquentes</h2>
       <details class="faq"><summary>Je dois créer un compte pour lire ?</summary><p>Non. Tout le contenu public est lisible sans compte. Le compte sert à partager, à donner des gemmes et des étoiles, et à demander l’accès à l’espace privé.</p></details>
-      <details class="faq"><summary>Qui peut répondre sous un partage ?</summary><p>N’importe quel membre connecté. Contrairement aux partages, une réponse n’est pas relue avant d’apparaître : elle s’affiche tout de suite, signée de ton pseudo. Tu peux supprimer les tiennes à tout moment, et l’admin peut supprimer n’importe laquelle. Si une réponse pose problème, signale le partage : le fil est relu avec lui.</p></details>
-      <details class="faq"><summary>C’est quoi les gemmes et les étoiles ?</summary><p>Les étoiles notent la qualité, de 1 à 5, et ne coûtent rien. Les gemmes sont rares : tu en reçois quelques-unes par semaine et tu en donnes au maximum une par partage. On ne peut ni gemmer ni noter son propre partage.</p></details>
-      <details class="faq"><summary>Comment marche le Top 5 ?</summary><p>Chaque partage a des points : une gemme vaut 10 points, et chaque étoile reçue en vaut 2 (cinq étoiles d’une personne = 10 points). Le <a href="#/top">Top 5</a> existe en trois versions : la semaine et le mois comptent les partages publiés sur cette période, « depuis le début » compte tout.</p></details>
+      <details class="faq"><summary>Qui peut répondre sous un drop ?</summary><p>N’importe quel membre connecté. Contrairement aux drops, une réponse n’est pas relue avant d’apparaître : elle s’affiche tout de suite, signée de ton pseudo. Tu peux supprimer les tiennes à tout moment, et l’admin peut supprimer n’importe laquelle. Si une réponse pose problème, signale le drop : le fil est relu avec lui.</p></details>
+      <details class="faq"><summary>C’est quoi les gemmes et les étoiles ?</summary><p>Les étoiles notent la qualité, de 1 à 5, et ne coûtent rien. Les gemmes sont rares : tu en reçois quelques-unes par semaine et tu en donnes au maximum une par drop. On ne peut ni gemmer ni noter son propre drop.</p></details>
+      <details class="faq"><summary>Comment marche le Top 5 ?</summary><p>Chaque drop a des points : une gemme vaut 10 points, et chaque étoile reçue en vaut 2 (cinq étoiles d’une personne = 10 points). Le <a href="#/top">Top 5</a> existe en trois versions : la semaine et le mois comptent les drops publiés sur cette période, « depuis le début » compte tout.</p></details>
       <details class="faq"><summary>Comment marche un sondage ?</summary><p>Celui qui le crée écrit la question en titre et 2 à 6 réponses. Chaque membre vote une fois et peut changer d’avis ; cliquer de nouveau sa réponse retire le vote. Les résultats s’affichent une fois qu’on a voté.</p></details>
-      <details class="faq"><summary>C’est quoi l’espace privé ?</summary><p>Une section à part, marquée d’un cadenas, qui contient des partages réservés. Tout le monde voit le sujet, mais le contenu demande un accès. Aujourd’hui il se donne à la main : écris-nous pour le demander.</p></details>
-      <details class="faq"><summary>On peut payer pour être en haut ?</summary><p>Oui, et c’est écrit dessus : un partage dont la place a été payée porte la mention « sponsorisé » tant qu’elle dure. Ce qui s’achète est la place, jamais la publication — le partage passe la même relecture que les autres, et payer ne donne ni gemme, ni étoile, ni point. <a href="#/mise-en-avant">Voir comment ça marche</a>.</p></details>
-      <details class="faq"><summary>C’est quoi une collection ?</summary><p>Un parcours : des partages déjà publiés, remis dans l’ordre où on devrait les lire, avec un mot sur chacun. « Démarrer avec Claude Code en une soirée », par exemple. Tu n’écris rien de neuf — tu ranges, et ranger demande du jugement. Clique « Composer » depuis <a href="#/collections">les collections</a>, choisis au moins deux partages, et envoie : elle est relue comme un partage. La modifier la renvoie en relecture, sauf si tu ne touches qu’aux notes.</p></details>
-      <details class="faq"><summary>Comment je sais que mon partage est passé ?</summary><p>La cloche en haut à droite s’allume. Tu es prévenu quand un de tes partages ou une de tes collections est publié ou refusé (avec le motif), quand quelqu’un répond sous un de tes partages, quand on commande ce que tu vends, et quand un achat que tu as fait est confirmé. <b>Rien n’est envoyé par email ni poussé sur ton téléphone</b> : la liste t’attend sur <a href="#/notifications">Ce qui s’est passé</a>, et elle ne garde que les trois derniers mois. Ouvrir la page marque tout comme lu, mais n’efface rien.</p></details>
+      <details class="faq"><summary>C’est quoi l’espace privé ?</summary><p>Une section à part, marquée d’un cadenas, qui contient des drops réservés. Tout le monde voit le sujet, mais le contenu demande un accès. Aujourd’hui il se donne à la main : écris-nous pour le demander.</p></details>
+      <details class="faq"><summary>On peut payer pour être en haut ?</summary><p>Oui, et c’est écrit dessus : un drop dont la place a été payée porte la mention « sponsorisé » tant qu’elle dure. Ce qui s’achète est la place, jamais la publication — le drop passe la même relecture que les autres, et payer ne donne ni gemme, ni étoile, ni point. <a href="#/mise-en-avant">Voir comment ça marche</a>.</p></details>
+      <details class="faq"><summary>C’est quoi une collection ?</summary><p>Un parcours : des drops déjà publiés, remis dans l’ordre où on devrait les lire, avec un mot sur chacun. « Démarrer avec Claude Code en une soirée », par exemple. Tu n’écris rien de neuf — tu ranges, et ranger demande du jugement. Clique « Composer » depuis <a href="#/collections">les collections</a>, choisis au moins deux drops, et envoie : elle est relue comme un drop. La modifier la renvoie en relecture, sauf si tu ne touches qu’aux notes.</p></details>
+      <details class="faq"><summary>Comment je sais que mon drop est passé ?</summary><p>La cloche en haut à droite s’allume. Tu es prévenu quand un de tes drops ou une de tes collections est publié ou refusé (avec le motif), quand quelqu’un répond sous un de tes drops, quand on commande ce que tu vends, et quand un achat que tu as fait est confirmé. <b>Rien n’est envoyé par email ni poussé sur ton téléphone</b> : la liste t’attend sur <a href="#/notifications">Ce qui s’est passé</a>, et elle ne garde que les trois derniers mois. Ouvrir la page marque tout comme lu, mais n’efface rien.</p></details>
       <details class="faq"><summary>C’est quoi « essayé sur » ?</summary><p>Devant un prompt ou un agent, la première question est « ça marche sur quoi ? » — le même prompt peut être excellent sur un modèle et inutile sur un autre. Quand tu partages un skill, un agent, un serveur MCP ou un prompt, tu peux donc dire sur quel modèle tu l’as essayé. On range les <b>familles</b> (Claude, GPT, Gemini…) et tu écris la version à côté (« Opus 5 »), parce qu’une famille dure des années quand une version est périmée en deux mois. Le rail de gauche te laisse alors tout filtrer : « montre-moi ce qui tourne sur Claude ». C’est facultatif, et mieux vaut le laisser vide que de deviner : annoncer un modèle qu’on n’a pas essayé, c’est refusé par la <a href="#/charte">charte</a>.</p></details>
       <details class="faq"><summary>Un agent, un serveur MCP : quelle différence avec un skill ?</summary><p>Un <b>skill</b> est un mode d’emploi que Claude lit tout seul quand ta demande correspond : tu le poses dans un dossier et tu l’oublies. Un <b>agent</b> fait un travail du début à la fin sans toi — il boucle, il se sert d’outils, et il s’arrête quand c’est fini ou quand il a besoin de toi. Un <b>serveur MCP</b> ne fait rien tout seul : il <i>donne</i> des outils à un modèle (une base de données, des fichiers, une API), et c’est le modèle qui s’en sert. En résumé : le skill explique, l’agent exécute, le MCP branche.</p></details>
-      <details class="faq"><summary>Je peux vendre un skill que j’ai écrit ?</summary><p>Oui. Mets un prix dans le formulaire de partage : le <b>contenu</b> ne s’ouvre alors qu’après l’achat, mais le titre, la description et les tags restent publics — sinon personne ne saurait ce qu’il achète. Ton partage passe la même relecture que les autres, et l’équipe peut refuser une vente comme elle refuse un contenu. La plateforme retient ${S.marche?.commission ?? 5} % sur chaque vente, le reste te revient. Tu suis tout dans <a href="#/mes-ventes">Mes ventes</a>, et c'est là aussi que tu indiques <b>où être payé</b> (CCP ou BaridiMob) : sans ça, ce qui t'est dû ne peut pas t'être reversé. Ces coordonnées ne sont visibles que de toi et de l'équipe.</p></details>
+      <details class="faq"><summary>Je peux vendre un skill que j’ai écrit ?</summary><p>Oui. Mets un prix dans le formulaire de drop : le <b>contenu</b> ne s’ouvre alors qu’après l’achat, mais le titre, la description et les tags restent publics — sinon personne ne saurait ce qu’il achète. Ton drop passe la même relecture que les autres, et l’équipe peut refuser une vente comme elle refuse un contenu. La plateforme retient ${S.marche?.commission ?? 5} % sur chaque vente, le reste te revient. Tu suis tout dans <a href="#/mes-ventes">Mes ventes</a>, et c'est là aussi que tu indiques <b>où être payé</b> (CCP ou BaridiMob) : sans ça, ce qui t'est dû ne peut pas t'être reversé. Ces coordonnées ne sont visibles que de toi et de l'équipe.</p></details>
       <details class="faq"><summary>Comment se passe un achat ?</summary><p>Tu cliques « Acheter » : ça enregistre une commande, ça ne prend pas d’argent. Tu arrives alors sur <a href="#/mes-achats">Mes achats</a>, qui te donne trois étapes : <b>1.</b> envoie le montant au CCP ou au compte BaridiMob indiqué ; <b>2.</b> écris ta <b>référence de commande</b> (elle commence par MK-) dans le motif du versement ; <b>3.</b> envoie la capture du versement, avec ta référence, au contact indiqué. Dès que le versement est vérifié, le contenu s’ouvre et la cloche, en haut, te prévient. Tu retrouves tout ça à tout moment dans Mes achats.</p></details>
       <details class="faq"><summary>Pourquoi une vérification à l’inscription ?</summary><p>Pour bloquer les robots qui créent des comptes en masse. Elle se fait toute seule en une seconde, il n’y a pas d’image à déchiffrer, et aucun service extérieur n’est appelé.</p></details>
-      <details class="faq"><summary>Comment partager une vidéo ?</summary><p>On n’héberge pas de vidéo : la bibliothèque garde les skills, les prompts, les idées et les PDF. Mets ta vidéo sur YouTube, Drive ou Vimeo, puis fais un partage de type « Lien » : le nom de la vidéo en titre, son adresse dans le lien.</p></details>
+      <details class="faq"><summary>Comment partager une vidéo ?</summary><p>On n’héberge pas de vidéo : la bibliothèque garde les skills, les prompts, les idées et les PDF. Mets ta vidéo sur YouTube, Drive ou Vimeo, puis fais un drop de type « Lien » : le nom de la vidéo en titre, son adresse dans le lien.</p></details>
       <details class="faq"><summary>Comment utiliser un skill ?</summary><p>${HOWTO}</p></details>
-      <details class="faq"><summary>Pourquoi mon partage n’apparaît pas ?</summary><p>Chaque partage est relu avant d’être publié. Tu vois son statut dans « Mes partages » : en attente, publié ou refusé (avec le motif).</p></details>
-      <details class="faq"><summary>Pourquoi mon PDF est refusé ?</summary><p>Les PDF sont limités à ${S.limits.pdfKb} Ko, pour que le site reste rapide même en 4G. Si le tien dépasse, c’est presque toujours une image mal compressée à l’intérieur. Tu peux le réduire sur ton ordinateur (sur Mac : Aperçu → Exporter → Filtre Quartz → « Reduce File Size »), passer par un outil en ligne, ou simplement l’héberger ailleurs et coller le lien : un partage « PDF » accepte un lien à la place du fichier. Le formulaire te donne les trois solutions au moment où tu choisis le fichier.</p></details>
-      <details class="faq"><summary>Quelles photos puis-je ajouter ?</summary><p>JPG, PNG ou WebP, trois par partage, 10 Mo chacune. Elles sont réduites automatiquement et la position GPS est effacée.</p></details>
-      <details class="faq"><summary>Je peux supprimer un de mes partages ?</summary><p>Oui, depuis « Mes partages », bouton « Supprimer ».</p></details>
+      <details class="faq"><summary>Pourquoi mon drop n’apparaît pas ?</summary><p>Chaque drop est relu avant d’être publié. Tu vois son statut dans « Mes drops » : en attente, publié ou refusé (avec le motif).</p></details>
+      <details class="faq"><summary>Pourquoi mon PDF est refusé ?</summary><p>Les PDF sont limités à ${S.limits.pdfKb} Ko, pour que le site reste rapide même en 4G. Si le tien dépasse, c’est presque toujours une image mal compressée à l’intérieur. Tu peux le réduire sur ton ordinateur (sur Mac : Aperçu → Exporter → Filtre Quartz → « Reduce File Size »), passer par un outil en ligne, ou simplement l’héberger ailleurs et coller le lien : un drop « PDF » accepte un lien à la place du fichier. Le formulaire te donne les trois solutions au moment où tu choisis le fichier.</p></details>
+      <details class="faq"><summary>Quelles photos puis-je ajouter ?</summary><p>JPG, PNG ou WebP, trois par drop, 10 Mo chacune. Elles sont réduites automatiquement et la position GPS est effacée.</p></details>
+      <details class="faq"><summary>Je peux supprimer un de mes drops ?</summary><p>Oui, depuis « Mes drops », bouton « Supprimer ».</p></details>
 
       ${STATIQUE ? '' : html`
         <h2 class="faq-title">Installer la bibliothèque</h2>
@@ -1824,7 +1807,7 @@ const collCarte = c => html`
     <a class="coll-titre" href="#/c/${c.id}">${fr(c.title)}</a>
     <p class="coll-desc">${fr(c.description)}</p>
     <div class="meta">
-      <span class="coll-compte">${ICON.lignes}${c.count} partage${c.count > 1 ? 's' : ''}</span>
+      <span class="coll-compte">${ICON.lignes}${c.count} drop${c.count > 1 ? 's' : ''}</span>
       ${auteurLien(c)}
       ${c.pinned ? html`<span class="pin">${ICON.pin}épinglée</span>` : ''}
       ${c.status && c.status !== 'approved' ? html`<span class="status ${c.status}">${c.status === 'pending' ? 'En attente' : 'Refusée'}</span>` : ''}
@@ -1836,7 +1819,7 @@ async function collectionsView() {
   document.title = 'Collections – makers.si';
   render(html`
     <div class="narrow">
-      <a class="back" href="#/">← Tous les partages</a>
+      <a class="back" href="#/">← Tous les drops</a>
       <div class="admin-head">
         <div><h1 class="page-title">${ICON.lignes}Les collections</h1>
           <p class="page-sub">Des parcours composés par des membres à partir de ce qui existe déjà. Par où commencer, dans quel ordre, et pourquoi.</p></div>
@@ -1844,7 +1827,7 @@ async function collectionsView() {
       </div>
       ${collections.length
         ? html`<div class="coll-liste">${collections.map(collCarte)}</div>`
-        : html`<div class="empty">Aucune collection pour l’instant.<br>La première est à composer : choisis cinq partages qui vont ensemble et dis pourquoi.<br>
+        : html`<div class="empty">Aucune collection pour l’instant.<br>La première est à composer : choisis cinq drops qui vont ensemble et dis pourquoi.<br>
             ${STATIQUE ? '' : html`<a class="btn primary" href="${S.me ? '#/collection' : '#/rejoindre'}">${S.me ? 'Composer la première' : 'Créer mon compte'}</a>`}</div>`}
     </div>`);
 }
@@ -1865,9 +1848,9 @@ async function collectionView(id) {
       ${c.status === 'rejected' ? html`<div class="notice bad">Refusée${c.rejectReason ? ' : ' + c.rejectReason : '.'}</div>` : ''}
       <div><span class="kind k-idee">${ICON.lignes}Collection</span></div>
       <h1>${fr(c.title)}</h1>
-      <div class="post-meta">${auteurLien(c)}<span>${ago(c.approvedAt || c.createdAt)}</span><span>${c.count} partage${c.count > 1 ? 's' : ''}</span></div>
+      <div class="post-meta">${auteurLien(c)}<span>${ago(c.approvedAt || c.createdAt)}</span><span>${c.count} drop${c.count > 1 ? 's' : ''}</span></div>
       <p class="lead">${fr(c.description)}</p>
-      ${c.manquants ? html`<p class="muted">${c.manquants} partage${c.manquants > 1 ? 's ont' : ' a'} été retiré${c.manquants > 1 ? 's' : ''} de la bibliothèque depuis.</p>` : ''}
+      ${c.manquants ? html`<p class="muted">${c.manquants} drop${c.manquants > 1 ? 's ont' : ' a'} été retiré${c.manquants > 1 ? 's' : ''} de la bibliothèque depuis.</p>` : ''}
 
       <ol class="coll-etapes">
         ${c.items.map(({ post, note }, i) => html`
@@ -1912,7 +1895,7 @@ function compoListe() {
             <button type="button" class="btn ghost small" data-action="compo-del" data-i="${i}" aria-label="Retirer">✕</button>
           </div>
         </li>`)}</ol>`
-    : html`<p class="muted">Rien de choisi pour l’instant. Cherche un partage ci-dessus et ajoute-le.</p>`).s;
+    : html`<p class="muted">Rien de choisi pour l’instant. Cherche un drop ci-dessus et ajoute-le.</p>`).s;
   const n = $('#compo-compte');
   if (n) n.textContent = `${compo.items.length} choisi${compo.items.length > 1 ? 's' : ''}`;
 }
@@ -1926,7 +1909,7 @@ function composerView(id) {
       <div class="narrow">
         <a class="back" href="#/collections">← Les collections</a>
         <h1 class="page-title">${neuve ? 'Composer une collection' : 'Modifier ma collection'}</h1>
-        <p class="page-sub">Choisis des partages déjà publiés, range-les dans l’ordre où on devrait les lire, et dis en un mot pourquoi chacun est là. ${neuve ? 'Elle est relue avant publication.' : 'Changer les partages ou le texte la renvoie en relecture.'}</p>
+        <p class="page-sub">Choisis des drops déjà publiés, range-les dans l’ordre où on devrait les lire, et dis en un mot pourquoi chacun est là. ${neuve ? 'Elle est relue avant publication.' : 'Changer les drops ou le texte la renvoie en relecture.'}</p>
         <form data-form="collection" data-id="${id || ''}" novalidate>
           <div class="field"><label for="c-titre">Titre</label>
             <input id="c-titre" type="text" name="title" maxlength="80" required placeholder="Démarrer avec Claude Code en une soirée" value="${compo.title}">
@@ -1934,9 +1917,9 @@ function composerView(id) {
           <div class="field"><label for="c-desc">À qui ça sert</label>
             <textarea id="c-desc" name="description" rows="3" maxlength="500" required placeholder="Pour qui débute et ne sait pas par quel bout prendre les skills. À lire dans l’ordre.">${compo.description}</textarea></div>
 
-          <div class="field"><label for="compo-q">Ajouter des partages</label>
+          <div class="field"><label for="compo-q">Ajouter des drops</label>
             <input id="compo-q" type="text" autocomplete="off" placeholder="Cherche un titre, un tag…">
-            <small>De 2 à 30 partages. Seuls les partages publiés peuvent être ajoutés.</small>
+            <small>De 2 à 30 drops. Seuls les drops publiés peuvent être ajoutés.</small>
             <div class="compo-res" id="compo-res"></div></div>
 
           <div class="field"><div class="lbl">Ta collection <span class="muted" id="compo-compte"></span></div>
@@ -1977,7 +1960,7 @@ async function ventesView() {
   render(html`
     <div class="narrow">
       <div class="admin-head"><h1 class="page-title">Mes ventes</h1>
-        <div><a class="btn ghost" href="#/mes-partages">Mes partages</a> <a class="btn ghost" href="#/mes-achats">Mes achats</a></div></div>
+        <div><a class="btn ghost" href="#/mes-partages">Mes drops</a> <a class="btn ghost" href="#/mes-achats">Mes achats</a></div></div>
       <p class="page-sub">La plateforme retient ${d.taux} % sur chaque vente. Le reste t’est reversé à la main : ce tableau dit ce qui t’est dû.</p>
       <div class="profil-chiffres">
         <div><b>${d.ventes.filter(v => v.status === 'paye').length}</b><span>vendus</span></div>
@@ -1987,7 +1970,7 @@ async function ventesView() {
       </div>
       ${blocVersement(d)}
       ${d.ventes.length
-        ? html`<table class="table"><thead><tr><th>Partage</th><th>Acheteur</th><th>Prix</th><th>Pour toi</th><th>État</th></tr></thead><tbody>
+        ? html`<table class="table"><thead><tr><th>Drop</th><th>Acheteur</th><th>Prix</th><th>Pour toi</th><th>État</th></tr></thead><tbody>
             ${d.ventes.map(v => html`<tr>
               <td><a href="#/p/${v.postId}">${v.titre}</a></td>
               <td class="muted">@${v.acheteur}</td>
@@ -1996,7 +1979,7 @@ async function ventesView() {
               <td><span class="status ${v.status === 'paye' ? 'approved' : 'pending'}">${ETAT_VENTE[v.status] || v.status}</span>
                 ${v.regleAt ? html`<br><small class="muted">reversé le ${new Date(v.regleAt).toLocaleDateString('fr-FR')}</small>` : ''}</td></tr>`)}
           </tbody></table>`
-        : html`<div class="empty">Tu n’as encore rien vendu.<br>Mets un prix sur un partage pour commencer.<br><a class="btn primary" href="#/partager">${ICON.plus}Partager</a></div>`}
+        : html`<div class="empty">Tu n’as encore rien vendu.<br>Mets un prix sur un drop pour commencer.<br><a class="btn primary" href="#/partager">${ICON.plus}New drop</a></div>`}
     </div>`);
 }
 
@@ -2076,7 +2059,7 @@ async function achatsView() {
   render(html`
     <div class="narrow">
       <div class="admin-head"><h1 class="page-title">Mes achats</h1>
-        <div><a class="btn ghost" href="#/mes-ventes">Mes ventes</a> <a class="btn ghost" href="#/mes-partages">Mes partages</a></div></div>
+        <div><a class="btn ghost" href="#/mes-ventes">Mes ventes</a> <a class="btn ghost" href="#/mes-partages">Mes drops</a></div></div>
       ${attente.length ? blocPaiement(paiement, attente) : ''}
       ${achats.length
         ? html`<table class="table"><thead><tr><th>Référence</th><th>Produit</th><th class="col-large">Vendeur</th><th>Prix</th><th>État</th></tr></thead><tbody>
@@ -2106,7 +2089,7 @@ async function notificationsView() {
   document.title = 'Ce qui s’est passé – makers.si';
   render(html`
     <div class="narrow">
-      <a class="back" href="#/">← Tous les partages</a>
+      <a class="back" href="#/">← Tous les drops</a>
       <h1 class="page-title">${ICON.cloche}Ce qui s’est passé</h1>
       <p class="page-sub">Pendant que tu n’étais pas là. Rien n’est envoyé par email ni poussé sur ton téléphone : cette liste t’attend ici, et elle ne garde que les trois derniers mois.</p>
       ${liste.length ? html`
@@ -2122,7 +2105,7 @@ async function notificationsView() {
             </a>`)}
         </div>`
         : html`<div class="empty">Rien pour l’instant.<br>
-            Tu seras prévenu ici quand un de tes partages sera relu, quand quelqu’un te répondra,
+            Tu seras prévenu ici quand un de tes drops sera relu, quand quelqu’un te répondra,
             ou quand on commandera ce que tu vends.</div>`}
     </div>`);
   // Ouvrir la page vaut lecture : la pastille s'éteint, et l'en-tête se met à jour
@@ -2143,12 +2126,12 @@ async function mineView() {
   const label = { pending: 'En attente', approved: 'Publié', rejected: 'Refusé' };
   render(html`
     <div class="narrow">
-      <div class="admin-head"><h1 class="page-title">Mes partages</h1>
-        <div><a class="btn primary" href="#/partager">${ICON.plus}Partager</a> <a class="btn ghost" href="#/collection">Composer</a> <a class="btn ghost" href="#/mes-ventes">Mes ventes</a> <a class="btn ghost" href="#/membre/${encodeURIComponent(S.me.pseudo)}">Mon profil public</a> <a class="btn ghost" href="#/compte">Mon compte</a> <button class="btn ghost" data-action="logout">Déconnexion</button></div></div>
+      <div class="admin-head"><h1 class="page-title">Mes drops</h1>
+        <div><a class="btn primary" href="#/partager">${ICON.plus}New drop</a> <a class="btn ghost" href="#/collection">Composer</a> <a class="btn ghost" href="#/mes-ventes">Mes ventes</a> <a class="btn ghost" href="#/membre/${encodeURIComponent(S.me.pseudo)}">Mon profil public</a> <a class="btn ghost" href="#/compte">Mon compte</a> <button class="btn ghost" data-action="logout">Déconnexion</button></div></div>
       ${mesColls.collections.length ? html`
         <h2 class="profil-titre">Mes collections</h2>
         <div class="coll-liste">${mesColls.collections.map(collCarte)}</div>
-        <h2 class="profil-titre">Mes partages</h2>` : ''}
+        <h2 class="profil-titre">Mes drops</h2>` : ''}
       ${posts.length ? html`<table class="table"><thead><tr><th>Titre</th><th>Statut</th><th>Gemmes</th><th>Étoiles</th><th></th></tr></thead><tbody>
         ${posts.map(p => html`<tr><td><a href="#/p/${p.id}">${p.title}</a>${p.status === 'rejected' && p.rejectReason ? html`<br><small class="muted">${p.rejectReason}</small>` : ''}</td>
           <td><span class="status ${p.status}">${label[p.status]}</span></td><td class="mono">${p.gems}</td>
@@ -2163,7 +2146,7 @@ async function adminView(q) {
     return render(html`
       <div class="narrow">
         <h1 class="page-title">Espace admin</h1>
-        <p class="page-sub">Valide ou refuse les partages avant qu’ils soient publiés.</p>
+        <p class="page-sub">Valide ou refuse les drops avant qu’ils soient publiés.</p>
         <form data-form="admin-login" novalidate>
           <div class="field"><label for="a-pw">Mot de passe admin</label><input id="a-pw" type="password" name="password" autocomplete="current-password" required>
             <small>Il est dans <span class="mono">.env</span>, à la ligne <span class="mono">ADMIN_PASSWORD</span>. Sans <span class="mono">.env</span>, le serveur en génère un dans <span class="mono">data/config.json</span>.</small></div>
@@ -2239,11 +2222,11 @@ async function adminView(q) {
               <td>${m.locked ? html`<button class="btn small" data-action="member-unlock" data-id="${m.id}">Débloquer</button> ` : ''}<button class="btn ghost small" data-action="member-delete" data-id="${m.id}" data-pseudo="${m.pseudo}">Supprimer</button></td></tr>`)}</tbody></table>`
         : tab === 'collections'
           ? html`
-            <p class="about-type">Une collection est une recommandation signée : elle range des partages déjà publiés et dit pourquoi. On relit l’ordre et les mots, pas le contenu — il a déjà été validé.</p>
+            <p class="about-type">Une collection est une recommandation signée : elle range des drops déjà publiés et dit pourquoi. On relit l’ordre et les mots, pas le contenu — il a déjà été validé.</p>
             ${data.collections.length
               ? data.collections.map(c => html`
                 <div class="card">
-                  <div class="post-meta">${auteurLien(c)}<span>${ago(c.createdAt)}</span><span>${c.count} partage${c.count > 1 ? 's' : ''}</span></div>
+                  <div class="post-meta">${auteurLien(c)}<span>${ago(c.createdAt)}</span><span>${c.count} drop${c.count > 1 ? 's' : ''}</span></div>
                   <h3><a href="#/c/${c.id}">${fr(c.title)}</a></h3>
                   <p>${fr(c.description)}</p>
                   <ol class="reasons">${c.items.map(({ post, note }) => html`<li>${post.title}${note ? html` — <span class="muted">${note}</span>` : ''}</li>`)}</ol>
@@ -2267,7 +2250,7 @@ async function adminView(q) {
 
             <h3 class="admin-sous-titre">Commandes à confirmer</h3>
             ${data.attente.length
-              ? html`<table class="table"><thead><tr><th>Référence</th><th>Date</th><th>Partage</th><th>Acheteur</th><th>Prix</th><th></th></tr></thead><tbody>
+              ? html`<table class="table"><thead><tr><th>Référence</th><th>Date</th><th>Drop</th><th>Acheteur</th><th>Prix</th><th></th></tr></thead><tbody>
                   ${data.attente.map(a => html`<tr>
                     <td class="mono nowrap"><b>${a.ref}</b></td>
                     <td>${new Date(a.at).toLocaleDateString('fr-FR')}</td>
@@ -2300,7 +2283,7 @@ async function adminView(q) {
 
             <h3 class="admin-sous-titre">Ventes encaissées<small>${data.payes.length} au total</small></h3>
             ${data.payes.length
-              ? html`<table class="table"><thead><tr><th>Date</th><th>Partage</th><th>Vendeur</th><th>Prix</th><th>Ta part</th></tr></thead><tbody>
+              ? html`<table class="table"><thead><tr><th>Date</th><th>Drop</th><th>Vendeur</th><th>Prix</th><th>Ta part</th></tr></thead><tbody>
                   ${data.payes.map(a => html`<tr>
                     <td>${new Date(a.payeAt).toLocaleDateString('fr-FR')}</td>
                     <td><a href="#/p/${a.postId}">${a.titre}</a><br><small class="muted">acheté par @${a.buyerPseudo}</small></td>
@@ -2316,7 +2299,7 @@ async function adminView(q) {
               : html`<div class="empty">Aucune place occupée en ce moment. Les places se posent depuis l’onglet « Publiés ».</div>`}
             <h3 class="admin-sous-titre">Registre des ventes<small>${data.total} ${data.devise} encaissés au total</small></h3>
             ${data.registre.length
-              ? html`<table class="table"><thead><tr><th>Date</th><th>Partage</th><th>Jours</th><th>Montant</th><th>Note</th></tr></thead><tbody>
+              ? html`<table class="table"><thead><tr><th>Date</th><th>Drop</th><th>Jours</th><th>Montant</th><th>Note</th></tr></thead><tbody>
                   ${data.registre.map(v => html`<tr>
                     <td>${new Date(v.at).toLocaleDateString('fr-FR')}</td>
                     <td><a href="#/p/${v.postId}">${v.titre}</a><br><small class="muted">@${v.auteur} · jusqu’au ${new Date(v.jusqua).toLocaleDateString('fr-FR')}</small></td>
@@ -2325,7 +2308,7 @@ async function adminView(q) {
                     <td class="muted">${v.note}</td></tr>`)}
                 </tbody></table>`
               : html`<div class="empty">Rien de vendu pour l’instant.</div>`}`
-          : data.posts.length ? data.posts.map(card) : html`<div class="empty">${tab === 'pending' ? 'Rien à valider. Tout est à jour.' : 'Aucun partage ici.'}</div>`}
+          : data.posts.length ? data.posts.map(card) : html`<div class="empty">${tab === 'pending' ? 'Rien à valider. Tout est à jour.' : 'Aucun drop ici.'}</div>`}
     </div>`);
 }
 
@@ -2380,7 +2363,7 @@ async function route() {
         <div class="narrow">
           <div class="empty">
             <b>${navigator.onLine ? 'Le serveur ne répond pas.' : 'Tu es hors ligne.'}</b><br>
-            L’application est bien là, elle s’ouvre sans connexion — mais les partages, les
+            L’application est bien là, elle s’ouvre sans connexion — mais les drops, les
             réponses et les classements vivent sur le serveur, et ils ont besoin du réseau.<br>
             Dès qu’il revient, la page se remet toute seule.
             <button class="btn" data-action="reessayer">Réessayer maintenant</button>
@@ -2436,7 +2419,7 @@ document.addEventListener('click', async (e) => {
         ? `Gemme donnée. Il t’en reste ${r.gemsLeft} cette semaine.`
         : `Gemme reprise. Il t’en reste ${r.gemsLeft}.`);
     } else if (action === 'star') {
-      if (!S.me) { toast('Rejoins la communauté pour noter un partage.'); return go('#/rejoindre'); }
+      if (!S.me) { toast('Rejoins la communauté pour noter un drop.'); return go('#/rejoindre'); }
       const n = Number(el.dataset.n);
       const r = await api(`/posts/${id}/stars`, { method: 'POST', body: { stars: n } });
       $$(`.stars.big [data-id="${id}"]`).forEach(b => b.classList.toggle('on', Number(b.dataset.n) <= r.myStars));
@@ -2549,7 +2532,7 @@ document.addEventListener('click', async (e) => {
       await api(`/admin/posts/${id}/approve`, { method: 'POST' });
       toast('Publié.'); route();
     } else if (action === 'mine-delete') {
-      if (!confirm('Supprimer ce partage ?')) return;
+      if (!confirm('Supprimer ce drop ?')) return;
       await api(`/posts/${id}/delete`, { method: 'POST' });
       toast('Supprimé.'); route();
     } else if (action === 'pin') {
@@ -2565,15 +2548,15 @@ document.addEventListener('click', async (e) => {
       await api(`/admin/members/${id}/unlock`, { method: 'POST' });
       toast('Compte débloqué.'); route();
     } else if (action === 'member-delete') {
-      if (!confirm(`Supprimer le compte @${el.dataset.pseudo} et tous ses partages ?`)) return;
+      if (!confirm(`Supprimer le compte @${el.dataset.pseudo} et tous ses drops ?`)) return;
       await api(`/admin/members/${id}/delete`, { method: 'POST' });
       toast('Compte supprimé.'); route();
     } else if (action === 'dismiss') {
       await api(`/admin/posts/${id}/dismiss`, { method: 'POST' });
       toast('Signalements ignorés.'); route();
     } else if (action === 'compo-add') {
-      if (compo.items.some(x => x.postId === id)) return toast('Ce partage est déjà dans ta collection.');
-      if (compo.items.length >= 30) return toast('Trente partages au maximum.');
+      if (compo.items.some(x => x.postId === id)) return toast('Ce drop est déjà dans ta collection.');
+      if (compo.items.length >= 30) return toast('Trente drops au maximum.');
       compo.items.push({ postId: id, title: el.dataset.titre, note: '' });
       compoListe();
       toast('Ajouté.');
@@ -2587,7 +2570,7 @@ document.addEventListener('click', async (e) => {
       [compo.items[i], compo.items[j]] = [compo.items[j], compo.items[i]];
       compoListe();
     } else if (action === 'coll-delete') {
-      if (!confirm('Supprimer cette collection ? Les partages qu’elle cite ne sont pas touchés.')) return;
+      if (!confirm('Supprimer cette collection ? Les drops qu’elle cite ne sont pas touchés.')) return;
       await api(`/collections/${id}/delete`, { method: 'POST' });
       toast('Collection supprimée.');
       go('#/collections');
@@ -2607,9 +2590,9 @@ document.addEventListener('click', async (e) => {
       await api(`/admin/collections/${id}/delete`, { method: 'POST' });
       toast('Supprimée.'); route();
     } else if (action === 'post-gratuit') {
-      if (!confirm(`Retirer le prix de ${el.dataset.prix} et rendre ce partage gratuit ?\n\nLes ventes déjà faites restent au registre, et ceux qui ont payé gardent leur accès.`)) return;
+      if (!confirm(`Retirer le prix de ${el.dataset.prix} et rendre ce drop gratuit ?\n\nLes ventes déjà faites restent au registre, et ceux qui ont payé gardent leur accès.`)) return;
       await api(`/admin/posts/${id}/gratuit`, { method: 'POST' });
-      toast('Partage rendu gratuit.'); route();
+      toast('Drop rendu gratuit.'); route();
     } else if (action === 'achat-confirmer') {
       await api(`/admin/achats/${id}/confirmer`, { method: 'POST' });
       toast('Vente confirmée. L’acheteur a maintenant accès au contenu.'); route();
@@ -2642,7 +2625,7 @@ document.addEventListener('click', async (e) => {
       $(`[data-card="${id}"] .reject-form`).classList.toggle('hidden');
       $(`[data-card="${id}"] .reject-form input`).focus();
     } else if (action === 'delete') {
-      if (!confirm('Supprimer définitivement ce partage ?')) return;
+      if (!confirm('Supprimer définitivement ce drop ?')) return;
       await api(`/admin/posts/${id}/delete`, { method: 'POST' });
       toast('Supprimé.'); route();
     }
@@ -2706,7 +2689,7 @@ document.addEventListener('submit', async (e) => {
       } else fd.delete('file');
       const pics = fd.getAll('images').filter(x => x.size);
       fd.delete('images');
-      if (pics.length > 3) return fail('3 photos maximum par partage.');
+      if (pics.length > 3) return fail('3 photos maximum par drop.');
       for (const x of pics) {
         if (isVideo(x)) return fail(VIDEO_MSG);
         if (x.size > 10 * 1024 * 1024) return fail('Une photo dépasse 10 Mo.');
@@ -2809,7 +2792,7 @@ document.addEventListener('input', (e) => {
               ${kind(p.type)}<span class="compo-res-titre">${p.title}</span>
               <button type="button" class="btn small" data-action="compo-add" data-id="${p.id}" data-titre="${p.title}">${ICON.plus}Ajouter</button>
             </div>`)
-        : [html`<p class="muted">Aucun partage publié ne correspond à « ${q} ».</p>`]).map(x => x.s).join('');
+        : [html`<p class="muted">Aucun drop publié ne correspond à « ${q} ».</p>`]).map(x => x.s).join('');
     } catch { boite.innerHTML = ''; }
   }, 200);
 });
