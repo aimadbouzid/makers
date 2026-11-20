@@ -28,6 +28,10 @@
        de nuit avant de passer au papier. Un fichier, pas une balise en ligne :
        la politique de sécurité du site refuse les scripts écrits dans le HTML. -->
   <script type="module" src="theme.js"></script>
+  <!-- L'écran d'accueil, façon écran verrouillé. Script classique et non module :
+       il doit poser sa classe sur <html> avant le premier affichage, sinon on
+       verrait le site clignoter avant l'écran. -->
+  <script src="accueil.js"></script>
   <link rel="canonical" href="https://aimadbouzid.github.io/makers/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="makers.si">
