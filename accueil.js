@@ -6,7 +6,8 @@
 // leurs boîtes. On entre en faisant défiler vers le haut — la page se lève et
 // découvre la bibliothèque dessous — ou par les boutons.
 //
-// - Une fois par visite (sessionStorage) : recharger la page ne la remontre pas.
+// - À la première visite seulement (localStorage) : un habitué arrive directement
+//   dans la bibliothèque, sans porte à franchir à chaque fois.
 // - Seulement en arrivant sur l'accueil. Quelqu'un qui ouvre le lien d'un drop
 //   veut ce drop, pas une page de plus avant.
 // - Script classique, chargé dans <head> : il pose une classe sur <html> avant le
@@ -16,7 +17,7 @@
   const CLE = 'mk-accueil';
   const surAccueil = ['', '#', '#/'].includes(location.hash);
   let deja = false;
-  try { deja = sessionStorage.getItem(CLE) === 'vu'; } catch { /* stockage bloqué : on montre */ }
+  try { deja = localStorage.getItem(CLE) === 'vu' || sessionStorage.getItem(CLE) === 'vu'; } catch { /* stockage bloqué : on montre */ }
   if (!surAccueil || deja) return;
 
   const racine = document.documentElement;
@@ -63,7 +64,11 @@
     moment.append(point, quand);
     const titre = el('h1', 'accueil-titre');
     const bonjour = el('span', 'accueil-salut');
-    titre.append(bonjour, el('span', 'accueil-suite', 'Voici les derniers drops.'));
+    // « Les derniers drops » seulement s'ils sont récents : annoncer des nouveautés
+    // vieilles d'un mois, c'est montrer un site qui ne bouge plus. Le titre est corrigé
+    // dès que la vitrine sait de quand datent les drops.
+    const suite = el('span', 'accueil-suite', 'Voici les drops à la une.');
+    titre.append(bonjour, suite);
     const phrase = el('p', 'accueil-phrase',
       'Des skills, des prompts et des produits digitaux pour travailler avec l’IA. Certains s’achètent, d’autres sont offerts, et tous sont relus avant d’être publiés.');
     const actions = el('div', 'accueil-actions');
@@ -99,7 +104,7 @@
     tic();
     const minuterie = setInterval(tic, 1000);
 
-    return { page, vitrine, portes: [passer, entrer, bas], minuterie };
+    return { page, vitrine, suite, portes: [passer, entrer, bas], minuterie };
   }
 
   // --- La vitrine : les trois derniers drops, chacun dans sa boîte -----------------
@@ -121,7 +126,7 @@
     return scene;
   }
 
-  async function vitrine(conteneur, ouvrir) {
+  async function vitrine(conteneur, ouvrir, suite) {
     let posts = [];
     try {
       if (window.MAKERS_STATIQUE) {
@@ -131,7 +136,15 @@
         posts = (await (await fetch('/api/posts?s=recent', { credentials: 'same-origin' })).json()).posts || [];
       }
     } catch { return; } // hors ligne : la page reste complète sans vitrine
-    posts.filter(p => !p.pinned).slice(0, 3).forEach((p, i) => {
+    // La vitrine montre des produits : ceux qui sont à vendre d'abord, puis les autres
+    // drops faits ici. Les liens vers d'autres sites n'y vont pas — ce ne sont pas des
+    // packs, et une vitrine de liens ressemble à un annuaire.
+    const choix = posts.filter(p => !p.pinned && p.type !== 'lien' && p.type !== 'info')
+      .sort((a, b) => (b.prix > 0) - (a.prix > 0) || (b.approvedAt || 0) - (a.approvedAt || 0))
+      .slice(0, 3);
+    const recent = posts.some(p => !p.pinned && Date.now() - (p.approvedAt || 0) < 7 * 86400000);
+    if (recent) suite.textContent = 'Voici les derniers drops.';
+    choix.forEach((p, i) => {
       const a = lien('#/p/' + p.id, 'accueil-drop k-' + p.type);
       a.style.setProperty('--i', i);
       const pied = el('span', 'accueil-drop-pied');
@@ -147,7 +160,7 @@
 
   // --- Entrer : la page se lève et découvre le site --------------------------------
   function montre() {
-    const { page, vitrine: cadre, portes, minuterie } = construit();
+    const { page, vitrine: cadre, suite, portes, minuterie } = construit();
     const autour = [...document.body.children];
     autour.forEach(e => { e.inert = true; });
     document.body.append(page);
@@ -161,7 +174,7 @@
     const ouvrir = (vers) => {
       if (parti) return;
       parti = true;
-      try { sessionStorage.setItem(CLE, 'vu'); } catch { /* vaut pour cette page */ }
+      try { localStorage.setItem(CLE, 'vu'); } catch { /* vaut pour cette page */ }
       if (vers) location.hash = vers;
       autour.forEach(e => { e.inert = false; });
       page.classList.add('part');
@@ -176,7 +189,7 @@
 
     portes.forEach(b => b.addEventListener('click', () => ouvrir()));
     page.querySelector('.accueil-boutique').addEventListener('click', e => { e.preventDefault(); ouvrir('#/?prix=payant'); });
-    vitrine(cadre, ouvrir);
+    vitrine(cadre, ouvrir, suite);
 
     // Tirer vers le haut, au doigt ou à la souris : la page suit, puis part si on l'a
     // montée d'un quart d'écran ou lancée vite ; sinon elle reprend sa place.

@@ -479,9 +479,8 @@ function railHTML(stats, path, q) {
     const s = n.toString();
     return '#/' + (s ? '?' + s : '');
   };
-  // Même règle que pour les gemmes : une rubrique vide reste visible — elle dit ce
-  // que la bibliothèque accueille — mais elle n'écrit pas son zéro. Quatre « 0 »
-  // alignés dans la colonne de gauche, sur chaque page, annoncent un site mort.
+  // Même règle que pour les gemmes : on n'écrit jamais un zéro. Quatre « 0 » alignés
+  // dans la colonne de gauche, sur chaque page, annoncent un site mort.
   const compte = n => (!n ? '' : html`<span>${n}</span>`);
   const total = stats ? Object.values(stats.byType).reduce((a, b) => a + b, 0) : null;
   const rien = !t && !tag && !mot && !prem && !mod && !prix && surFil;
@@ -498,8 +497,13 @@ function railHTML(stats, path, q) {
     <section>
       <h3 class="cote">La bibliothèque</h3>
       <a href="${vers('t', '')}" class="${rien ? 'on' : ''}">Tout ${compte(total)}</a>
-      ${Object.entries(TYPES).map(([cle, v]) => html`
-        <a href="${vers('t', cle)}" class="k-${cle} ${stats && !stats.byType?.[cle] ? 'vide' : ''} ${t === cle && !prem ? 'on' : ''}">
+      ${Object.entries(TYPES)
+        // Une rubrique vide n'apparaît plus : quatre lignes grisées dans la colonne de
+        // gauche, sur chaque page, faisaient un site à moitié vide. Elle revient d'elle-
+        // même au premier drop publié. Celle qu'on regarde reste, même vide.
+        .filter(([cle]) => !stats || stats.byType?.[cle] || t === cle)
+        .map(([cle, v]) => html`
+        <a href="${vers('t', cle)}" class="k-${cle} ${t === cle && !prem ? 'on' : ''}">
           ${ICON[TYPE_ICONE[cle]]}${v.plural} ${compte(stats?.byType?.[cle])}</a>`)}
     </section>
 
@@ -578,7 +582,7 @@ function barreBasHTML(path) {
       // confond jamais avec l'onglet de la page où l'on se trouve.
       : onglet(S.me ? '#/partager' : '#/rejoindre', ICON.plus, 'New drop', path === '/partager', 'appoint')}
     ${S.stats?.gems ? onglet('#/top', ICON.cup, 'Top', path === '/top') : ''}
-    ${STATIQUE ? '' : onglet(S.me ? '#/mes-partages' : '#/connexion', ICON.perso, S.me ? 'Moi' : 'Entrer', path === '/mes-partages')}`;
+    ${STATIQUE ? '' : onglet(S.me ? '#/mes-partages' : '#/connexion', ICON.perso, S.me ? 'Moi' : 'Connexion', path === '/mes-partages' || path === '/connexion')}`;
 }
 
 // Comme sur iOS 26, la barre du téléphone se réduit à ses icônes quand on descend dans
@@ -872,25 +876,42 @@ function empreinte(id = '') {
 // La boîte est décorative au sens strict : elle répète un lien et un titre déjà écrits
 // juste à côté. Elle est donc retirée du clavier et des lecteurs d'écran — sinon chaque
 // partage compterait deux fois dans l'index.
-function couverture(p, { mini = false } = {}) {
+// Le pack lui-même : la scène, la boîte et son ombre. Partagé par les cartes, la
+// liste et la page d'un produit, pour que ce soit partout le même objet.
+function boite(p) {
   const thumb = p.images?.[0]?.thumb;
   const court = TYPES[p.type]?.short || p.type;
   return html`
-    <a class="couv${mini ? ' couv-mini' : ''} k-${p.type}" href="#/p/${p.id}" tabindex="-1" aria-hidden="true">
-      <span class="boite-scene">
-        <span class="boite">
-          <span class="boite-face${thumb ? ' photo' : ''}">
-            ${thumb ? html`<img src="${thumb}" alt="" loading="lazy">` : html`
-              <span class="boite-kind">${court}</span>
-              <span class="boite-titre">${fr(p.title)}</span>
-              <span class="boite-marque">makers<i>.</i>si</span>`}
-          </span>
-          <span class="boite-tranche"><span>${court}</span></span>
-          <span class="boite-dessus"></span>
+    <span class="boite-scene">
+      <span class="boite">
+        <span class="boite-face${thumb ? ' photo' : ''}">
+          ${thumb ? html`<img src="${thumb}" alt="" loading="lazy">` : html`
+            <span class="boite-kind">${court}</span>
+            <span class="boite-titre">${fr(p.title)}</span>
+            <span class="boite-marque">makers<i>.</i>si</span>`}
         </span>
-        <span class="boite-sol"></span>
+        <span class="boite-tranche"><span>${court}</span></span>
+        <span class="boite-dessus"></span>
       </span>
+      <span class="boite-sol"></span>
+    </span>`;
+}
+
+// Un lien n'est pas un produit qu'on emporte : le mettre en boîte trompait sur ce
+// qu'on obtient. Il a sa propre couverture, plate — une barre d'adresse, avec le
+// site vers lequel il mène. On la reconnaît d'un coup d'œil dans une rangée de packs.
+function couvLien(p, mini) {
+  const site = p.url ? domain(p.url) : 'lien externe';
+  return html`
+    <a class="couv couv-adresse${mini ? ' couv-mini' : ''} k-${p.type}" href="#/p/${p.id}" tabindex="-1" aria-hidden="true">
+      <span class="adresse">${ICON.out}${mini ? '' : html`<span class="adresse-site">${site}</span><span class="adresse-fleche">↗</span>`}</span>
     </a>`;
+}
+
+function couverture(p, { mini = false } = {}) {
+  if (p.type === 'lien') return couvLien(p, mini);
+  return html`
+    <a class="couv${mini ? ' couv-mini' : ''} k-${p.type}" href="#/p/${p.id}" tabindex="-1" aria-hidden="true">${boite(p)}</a>`;
 }
 
 // Deux façons de voir le fil, au choix du visiteur. Les cartes sont le réglage par
@@ -1058,6 +1079,10 @@ function lockedBox(p) {
       <div class="locked">
         <div class="locked-head">${ICON.lock}<b>En vente · ${p.prix} ${p.devise || ''}</b></div>
         <p>Ce drop contient ${dedans}. Le contenu s’ouvre une fois l’achat confirmé ; le titre, la description et les tags restent publics.</p>
+        ${p.has?.chemins?.length ? html`<div class="recu"><b>Ce que tu reçois</b>
+          <ul class="recu-liste">${p.has.chemins.map(c => html`<li>${ICON.doc}<span class="mono">${c}</span></li>`)}</ul></div>`
+          : p.has?.fichier ? html`<div class="recu"><b>Ce que tu reçois</b>
+          <ul class="recu-liste"><li>${ICON.doc}<span>Un fichier ${p.has.fichier.ext.toUpperCase()} · ${p.has.fichier.size < 1048576 ? Math.max(1, Math.round(p.has.fichier.size / 1024)) + ' Ko' : (p.has.fichier.size / 1048576).toFixed(1).replace('.', ',') + ' Mo'}</span></li></ul></div>` : ''}
         ${STATIQUE
           // Le site complet n'est pas encore en ligne : renvoyer vers lui serait renvoyer
           // vers rien. On dit ce qui est vrai, sans date qu'on ne peut pas tenir.
@@ -1406,6 +1431,7 @@ async function postView(id) {
   render(html`
     <div class="narrow post k-${p.type}">
       <a class="back" href="#/">← Tous les drops</a>
+      ${p.type !== 'lien' ? html`<div class="pack-hero k-${p.type}" aria-hidden="true">${boite(p)}</div>` : ''}
       ${p.status === 'pending' ? html`<div class="notice">En attente de validation. Toi seul(e) vois ce drop pour l’instant.</div>` : ''}
       ${p.status === 'rejected' ? html`<div class="notice bad">Refusé${p.rejectReason ? ' : ' + p.rejectReason : '.'}</div>` : ''}
       <div>${kind(p.type)}${p.premium ? html` <span class="pin lock">${ICON.lock}espace privé</span>` : ''}${p.prix ? html` ${prixBadge(p)}` : ''}${p.promo ? html` ${sponsoBadge(p)}` : ''}</div>
@@ -1418,13 +1444,14 @@ async function postView(id) {
            « Pas encore noté » répété sous chaque drop. -->
       ${p.status === 'approved' || !p.status ? html`${STATIQUE && !p.gems && !p.starsCount ? '' : html`<div class="post-actions">
           ${gemButton(p)}
-          ${STATIQUE ? '' : html`<span class="muted">${p.gems} gemme${p.gems > 1 ? 's' : ''}</span>`}
+          ${STATIQUE || !p.gems ? '' : html`<span class="muted">${p.gems} gemme${p.gems > 1 ? 's' : ''}</span>`}
           ${STATIQUE && !p.starsCount ? '' : html`
             <span class="sep"></span>
             ${starsView(p, { interactive: !STATIQUE })}
             <span class="muted" data-stars-label="${p.id}">${p.starsCount
               ? `${String(p.stars).replace('.', ',')} sur 5 · ${p.starsCount} note${p.starsCount > 1 ? 's' : ''}`
-              : 'Pas encore noté'}</span>`}
+              // Une note vide ne dit rien de bon : on laisse les étoiles inviter seules.
+              : ''}</span>`}
         </div>`}
         ${reponsesView(p, reponses)}
         <details class="report"><summary>Signaler ce drop</summary>
