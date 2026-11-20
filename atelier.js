@@ -89,7 +89,7 @@ function commandes() {
   }
   // Le thème : la seule commande qui ne navigue pas.
   const themes = [['auto', 'Thème : suivre l’appareil'], ['papier', 'Thème : papier (clair)'], ['nuit', 'Thème : nuit (sombre)']];
-  for (const [cle, mot] of themes) {
+  for (const [cle, mot] of window.makersTheme?.nuitPermise?.() ? themes : []) {
     if (cle === choix) continue;
     liste.push({ groupe: 'Réglages', mot, icone: 'ampoule', faire: () => window.makersTheme?.choisis(cle) });
   }

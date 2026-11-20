@@ -148,7 +148,7 @@ const ICON = {
 // pour ne pas redemander les mêmes compteurs à chaque changement de page.
 // `modeles` vient du serveur (jamais recopié ici) : le formulaire ne peut donc
 // pas proposer une famille que le serveur refuserait.
-const S = { me: null, admin: false, pending: 0, nonLues: 0, promo: null, marche: null, stats: null, modeles: {}, limits: { pdfKb: 200, fileMb: 15, imageMb: 10, images: 3 } };
+const S = { me: null, admin: false, pending: 0, nonLues: 0, promo: null, marche: null, stats: null, modeles: {}, site: { nuit: false }, limits: { pdfKb: 200, fileMb: 15, imageMb: 10, images: 3 } };
 
 // Une barre fine en haut de page dès le clic : la navigation demande un aller-retour
 // réseau, et sans ce signal on a l'impression que le clic n'a rien fait.
@@ -202,13 +202,13 @@ async function apiStatique(chemin, method) {
   if (method !== 'GET') {
     throw Object.assign(new Error('Cette copie du site est en lecture seule. Elle sert à consulter la bibliothèque ; pour partager, voter ou créer un compte, il faut la version complète.'), { status: 403 });
   }
-  const { posts, stats, limits, promo, modeles = {}, collections = [] } = await chargeStatique();
+  const { posts, stats, limits, promo, modeles = {}, collections = [], site = { nuit: false } } = await chargeStatique();
   const [base, qs] = chemin.split('?');
   const q = new URLSearchParams(qs || '');
 
   // `promo` décrit l'offre (places, durée, tarif), pas son état : une copie de fichiers
   // n'a pas d'horloge, donc elle ne sait pas combien de places sont libres à cet instant.
-  if (base === '/me') return { member: null, admin: false, pending: 0, limits, promo, modeles };
+  if (base === '/me') return { member: null, admin: false, pending: 0, limits, promo, modeles, site };
   if (base === '/stats') return stats;
 
   const points = p => p.points;
@@ -422,11 +422,11 @@ function header() {
         ${ICON.loupe}<span>Chercher, ou taper une commande…</span><kbd>⌘K</kbd>
       </button>
       <div class="bar-end">
-        <div class="theme" role="group" aria-label="Apparence">
+        ${S.site?.nuit ? html`<div class="theme" role="group" aria-label="Apparence">
           ${theme('auto', 'auto', 'Suivre le réglage de l’appareil')}
           ${theme('papier', 'papier', 'Fond clair')}
           ${theme('nuit', 'nuit', 'Fond sombre')}
-        </div>
+        </div>` : ''}
         <!-- Sur téléphone, la modération quitte la barre du haut : elle ne sert qu'à
              une personne, et la place revient à la cloche, qui sert tous les jours.
              Elle reste atteignable par le rail et par la palette. -->
@@ -2162,12 +2162,13 @@ async function adminView(q) {
       : tab === 'promos' ? api('/admin/promos')
         : tab === 'collections' ? api('/admin/collections?status=pending')
         : tab === 'marche' ? api('/admin/marche')
+        : tab === 'reglages' ? Promise.resolve({})
           : tab === 'reports' ? api('/admin/reports') : api('/admin/posts?status=' + tab),
   ]);
   // Les deux compteurs de l'admin suivent ce qu'il vient de faire : confirmer une
   // commande doit faire baisser son badge tout de suite, pas au prochain rechargement.
   S.pending = counts.pending; S.aConfirmer = counts.marche; header(); rail();
-  const tabs = [['pending', 'À valider', counts.pending], ['reports', 'Signalés', counts.reported], ['approved', 'Publiés', counts.approved], ['rejected', 'Refusés', counts.rejected], ['promos', 'Mises en avant', counts.promos], ['collections', 'Collections', counts.collections], ['marche', 'Marché', counts.marche], ['members', 'Membres', counts.members]];
+  const tabs = [['pending', 'À valider', counts.pending], ['reports', 'Signalés', counts.reported], ['approved', 'Publiés', counts.approved], ['rejected', 'Refusés', counts.rejected], ['promos', 'Mises en avant', counts.promos], ['collections', 'Collections', counts.collections], ['marche', 'Marché', counts.marche], ['members', 'Membres', counts.members], ['reglages', 'Réglages', null]];
   const privateNote = tab === 'members'
     ? html`<p class="about-type">L’accès à l’espace privé se donne à la main, un membre à la fois. Il n’y a pas encore de paiement : c’est toi qui décides qui entre.</p>`
     : tab === 'promos'
@@ -2212,9 +2213,17 @@ async function adminView(q) {
   render(html`
     <div>
       <div class="admin-head"><h1 class="page-title">Modération</h1><button class="btn ghost" data-action="logout">Déconnexion</button></div>
-      <div class="toolbar"><div class="tabs">${tabs.map(([k, l, n]) => html`<a href="#/admin?s=${k}" class="${tab === k ? 'on' : ''}">${l} (${n})</a>`)}</div></div>
+      <div class="toolbar"><div class="tabs">${tabs.map(([k, l, n]) => html`<a href="#/admin?s=${k}" class="${tab === k ? 'on' : ''}">${l}${n === null ? '' : ` (${n})`}</a>`)}</div></div>
       ${privateNote}
-      ${tab === 'members'
+      ${tab === 'reglages'
+        ? html`<div class="card reglage">
+            <h3>Mode nuit</h3>
+            <p>${S.site?.nuit
+              ? 'Autorisé. Chaque visiteur choisit entre clair, sombre, ou le réglage de son appareil.'
+              : 'Bloqué. Tout le monde voit le mode clair, même avec un téléphone réglé en sombre, et le sélecteur de thème n’apparaît pas.'}</p>
+            <button class="btn ${S.site?.nuit ? '' : 'primary'}" data-action="reglage-nuit" data-valeur="${S.site?.nuit ? 'non' : 'oui'}">${S.site?.nuit ? 'Bloquer le mode nuit' : 'Autoriser le mode nuit'}</button>
+          </div>`
+      : tab === 'members'
         ? html`<table class="table"><thead><tr><th>Pseudo</th><th>Email</th><th>Inscrit</th><th>Publiés</th><th>Espace privé</th><th></th></tr></thead><tbody>
             ${data.members.map(m => html`<tr><td>@${m.pseudo}${m.locked ? html` <span class="status rejected">bloqué</span>` : ''}</td>
               <td class="muted">${m.email}</td><td>${ago(m.createdAt)}</td><td class="mono">${m.posts}</td>
@@ -2383,6 +2392,9 @@ async function refreshMe() {
     if (r.promo) S.promo = r.promo;
     if (r.marche) S.marche = r.marche;
     if (r.modeles) S.modeles = r.modeles;
+    // Le mode nuit n'existe que si l'admin l'a autorisé.
+    S.site = { nuit: r.site?.nuit === true };
+    window.makersTheme?.permettre?.(S.site.nuit);
   } catch { /* hors ligne : on reste visiteur */ }
 }
 
@@ -2520,6 +2532,12 @@ document.addEventListener('click', async (e) => {
         if ('caches' in window) for (const n of await caches.keys()) await caches.delete(n);
       } catch { /* rien à vider : on recharge quand même */ }
       location.reload();
+    } else if (action === 'reglage-nuit') {
+      const r = await api('/admin/reglages', { method: 'POST', body: { nuit: el.dataset.valeur === 'oui' } });
+      S.site = { nuit: r.site.nuit === true };
+      window.makersTheme?.permettre?.(S.site.nuit);
+      toast(S.site.nuit ? 'Mode nuit autorisé.' : 'Mode nuit bloqué : tout le monde voit le mode clair.');
+      header(); route();
     } else if (action === 'theme') {
       // Le choix est gardé sur l'appareil par theme.js, jamais envoyé au serveur.
       window.makersTheme?.choisis(el.dataset.theme);
