@@ -1713,33 +1713,90 @@ body.chargement::before { width: 80%; opacity: 1; transition: width 2.5s cubic-b
   :root[data-theme="nuit"] .theme [data-theme="nuit"] { display: none; }
   :root[data-theme="papier"] .theme [data-theme="papier"] { display: none; }
   .who, .hide-sm { display: none; }
-  .wrap { padding: 20px 16px 104px; }
+  .wrap { padding: 20px 16px calc(108px + env(safe-area-inset-bottom, 0px)); }
   .narrow { max-width: none; }
   /* Le tiroir s'arrête au-dessus de la barre du bas, sinon son pied passe dessous. */
-  .rail { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+  .rail { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
 
-  /* La barre d'onglets du téléphone : une matière translucide, posée au bord de
-     l'écran, qui laisse deviner le contenu qui défile dessous. Les libellés sont
-     écrits normalement — des petites capitales sur dix pixels ne se lisent pas. */
+  /* La barre d'onglets du téléphone. Elle flotte au-dessus du contenu, détachée des
+     bords, dans une matière de verre — c'est la barre d'iOS 26. L'onglet de la page en
+     cours est marqué par une pastille teintée autour de son icône — c'est celle de
+     Material 3. Et « New drop », qui n'est pas un endroit mais un geste, a son propre
+     bouton plein : il ne se confond plus avec l'onglet actif. Quand on descend dans
+     une page, la barre se réduit à ses icônes ; elle revient dès qu'on remonte. */
   .barre-bas {
-    display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 35;
+    display: flex; align-items: stretch; gap: 2px;
+    position: fixed; z-index: 35;
+    left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    height: 64px; padding: 5px;
+    border-radius: 30px;
     background: var(--bar-plein);
-    border-top: 1px solid var(--line);
-    padding-bottom: env(safe-area-inset-bottom, 0);
+    /* Un liseré de lumière en haut, un contour à peine dessiné, et deux ombres : une
+       courte qui pose la barre, une longue et douce qui la fait flotter. */
+    --reflet: rgb(255 255 255 / .09);
+    box-shadow:
+      inset 0 0 0 .5px color-mix(in srgb, var(--ink) 14%, transparent),
+      inset 0 1px 0 var(--reflet),
+      0 1px 2px rgb(0 0 0 / .08),
+      0 12px 32px -10px rgb(0 0 0 / .28);
+    transition: height .4s var(--ease), left .4s var(--ease), right .4s var(--ease), bottom .4s var(--ease);
   }
+  :root[data-theme="papier"] .barre-bas { --reflet: rgb(255 255 255 / .9); }
   @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
-    .barre-bas { background: var(--bar); -webkit-backdrop-filter: var(--flou); backdrop-filter: var(--flou); }
+    .barre-bas {
+      background: color-mix(in srgb, var(--surface) 70%, transparent);
+      -webkit-backdrop-filter: saturate(190%) blur(24px); backdrop-filter: saturate(190%) blur(24px);
+    }
   }
   .barre-bas a {
-    /* 49 px de haut : c'est la hauteur d'un onglet qu'on atteint sans viser. */
-    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
-    min-height: 49px; padding: 7px 2px 6px; text-decoration: none; color: var(--muted);
-    font: 500 10.5px var(--font); letter-spacing: -.005em; text-transform: none;
-    transition: color .16s var(--ease-doux);
+    flex: 1; min-width: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    border-radius: 24px; text-decoration: none; color: var(--muted);
+    -webkit-tap-highlight-color: transparent;
+    transition: color .2s var(--ease-doux);
   }
-  .barre-bas a .ico { width: 23px; height: 23px; }
+  /* La pastille : invisible au repos, teintée sur la page en cours. Elle s'ouvre en
+     largeur depuis le centre, comme celle de Material 3. */
+  .barre-bas .p {
+    position: relative; display: grid; place-items: center;
+    width: 54px; height: 32px; border-radius: 16px;
+    transition: transform .25s var(--ease);
+  }
+  .barre-bas .p::before {
+    content: ''; position: absolute; inset: 0; border-radius: inherit;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    transform: scaleX(.45); opacity: 0;
+    transition: transform .45s var(--ease), opacity .2s var(--ease-doux);
+  }
+  .barre-bas .ico { position: relative; width: 22px; height: 22px; transition: transform .3s var(--ease); }
+  .barre-bas .l {
+    max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+    font: 600 10.5px/1.15 var(--font); letter-spacing: -.01em;
+    max-height: 14px; transition: opacity .2s var(--ease-doux), max-height .4s var(--ease);
+  }
   .barre-bas a.on { color: var(--accent); }
-  .barre-bas a.appoint { color: var(--accent); }
+  .barre-bas a.on .p::before { transform: none; opacity: 1; }
+  .barre-bas a.on .l { font-weight: 700; }
+  /* « New drop » : un bouton plein, avec l'ombre de sa couleur. */
+  .barre-bas a.appoint { color: var(--ink); }
+  .barre-bas a.appoint .p::before {
+    background: var(--accent-plein); transform: none; opacity: 1;
+    box-shadow: 0 6px 14px -6px color-mix(in srgb, var(--accent-plein) 80%, transparent),
+      inset 0 1px 0 rgb(255 255 255 / .22);
+  }
+  .barre-bas a.appoint .ico { color: #fff; }
+  /* Le doigt se sent : la pastille s'enfonce un instant sous la pression. */
+  .barre-bas a:active .p { transform: scale(.9); }
+  .barre-bas a:focus-visible { outline: none; }
+  .barre-bas a:focus-visible .p { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Réduite : les noms s'effacent, la barre se resserre et descend un peu. */
+  .barre-bas.compacte { height: 50px; left: 44px; right: 44px; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+  .barre-bas.compacte .l { opacity: 0; max-height: 0; }
+  .barre-bas.compacte a { gap: 0; }
+  @media (prefers-reduced-motion: reduce) {
+    .barre-bas, .barre-bas .p, .barre-bas .p::before, .barre-bas .l, .barre-bas .ico { transition: none; }
+  }
 
   .item {
     grid-template-columns: minmax(0, 1fr) auto;
@@ -1816,7 +1873,7 @@ body.chargement::before { width: 80%; opacity: 1; transition: width 2.5s cubic-b
   .colophon { grid-template-columns: minmax(0, 1fr); gap: 24px; margin-top: 44px; }
   .palette-fond { padding: 0; align-items: stretch; }
   .palette { max-width: none; max-height: none; border: 0; border-radius: 0; }
-  .toast { left: 16px; right: 16px; bottom: 76px; max-width: none; transform: translateY(10px); }
+  .toast { left: 16px; right: 16px; bottom: calc(88px + env(safe-area-inset-bottom, 0px)); max-width: none; transform: translateY(10px); }
   .toast.show { transform: none; }
   .coll-etapes > li { grid-template-columns: 26px minmax(0, 1fr); gap: 12px; }
   .coll-etapes > li::before { left: 9px; top: 24px; }

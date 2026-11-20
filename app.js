@@ -562,19 +562,42 @@ function railHTML(stats, path, q) {
 // Les cinq cases de la barre du bas, sur téléphone. « Partager » au centre,
 // à la couleur de la maison : c'est le geste qu'on vient faire.
 function barreBasHTML(path) {
-  const on = p => (path === p ? 'on' : '');
   // La boutique a sa case : sur un téléphone, c'est cette barre qu'on utilise, et ce
   // que le site vend ne doit pas se trouver seulement au fond d'un menu.
   const enBoutique = path === '/' && new URLSearchParams(location.hash.split('?')[1] || '').get('prix') === 'payant';
+  // Un onglet : une pastille autour de l'icône (elle se colore sur la page en cours),
+  // et son nom dessous. `aria-current` dit aux lecteurs d'écran où l'on est.
+  const onglet = (href, icone, nom, actif, classe = '') => html`<a href="${href}" class="${classe}${actif ? ' on' : ''}"${actif ? html` aria-current="page"` : ''}><span class="p">${icone}</span><span class="l">${nom}</span></a>`;
   return html`
-    <a href="#/" class="${path === '/' && !enBoutique ? 'on' : ''}">${ICON.maison}Biblio</a>
-    <a href="#/?prix=payant" class="${enBoutique ? 'on' : ''}">${ICON.etiquette}Boutique</a>
-    <a href="#/collections" class="${on('/collections')}">${ICON.lignes}Parcours</a>
+    ${onglet('#/', ICON.maison, 'Biblio', path === '/' && !enBoutique)}
+    ${onglet('#/?prix=payant', ICON.etiquette, 'Boutique', enBoutique)}
+    ${onglet('#/collections', ICON.lignes, 'Parcours', path === '/collections')}
     ${STATIQUE
-      ? html`<a href="#/aide" class="${on('/aide')}">${ICON.ampoule}Aide</a>`
-      : html`<a href="${S.me ? '#/partager' : '#/rejoindre'}" class="appoint ${on('/partager')}">${ICON.plus}New drop</a>`}
-    ${S.stats?.gems ? html`<a href="#/top" class="${on('/top')}">${ICON.cup}Top</a>` : ''}
-    ${STATIQUE ? '' : html`<a href="${S.me ? '#/mes-partages' : '#/connexion'}" class="${on('/mes-partages')}">${ICON.perso}${S.me ? 'Moi' : 'Entrer'}</a>`}`;
+      ? onglet('#/aide', ICON.ampoule, 'Aide', path === '/aide')
+      // « New drop » n'est pas un endroit mais un geste : un bouton plein, qui ne se
+      // confond jamais avec l'onglet de la page où l'on se trouve.
+      : onglet(S.me ? '#/partager' : '#/rejoindre', ICON.plus, 'New drop', path === '/partager', 'appoint')}
+    ${S.stats?.gems ? onglet('#/top', ICON.cup, 'Top', path === '/top') : ''}
+    ${STATIQUE ? '' : onglet(S.me ? '#/mes-partages' : '#/connexion', ICON.perso, S.me ? 'Moi' : 'Entrer', path === '/mes-partages')}`;
+}
+
+// Comme sur iOS 26, la barre du téléphone se réduit à ses icônes quand on descend dans
+// une page, pour laisser la place au contenu, et revient dès qu'on remonte. Un seul
+// calcul par image affichée, et un écouteur passif : le défilement n'attend jamais.
+{
+  let dernier = 0, prevu = false;
+  addEventListener('scroll', () => {
+    if (prevu) return;
+    prevu = true;
+    requestAnimationFrame(() => {
+      prevu = false;
+      const b = document.getElementById('barre-bas'), y = scrollY;
+      if (!b) return;
+      if (y < 80 || y < dernier - 6) b.classList.remove('compacte');
+      else if (y > dernier + 6) b.classList.add('compacte');
+      dernier = y;
+    });
+  }, { passive: true });
 }
 
 // Le rail se dessine tout de suite avec les chiffres qu'on a déjà, puis se
@@ -585,7 +608,7 @@ async function rail() {
   const dessine = () => {
     const r = $('#rail'), b = $('#barre-bas');
     if (r) r.innerHTML = railHTML(S.stats, path, q).s;
-    if (b) b.innerHTML = barreBasHTML(path).s;
+    if (b) { b.innerHTML = barreBasHTML(path).s; b.classList.remove('compacte'); }
   };
   dessine();
   if (S.stats) return;
