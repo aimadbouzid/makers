@@ -547,7 +547,7 @@ function railHTML(stats, path, q) {
             <a href="#/mes-ventes" class="${path === '/mes-ventes' ? 'on' : ''}">${ICON.file}Mes ventes</a>
             <a href="#/membre/${encodeURIComponent(S.me.pseudo)}">${ICON.perso}Mon profil</a>`
           : html`
-            <a class="btn primary" href="#/rejoindre">${ICON.plus}Créer mon compte</a>
+            <a href="#/rejoindre">${ICON.plus}Créer mon compte</a>
             <a href="#/connexion">${ICON.lock}Me connecter</a>`}
         <!-- Hors du choix ci-dessus : une session d'administration est indépendante
              d'un compte membre. On peut modérer sans être connecté comme membre. -->
@@ -888,6 +888,7 @@ function boite(p) {
           ${thumb ? html`<img src="${thumb}" alt="" loading="lazy">` : html`
             <span class="boite-kind">${court}</span>
             <span class="boite-titre">${fr(p.title)}</span>
+            <span class="boite-glyphe">${ICON[TYPE_ICONE[p.type]] || ''}</span>
             <span class="boite-marque">makers<i>.</i>si</span>`}
         </span>
         <span class="boite-tranche"><span>${court}</span></span>
@@ -898,13 +899,30 @@ function boite(p) {
 }
 
 // Un lien n'est pas un produit qu'on emporte : le mettre en boîte trompait sur ce
-// qu'on obtient. Il a sa propre couverture, plate — une barre d'adresse, avec le
-// site vers lequel il mène. On la reconnaît d'un coup d'œil dans une rangée de packs.
+// qu'on obtient. Il a sa propre couverture, plate : une plaque qui dit où il mène —
+// le site en petit, et ce qu'on y trouve en grand. Pour un dépôt GitHub, son
+// propriétaire et son nom (« anthropics / skills ») : c'est ce qu'un développeur
+// reconnaît, bien plus qu'un titre.
+function cibleLien(url) {
+  try {
+    const u = new URL(url);
+    const site = u.hostname.replace(/^www\./, '');
+    const [a, b] = u.pathname.split('/').filter(Boolean);
+    if (site === 'github.com' && a && b) return { site, haut: a, nom: b };
+    return { site, haut: '', nom: a || site };
+  } catch { return { site: 'lien externe', haut: '', nom: '' }; }
+}
 function couvLien(p, mini) {
-  const site = p.url ? domain(p.url) : 'lien externe';
+  if (mini) {
+    return html`<a class="couv couv-adresse couv-mini k-${p.type}" href="#/p/${p.id}" tabindex="-1" aria-hidden="true"><span class="adresse">${ICON.out}</span></a>`;
+  }
+  const c = cibleLien(p.url || '');
   return html`
-    <a class="couv couv-adresse${mini ? ' couv-mini' : ''} k-${p.type}" href="#/p/${p.id}" tabindex="-1" aria-hidden="true">
-      <span class="adresse">${ICON.out}${mini ? '' : html`<span class="adresse-site">${site}</span><span class="adresse-fleche">↗</span>`}</span>
+    <a class="couv couv-depot k-${p.type}" href="#/p/${p.id}" tabindex="-1" aria-hidden="true">
+      <span class="depot-plaque">
+        <span class="depot-site">${ICON.out}${c.site}</span>
+        <span class="depot-nom">${c.haut ? html`<span class="depot-proprio">${c.haut} /</span>` : ''}<b>${c.nom || fr(p.title)}</b></span>
+      </span>
     </a>`;
 }
 
@@ -1075,10 +1093,15 @@ function lockedBox(p) {
   // Deux verrous différents, deux explications différentes : un abonnement d'un côté,
   // un achat de l'autre. Les confondre ferait croire qu'on paie deux fois.
   if (p.prix) {
+    // L'endroit où l'on décide de payer : une vraie carte, avec le prix en grand — et
+    // le seul prix de la page. Avant, c'était une note encadrée, comme une citation.
     return html`
-      <div class="locked">
-        <div class="locked-head">${ICON.lock}<b>En vente · ${p.prix} ${p.devise || ''}</b></div>
-        <p>Ce drop contient ${dedans}. Le contenu s’ouvre une fois l’achat confirmé ; le titre, la description et les tags restent publics.</p>
+      <div class="locked achat">
+        <div class="achat-haut">
+          <span class="achat-prix">${prixLisible(p.prix)}<small>${p.devise || 'DA'}</small></span>
+          <span class="achat-etat">${ICON.lock}Contenu fermé</span>
+        </div>
+        <p>Ce drop contient ${dedans}. Il s’ouvre une fois l’achat confirmé ; le titre, la description et les tags restent publics.</p>
         ${p.has?.chemins?.length ? html`<div class="recu"><b>Ce que tu reçois</b>
           <ul class="recu-liste">${p.has.chemins.map(c => html`<li>${ICON.doc}<span class="mono">${c}</span></li>`)}</ul></div>`
           : p.has?.fichier ? html`<div class="recu"><b>Ce que tu reçois</b>
@@ -1086,15 +1109,15 @@ function lockedBox(p) {
         ${STATIQUE
           // Le site complet n'est pas encore en ligne : renvoyer vers lui serait renvoyer
           // vers rien. On dit ce qui est vrai, sans date qu'on ne peut pas tenir.
-          ? html`<p class="muted">Ce produit ne s’achète pas encore en ligne : la vente n’est pas ouverte.</p>`
+          ? html`<p class="achat-ferme">Ce produit ne s’achète pas encore en ligne : la vente n’est pas ouverte.</p>`
           // Pas de coordonnées de paiement réglées : on ne propose pas d'acheter. Un
           // bouton qui mène à une commande impayable, c'est pire qu'un bouton absent.
           : !S.marche?.ouvert
-            ? html`<p class="muted">La vente n’est pas encore ouverte. Ce produit pourra s’acheter bientôt.</p>`
+            ? html`<p class="achat-ferme">La vente n’est pas encore ouverte. Ce produit pourra s’acheter bientôt.</p>`
           : S.me
-            ? html`<button class="btn primary" data-action="acheter" data-id="${p.id}" data-prix="${p.prix} ${p.devise || ''}">Acheter pour ${p.prix} ${p.devise || ''}</button>
+            ? html`<button class="btn primary achat-bouton" data-action="acheter" data-id="${p.id}" data-prix="${p.prix} ${p.devise || ''}">Acheter pour ${prixLisible(p.prix)} ${p.devise || ''}</button>
               <p class="muted">Tu commandes, tu reçois une référence et l’adresse où envoyer le paiement. Le contenu s’ouvre dès que le versement est vérifié.</p>`
-            : html`<a class="btn primary" href="#/rejoindre">Créer mon compte pour acheter</a>`}
+            : html`<a class="btn primary achat-bouton" href="#/rejoindre">Créer mon compte pour acheter</a>`}
       </div>`;
   }
   return html`
@@ -1193,7 +1216,7 @@ async function feedView(q) {
             ${stats.aVendre
               ? html`<a href="#/?prix=payant">${stats.aVendre} à vendre</a>, <a href="#/?prix=gratuit">${stats.gratuits} offert${stats.gratuits > 1 ? 's' : ''}</a>.`
               : html`Pour l’instant, tout ce qui est ici est <a href="#/?prix=gratuit">offert</a>.`}</span></div>
-          ${STATIQUE ? '' : html`<a class="btn primary" href="#/rejoindre">Nous rejoindre</a>`}
+          ${STATIQUE ? '' : html`<a class="btn primary seul-telephone" href="#/rejoindre">Nous rejoindre</a>`}
         </section>`}
 
       <!-- L'étagère : la sélection de la semaine, posée à l'entrée. Dans une
@@ -1434,7 +1457,7 @@ async function postView(id) {
       ${p.type !== 'lien' ? html`<div class="pack-hero k-${p.type}" aria-hidden="true">${boite(p)}</div>` : ''}
       ${p.status === 'pending' ? html`<div class="notice">En attente de validation. Toi seul(e) vois ce drop pour l’instant.</div>` : ''}
       ${p.status === 'rejected' ? html`<div class="notice bad">Refusé${p.rejectReason ? ' : ' + p.rejectReason : '.'}</div>` : ''}
-      <div>${kind(p.type)}${p.premium ? html` <span class="pin lock">${ICON.lock}espace privé</span>` : ''}${p.prix ? html` ${prixBadge(p)}` : ''}${p.promo ? html` ${sponsoBadge(p)}` : ''}</div>
+      <div>${kind(p.type)}${p.premium ? html` <span class="pin lock">${ICON.lock}espace privé</span>` : ''}${p.promo ? html` ${sponsoBadge(p)}` : ''}</div>
       <h1>${fr(p.title)}</h1>
       <div class="post-meta">${auteurLien(p)}<span>${ago(p.approvedAt || p.createdAt)}</span>${
         p.modele ? html`<span class="modele-ligne">essayé sur ${modeleBadge(p)}</span>` : ''}${p.tags.map(tagLink)}</div>
