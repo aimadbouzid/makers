@@ -1,15 +1,16 @@
-// L'écran d'accueil, comme l'écran verrouillé d'un iPhone.
+// La page d'accueil : ce qu'on voit en arrivant sur makers.si, avant d'entrer.
 //
-// Quand on arrive sur makers.si, on ne tombe pas directement dans la bibliothèque :
-// on voit d'abord la date et l'heure de son propre appareil, en grand, un mot qui
-// dépend du moment de la journée, et les derniers drops posés comme des
-// notifications. On fait glisser vers le haut, et le site apparaît dessous.
+// Une page du site, dans son style clair : l'heure et la date de l'appareil du
+// visiteur, mises à jour en direct, une salutation qui suit le moment de la
+// journée, ce que fait le site en une phrase, et les derniers drops posés dans
+// leurs boîtes. On entre en faisant défiler vers le haut — la page se lève et
+// découvre la bibliothèque dessous — ou par les boutons.
 //
-// - Une fois par visite (sessionStorage) : recharger la page ne le remontre pas.
+// - Une fois par visite (sessionStorage) : recharger la page ne la remontre pas.
 // - Seulement en arrivant sur l'accueil. Quelqu'un qui ouvre le lien d'un drop
-//   veut ce drop, pas un écran à faire glisser avant.
+//   veut ce drop, pas une page de plus avant.
 // - Script classique, chargé dans <head> : il pose une classe sur <html> avant le
-//   premier affichage, pour qu'on ne voie jamais le site clignoter avant l'écran.
+//   premier affichage, pour que le site ne clignote jamais avant cette page.
 // - Tout est construit avec textContent : aucune donnée n'est écrite comme du HTML.
 (() => {
   const CLE = 'mk-accueil';
@@ -25,18 +26,7 @@
   // --- L'heure et la date, celles de l'appareil ------------------------------------
   const fmtHeure = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
   const fmtDate = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-  const salut = h => (h >= 5 && h < 12 ? 'Bonjour' : h >= 12 && h < 18 ? 'Bon après-midi' : h >= 18 && h < 23 ? 'Bonsoir' : 'Bonne nuit');
-  const ilya = (() => {
-    const rtf = new Intl.RelativeTimeFormat('fr', { numeric: 'auto' });
-    return t => {
-      const s = Math.round((t - Date.now()) / 1000);
-      if (s > -60) return 'maintenant';
-      if (s > -3600) return rtf.format(Math.round(s / 60), 'minute');
-      if (s > -86400) return rtf.format(Math.round(s / 3600), 'hour');
-      if (s > -86400 * 30) return rtf.format(Math.round(s / 86400), 'day');
-      return new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' }).format(t);
-    };
-  })();
+  const salut = h => (h >= 5 && h < 12 ? 'Bonjour.' : h >= 12 && h < 18 ? 'Bon après-midi.' : h >= 18 && h < 23 ? 'Bonsoir.' : 'Bonne nuit.');
   const TYPES = { skill: 'Skill', prompt: 'Prompt', pdf: 'PDF', lien: 'Lien', idee: 'Idée', info: 'Actu', agent: 'Agent', mcp: 'MCP', sondage: 'Sondage', montage: 'Montage' };
 
   const el = (tag, classe, texte) => {
@@ -45,61 +35,93 @@
     if (texte !== undefined) e.textContent = texte;
     return e;
   };
+  const lien = (href, classe, texte) => { const a = el('a', classe, texte); a.href = href; return a; };
 
   function construit() {
-    const ecran = el('div', 'accueil');
-    ecran.setAttribute('role', 'dialog');
-    ecran.setAttribute('aria-modal', 'true');
-    ecran.setAttribute('aria-label', 'Bienvenue sur makers.si');
+    const page = el('section', 'accueil');
+    page.setAttribute('role', 'dialog');
+    page.setAttribute('aria-modal', 'true');
+    page.setAttribute('aria-label', 'Bienvenue sur makers.si');
 
     const fond = el('div', 'accueil-fond');
     fond.setAttribute('aria-hidden', 'true');
-    for (let i = 1; i <= 4; i++) fond.append(el('span', 'tache t' + i));
 
-    const contenu = el('div', 'accueil-contenu');
-    const marque = el('p', 'accueil-marque');
+    // En haut : la marque, et une porte pour qui veut entrer tout de suite.
+    const haut = el('header', 'accueil-haut');
+    const marque = el('span', 'accueil-marque');
     marque.append('makers', el('i', '', '.'), 'si');
-    const date = el('p', 'accueil-date');
-    const heure = el('p', 'accueil-heure');
-    heure.setAttribute('aria-live', 'off');
-    const mot = el('p', 'accueil-salut');
-    contenu.append(marque, date, heure, mot);
+    const passer = el('button', 'accueil-passer', 'Entrer');
+    passer.type = 'button';
+    haut.append(marque, passer);
 
-    const pile = el('div', 'accueil-notifs');
-    pile.setAttribute('aria-label', 'Les derniers drops');
-
-    const bas = el('div', 'accueil-bas');
-    const entrer = el('button', 'accueil-entrer');
+    // Le cœur : l'heure en direct, la salutation, ce qu'est le site.
+    const coeur = el('div', 'accueil-coeur');
+    const moment = el('p', 'accueil-moment');
+    const point = el('span', 'accueil-direct');
+    point.setAttribute('aria-hidden', 'true');
+    const quand = el('time', 'accueil-quand');
+    moment.append(point, quand);
+    const titre = el('h1', 'accueil-titre');
+    const bonjour = el('span', 'accueil-salut');
+    titre.append(bonjour, el('span', 'accueil-suite', 'Voici les derniers drops.'));
+    const phrase = el('p', 'accueil-phrase',
+      'Des skills, des prompts et des produits digitaux pour travailler avec l’IA. Certains s’achètent, d’autres sont offerts, et tous sont relus avant d’être publiés.');
+    const actions = el('div', 'accueil-actions');
+    const entrer = el('button', 'btn primary accueil-entrer', 'Entrer dans la bibliothèque');
     entrer.type = 'button';
-    entrer.append(el('span', 'fleche'), el('span', 'accueil-consigne',
-      matchMedia('(pointer: coarse)').matches ? 'Glisse vers le haut pour entrer' : 'Fais défiler ou clique pour entrer'));
-    const barre = el('span', 'accueil-barre');
-    barre.setAttribute('aria-hidden', 'true');
-    bas.append(entrer, barre);
+    actions.append(entrer, lien('#/?prix=payant', 'btn accueil-boutique', 'Voir la boutique'));
+    coeur.append(moment, titre, phrase, actions);
 
-    ecran.append(fond, contenu, pile, bas);
+    // Les derniers drops, dans leurs boîtes.
+    const vitrine = el('div', 'accueil-vitrine');
+    vitrine.setAttribute('aria-label', 'Les derniers drops');
 
-    // L'heure bouge pendant qu'on regarde : on la relit chaque seconde, mais on
-    // n'écrit dans la page que quand la minute change.
+    // En bas : l'invitation à faire défiler.
+    const bas = el('button', 'accueil-defile');
+    bas.type = 'button';
+    bas.append(el('span', 'accueil-fleche'), el('span', '', 'Faire défiler pour entrer'));
+
+    page.append(fond, haut, coeur, vitrine, bas);
+
+    // L'heure bouge pendant qu'on lit : relue chaque seconde, écrite seulement quand
+    // la minute change.
     let affichee = '';
     const tic = () => {
       const now = new Date();
       const h = fmtHeure.format(now);
       if (h === affichee) return;
       affichee = h;
-      heure.textContent = h;
       const d = fmtDate.format(now);
-      date.textContent = d.charAt(0).toUpperCase() + d.slice(1);
-      mot.textContent = salut(now.getHours());
+      quand.textContent = `${d.charAt(0).toUpperCase() + d.slice(1)} · ${h}`;
+      quand.dateTime = now.toISOString();
+      bonjour.textContent = salut(now.getHours());
     };
     tic();
     const minuterie = setInterval(tic, 1000);
 
-    return { ecran, pile, entrer, minuterie };
+    return { page, vitrine, portes: [passer, entrer, bas], minuterie };
   }
 
-  // --- Les derniers drops, en notifications ----------------------------------------
-  async function notifications(pile, ouvrir) {
+  // --- La vitrine : les trois derniers drops, chacun dans sa boîte -----------------
+  // Le même dessin que les cartes de la bibliothèque (voir « La boîte » dans
+  // style.css), pour que le visiteur reconnaisse ce qu'il va trouver en entrant.
+  function boite(p) {
+    const court = TYPES[p.type] || p.type;
+    const scene = el('span', 'boite-scene');
+    const b = el('span', 'boite');
+    const face = el('span', 'boite-face');
+    face.append(el('span', 'boite-kind', court), el('span', 'boite-titre', p.title));
+    const m = el('span', 'boite-marque');
+    m.append('makers', el('i', '', '.'), 'si');
+    face.append(m);
+    const tranche = el('span', 'boite-tranche');
+    tranche.append(el('span', '', court));
+    b.append(face, tranche, el('span', 'boite-dessus'));
+    scene.append(b, el('span', 'boite-sol'));
+    return scene;
+  }
+
+  async function vitrine(conteneur, ouvrir) {
     let posts = [];
     try {
       if (window.MAKERS_STATIQUE) {
@@ -108,43 +130,32 @@
       } else {
         posts = (await (await fetch('/api/posts?s=recent', { credentials: 'same-origin' })).json()).posts || [];
       }
-    } catch { return; } // hors ligne : l'écran reste beau sans notifications
+    } catch { return; } // hors ligne : la page reste complète sans vitrine
     posts.filter(p => !p.pinned).slice(0, 3).forEach((p, i) => {
-      const n = el('a', 'accueil-notif k-' + p.type);
-      n.href = '#/p/' + p.id;
-      n.style.setProperty('--i', i);
-      const icone = el('span', 'accueil-notif-icone');
-      icone.setAttribute('aria-hidden', 'true');
-      icone.textContent = (TYPES[p.type] || '·').slice(0, 1);
-      const corps = el('span', 'accueil-notif-corps');
-      const haut = el('span', 'accueil-notif-haut');
-      haut.append(el('b', '', 'makers.si'), el('span', '', ilya(p.approvedAt || p.createdAt)));
-      const titre = el('span', 'accueil-notif-titre', `New drop · ${TYPES[p.type] || p.type}${p.prix ? ` · ${p.prix} ${p.devise || 'DA'}` : ''}`);
-      const texte = el('span', 'accueil-notif-texte', p.title);
-      corps.append(haut, titre, texte);
-      n.append(icone, corps);
-      n.addEventListener('click', e => { e.preventDefault(); ouvrir('#/p/' + p.id); });
-      pile.append(n);
+      const a = lien('#/p/' + p.id, 'accueil-drop k-' + p.type);
+      a.style.setProperty('--i', i);
+      const pied = el('span', 'accueil-drop-pied');
+      pied.append(el('span', 'accueil-drop-titre', p.title),
+        el('span', 'accueil-drop-prix' + (p.prix ? '' : ' offert'), p.prix ? `${p.prix} ${p.devise || 'DA'}` : 'Offert'));
+      const cadre = el('span', 'accueil-drop-boite');
+      cadre.append(boite(p));
+      a.append(cadre, pied);
+      a.addEventListener('click', e => { e.preventDefault(); ouvrir('#/p/' + p.id); });
+      conteneur.append(a);
     });
   }
 
-  // --- Faire glisser vers le haut ------------------------------------------------
+  // --- Entrer : la page se lève et découvre le site --------------------------------
   function montre() {
-    const { ecran, pile, entrer, minuterie } = construit();
+    const { page, vitrine: cadre, portes, minuterie } = construit();
     const autour = [...document.body.children];
     autour.forEach(e => { e.inert = true; });
-    document.body.append(ecran);
+    document.body.append(page);
     racine.classList.add('accueil-ouvert');
     racine.classList.remove('accueil-avant');
-    // La barre d'adresse du téléphone prend la couleur de l'écran, puis la rend.
-    const meta = document.querySelector('meta[name="theme-color"]');
-    const couleur = meta?.getAttribute('content');
-    meta?.setAttribute('content', '#0a0e22');
-    // L'heure descend en place à l'image suivante (et au plus tard un instant après,
-    // si le navigateur retarde ses images, comme dans un onglet en arrière-plan).
-    requestAnimationFrame(() => ecran.classList.add('pret'));
-    setTimeout(() => ecran.classList.add('pret'), 80);
-    entrer.focus({ preventScroll: true });
+    requestAnimationFrame(() => page.classList.add('pret'));
+    setTimeout(() => page.classList.add('pret'), 80);
+    portes[1].focus({ preventScroll: true });
 
     let parti = false;
     const ouvrir = (vers) => {
@@ -153,60 +164,62 @@
       try { sessionStorage.setItem(CLE, 'vu'); } catch { /* vaut pour cette page */ }
       if (vers) location.hash = vers;
       autour.forEach(e => { e.inert = false; });
-      ecran.classList.add('part');
-      ecran.style.transform = '';
+      page.classList.add('part');
+      page.style.transform = '';
       const fin = () => {
         clearInterval(minuterie);
-        ecran.remove();
+        page.remove();
         racine.classList.remove('accueil-ouvert');
-        if (couleur) meta?.setAttribute('content', couleur);
       };
-      if (calme) fin(); else { ecran.addEventListener('transitionend', fin, { once: true }); setTimeout(fin, 900); }
+      if (calme) fin(); else { page.addEventListener('transitionend', fin, { once: true }); setTimeout(fin, 900); }
     };
 
-    entrer.addEventListener('click', () => ouvrir());
-    notifications(pile, ouvrir);
+    portes.forEach(b => b.addEventListener('click', () => ouvrir()));
+    page.querySelector('.accueil-boutique').addEventListener('click', e => { e.preventDefault(); ouvrir('#/?prix=payant'); });
+    vitrine(cadre, ouvrir);
 
-    // Le doigt (ou la souris) tire l'écran vers le haut ; on le suit exactement. Au
-    // lâcher, s'il est monté d'un quart de l'écran ou s'il a été lancé vite, il
-    // part ; sinon il retombe à sa place, comme sur un iPhone.
+    // Tirer vers le haut, au doigt ou à la souris : la page suit, puis part si on l'a
+    // montée d'un quart d'écran ou lancée vite ; sinon elle reprend sa place.
+    // Le geste part de n'importe où, cartes et boutons compris : sur un téléphone, on
+    // pose le doigt là où il tombe. Un vrai glissement n'ouvre pas ce qu'il y a dessous.
     let depart = null, dernier = 0, vitesse = 0, t0 = 0, glisse = false;
-    ecran.addEventListener('pointerdown', e => {
+    page.addEventListener('pointerdown', e => {
       if (parti || e.button > 0) return;
       depart = e.clientY; dernier = e.clientY; t0 = performance.now(); vitesse = 0; glisse = false;
-      ecran.classList.add('tire');
+      page.classList.add('tire');
     });
-    ecran.addEventListener('pointermove', e => {
+    page.addEventListener('pointermove', e => {
       if (depart === null) return;
       const dy = Math.min(0, e.clientY - depart);
-      if (Math.abs(e.clientY - depart) > 6 && !glisse) {
+      if (!glisse && Math.abs(e.clientY - depart) > 6) {
         glisse = true;
-        try { ecran.setPointerCapture(e.pointerId); } catch { /* rien */ }
+        try { page.setPointerCapture(e.pointerId); } catch { /* rien */ }
       }
       const t = performance.now();
       vitesse = (e.clientY - dernier) / Math.max(1, t - t0);
       dernier = e.clientY; t0 = t;
-      ecran.style.transform = `translateY(${dy}px)`;
-      ecran.style.setProperty('--tire', String(Math.min(1, -dy / innerHeight)));
+      page.style.transform = `translateY(${dy}px)`;
+      page.style.setProperty('--tire', String(Math.min(1, -dy / innerHeight)));
     });
     const lache = e => {
       if (depart === null) return;
       const dy = Math.min(0, (e.clientY ?? dernier) - depart);
       depart = null;
-      ecran.classList.remove('tire');
+      page.classList.remove('tire');
       if (-dy > innerHeight * 0.22 || vitesse < -0.5) return ouvrir();
-      ecran.style.transform = '';
-      ecran.style.setProperty('--tire', '0');
+      page.style.transform = '';
+      page.style.setProperty('--tire', '0');
     };
-    ecran.addEventListener('pointerup', lache);
-    ecran.addEventListener('pointercancel', lache);
-    // Un simple clic, sans glisser, entre aussi : sur ordinateur, personne ne pense
-    // à tirer une page vers le haut. Les notifications gèrent leur propre clic.
-    ecran.addEventListener('click', e => { if (!glisse && !e.target.closest('.accueil-notif')) ouvrir(); });
-    // La molette et le pavé tactile : faire défiler vers le bas, c'est monter l'écran.
-    ecran.addEventListener('wheel', e => { if (e.deltaY > 12) ouvrir(); }, { passive: true });
-    ecran.addEventListener('keydown', e => {
-      if (['Escape', 'ArrowUp', 'PageDown', ' '].includes(e.key)) { e.preventDefault(); ouvrir(); }
+    page.addEventListener('pointerup', lache);
+    // Le clic qui suit un glissement n'est pas un choix : on l'arrête avant les liens.
+    page.addEventListener('click', e => {
+      if (glisse) { e.preventDefault(); e.stopPropagation(); glisse = false; }
+    }, true);
+    page.addEventListener('pointercancel', lache);
+    // La molette et le pavé tactile : faire défiler vers le bas, c'est entrer.
+    page.addEventListener('wheel', e => { if (e.deltaY > 12) ouvrir(); }, { passive: true });
+    page.addEventListener('keydown', e => {
+      if (['Escape', 'PageDown', 'ArrowDown'].includes(e.key)) { e.preventDefault(); ouvrir(); }
     });
   }
 

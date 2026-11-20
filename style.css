@@ -1964,134 +1964,192 @@ body.chargement::before { width: 80%; opacity: 1; transition: width 2.5s cubic-b
 @media (max-width: 560px) { .versement-form .duo { flex-direction: column; gap: 0; } }
 
 /* ---------------------------------------------------------------------------
-   L'écran d'accueil (public/accueil.js)
-   Comme l'écran verrouillé d'un iPhone : la date et l'heure de l'appareil en
-   grand, sur un fond qui bouge doucement, les derniers drops en notifications,
-   et une barre à faire glisser vers le haut pour entrer. Ses couleurs sont les
-   siennes, pas celles du thème : un écran verrouillé ne change pas de fond quand
-   on change de page.
+   La page d'accueil (public/accueil.js)
+   Ce qu'on voit en arrivant, avant d'entrer : une page du site, dans son style
+   clair. L'heure de l'appareil en direct, une salutation sur deux tons, ce que
+   fait le site, et les derniers drops dans leurs boîtes. On la fait défiler vers
+   le haut pour entrer : elle se lève et découvre la bibliothèque dessous.
    --------------------------------------------------------------------------- */
-html.accueil-avant { background: #0a0e22; }
+html.accueil-avant { background: #fbfbfd; }
 html.accueil-avant body { visibility: hidden; }
 html.accueil-ouvert { overflow: hidden; }
 
 .accueil {
   position: fixed; inset: 0; z-index: 100;
   display: flex; flex-direction: column; align-items: center;
-  padding: max(54px, calc(env(safe-area-inset-top, 0px) + 34px)) 18px 0;
+  padding: 0 20px;
   overflow: hidden; visibility: visible;
-  color: #fff; background: #0a0e22;
+  color: var(--ink); background: #fbfbfd;
   touch-action: none; user-select: none; -webkit-user-select: none;
-  cursor: grab;
-  transition: transform .62s var(--ease);
+  transition: transform .7s var(--ease);
   will-change: transform;
 }
-.accueil.tire { transition: none; cursor: grabbing; }
-.accueil.part { transform: translateY(-104%); }
+.accueil.tire { transition: none; }
+.accueil.part { transform: translateY(-102%); }
+/* Une ombre sous le bord bas : quand la page se lève, on la voit glisser au-dessus
+   du site, comme une feuille qu'on soulève. */
+.accueil::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px;
+  box-shadow: 0 0 40px 12px rgb(0 0 0 / .12);
+}
 
-/* Le fond : quatre taches de lumière floues qui dérivent lentement. */
-.accueil-fond { position: absolute; inset: -20%; z-index: -1; filter: blur(64px) saturate(130%); }
-.accueil-fond .tache { position: absolute; border-radius: 50%; opacity: .85; animation: derive 22s ease-in-out infinite alternate; }
-.accueil-fond .t1 { width: 70vmax; height: 70vmax; left: -12%; top: -18%; background: #3b4bdb; }
-.accueil-fond .t2 { width: 60vmax; height: 60vmax; right: -16%; top: 4%; background: #a12ad1; animation-duration: 26s; animation-delay: -6s; }
-.accueil-fond .t3 { width: 56vmax; height: 56vmax; left: 4%; bottom: -22%; background: #0e9fc4; animation-duration: 30s; animation-delay: -12s; }
-.accueil-fond .t4 { width: 34vmax; height: 34vmax; right: 6%; bottom: 2%; background: #f08a4b; opacity: .6; animation-duration: 24s; animation-delay: -3s; }
+/* Le fond : de la lumière colorée, très douce, qui respire. */
+.accueil-fond { position: absolute; inset: 0; z-index: -1; overflow: hidden; }
+.accueil-fond::before, .accueil-fond::after {
+  content: ''; position: absolute; border-radius: 50%; filter: blur(70px);
+  animation: respire 18s ease-in-out infinite alternate;
+}
+.accueil-fond::before {
+  width: 62vmax; height: 62vmax; left: -18vmax; top: -24vmax;
+  background: radial-gradient(closest-side, rgb(10 106 217 / .20), transparent);
+}
 .accueil-fond::after {
-  /* Un voile sombre en haut, pour que l'heure reste nette sur n'importe quelle tache. */
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgb(6 8 24 / .35), transparent 45%, rgb(6 8 24 / .45));
+  width: 58vmax; height: 58vmax; right: -20vmax; bottom: -26vmax;
+  background: radial-gradient(closest-side, rgb(175 82 222 / .16), rgb(255 149 0 / .06) 60%, transparent);
+  animation-delay: -9s;
 }
-@keyframes derive {
-  from { transform: translate(0, 0) scale(1); }
-  to { transform: translate(6%, 8%) scale(1.12); }
-}
+@keyframes respire { to { transform: translate(4vmax, 3vmax) scale(1.08); } }
 
-/* La date, l'heure, le mot du moment. L'écran se fond à mesure qu'on le tire. */
-.accueil-contenu {
-  display: flex; flex-direction: column; align-items: center; text-align: center;
-  opacity: calc(1 - var(--tire, 0) * 1.8);
-  transform: translateY(calc(var(--tire, 0) * -40px)) scale(calc(1 - var(--tire, 0) * .06));
-  text-shadow: 0 1px 18px rgb(0 0 0 / .18);
+/* En haut : la marque, et « Entrer » pour qui n'a pas besoin de cette page. */
+.accueil-haut {
+  width: 100%; max-width: 1080px; display: flex; align-items: center; justify-content: space-between;
+  padding: max(16px, env(safe-area-inset-top, 0px)) 0 0; height: 64px;
 }
-.accueil-marque {
-  margin: 0 0 18px; font: 700 15px var(--font); letter-spacing: -.02em; opacity: .9;
-  padding: 5px 12px; border-radius: 999px;
-  background: rgb(255 255 255 / .14); box-shadow: inset 0 0 0 .5px rgb(255 255 255 / .25);
-  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+.accueil-marque { font: 750 19px var(--font); letter-spacing: -.03em; }
+.accueil-marque i { font-style: normal; color: var(--accent); }
+.accueil-passer {
+  border: 0; cursor: pointer; padding: 8px 16px; border-radius: 999px;
+  font: 600 14px var(--font); color: var(--ink);
+  background: rgb(255 255 255 / .7); box-shadow: inset 0 0 0 .5px rgb(0 0 0 / .12), 0 1px 2px rgb(0 0 0 / .05);
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
 }
-.accueil-marque i { font-style: normal; color: #9fb4ff; }
-.accueil-date { margin: 0; font: 600 clamp(17px, 4.8vw, 22px) var(--font); letter-spacing: -.01em; opacity: .92; }
-.accueil-heure {
-  margin: -4px 0 0;
-  font: 700 clamp(92px, 27vw, 176px)/1 ui-rounded, 'SF Pro Rounded', -apple-system, system-ui, sans-serif;
-  letter-spacing: -.035em; font-variant-numeric: tabular-nums;
-  background: linear-gradient(180deg, #fff 40%, rgb(255 255 255 / .82));
+.accueil-passer:hover { background: #fff; }
+
+/* Le cœur de la page. Il s'efface à mesure qu'on la tire vers le haut. */
+.accueil-coeur {
+  width: 100%; max-width: 940px; text-align: center;
+  display: flex; flex-direction: column; align-items: center;
+  margin-top: clamp(20px, 6vh, 80px);
+  opacity: calc(1 - var(--tire, 0) * 1.6);
+}
+.accueil-moment {
+  display: inline-flex; align-items: center; gap: 8px; margin: 0 0 22px;
+  padding: 6px 14px 6px 11px; border-radius: 999px;
+  font: 600 13.5px var(--font); color: var(--muted); font-variant-numeric: tabular-nums;
+  background: rgb(255 255 255 / .75); box-shadow: inset 0 0 0 .5px rgb(0 0 0 / .1);
+}
+/* Le point vert : l'heure est celle de maintenant, et elle avance. */
+.accueil-direct {
+  width: 7px; height: 7px; border-radius: 50%; background: #34c759;
+  box-shadow: 0 0 0 0 rgb(52 199 89 / .5); animation: pouls 2.2s ease-out infinite;
+}
+@keyframes pouls { 70% { box-shadow: 0 0 0 7px rgb(52 199 89 / 0); } 100% { box-shadow: 0 0 0 0 rgb(52 199 89 / 0); } }
+.accueil-titre {
+  margin: 0; font: 750 clamp(38px, 5.8vw, 76px)/1.03 var(--font); letter-spacing: -.045em;
+  text-wrap: balance;
+}
+.accueil-salut { display: block; }
+.accueil-suite {
+  display: block;
+  background: linear-gradient(90deg, #0a6ad9, #8e4ad8 55%, #d9467a);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.accueil-salut { margin: 6px 0 0; font: 500 clamp(15px, 4vw, 18px) var(--font); opacity: .8; }
+.accueil-phrase {
+  max-width: 560px; margin: 20px 0 0;
+  font: 400 clamp(16px, 2.1vw, 19px)/1.5 var(--font); color: var(--muted); text-wrap: pretty;
+}
+.accueil-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 28px; }
+.accueil-actions .btn { padding: 13px 22px; border-radius: 999px; font-size: 15.5px; font-weight: 600; }
+.accueil-actions .btn:not(.primary) { background: rgb(255 255 255 / .8); box-shadow: inset 0 0 0 .5px rgb(0 0 0 / .14); }
+.accueil-entrer { box-shadow: 0 8px 22px -10px color-mix(in srgb, var(--accent-plein) 90%, transparent); }
 
-/* Les notifications : du verre, empilé, qui arrive l'une après l'autre. */
-.accueil-notifs {
-  width: 100%; max-width: 400px; margin-top: auto; margin-bottom: 22px;
-  display: flex; flex-direction: column; gap: 8px;
+/* La vitrine : les trois derniers drops, dans leurs boîtes. */
+.accueil-vitrine {
+  width: 100%; max-width: 760px; margin-top: auto; padding-top: 24px;
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px;
   opacity: calc(1 - var(--tire, 0) * 2.2);
 }
-.accueil-notif {
-  display: flex; gap: 11px; align-items: flex-start; padding: 11px 13px;
-  border-radius: 22px; color: #fff; text-decoration: none;
-  background: rgb(255 255 255 / .16);
-  box-shadow: inset 0 0 0 .5px rgb(255 255 255 / .28), 0 8px 24px -12px rgb(0 0 0 / .4);
-  -webkit-backdrop-filter: blur(22px) saturate(160%); backdrop-filter: blur(22px) saturate(160%);
-  animation: notif-arrive .6s var(--ease) both;
-  animation-delay: calc(.35s + var(--i, 0) * .09s);
-  transition: transform .2s var(--ease), background .2s;
+.accueil-drop {
+  display: flex; flex-direction: column; text-decoration: none; color: var(--ink);
+  border-radius: 20px; overflow: hidden; background: rgb(255 255 255 / .82);
+  box-shadow: inset 0 0 0 .5px rgb(0 0 0 / .08), 0 12px 30px -18px rgb(0 0 0 / .3);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  transition: transform .35s var(--ease), box-shadow .35s var(--ease);
 }
-.accueil-notif:hover { background: rgb(255 255 255 / .22); }
-.accueil-notif:active { transform: scale(.97); }
-@keyframes notif-arrive { from { opacity: 0; transform: translateY(18px) scale(.96); } }
-.accueil-notif-icone {
-  flex: none; width: 38px; height: 38px; border-radius: 10px;
-  display: grid; place-items: center; font: 800 17px var(--font);
-  color: #fff; background: linear-gradient(160deg, color-mix(in srgb, var(--k, #4f6bff) 80%, #fff), var(--k, #4f6bff));
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / .35);
+.accueil-drop:hover { transform: translateY(-4px); box-shadow: inset 0 0 0 .5px rgb(0 0 0 / .08), 0 20px 40px -20px rgb(0 0 0 / .35); }
+.accueil-drop-boite { position: relative; height: 176px; }
+.accueil-drop:hover .boite { transform: rotateX(-5deg) rotateY(12deg) translateZ(8px); }
+.accueil-drop-pied { display: flex; flex-direction: column; gap: 6px; padding: 2px 14px 14px; text-align: left; }
+.accueil-drop-titre {
+  font: 650 14.5px/1.3 var(--font); letter-spacing: -.01em;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.accueil-notif-corps { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 1px; }
-.accueil-notif-haut { display: flex; justify-content: space-between; gap: 8px; font: 500 12.5px var(--font); opacity: .75; }
-.accueil-notif-haut b { font-weight: 650; letter-spacing: .01em; text-transform: uppercase; font-size: 11.5px; }
-.accueil-notif-titre { font: 650 14.5px/1.25 var(--font); }
-.accueil-notif-texte { font: 400 14.5px/1.3 var(--font); opacity: .92; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.accueil-drop-prix {
+  align-self: flex-start; padding: 2px 9px; border-radius: 999px;
+  font: 650 12.5px var(--font); font-variant-numeric: tabular-nums;
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+.accueil-drop-prix.offert { color: #1d7a35; background: rgb(52 199 89 / .14); }
 
-/* En bas : la consigne et la barre blanche, comme celle de l'iPhone. */
-.accueil-bas {
-  display: flex; flex-direction: column; align-items: center; gap: 12px;
-  padding-bottom: max(10px, calc(env(safe-area-inset-bottom, 0px) + 6px));
+/* En bas : l'invitation à faire défiler. */
+.accueil-defile {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  margin: 18px 0 max(14px, calc(env(safe-area-inset-bottom, 0px) + 8px));
+  border: 0; background: none; cursor: pointer; color: var(--muted);
+  font: 600 13px var(--font);
 }
-.accueil-entrer {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  border: 0; background: none; color: #fff; cursor: pointer; padding: 6px 14px;
-  font: 600 14px var(--font); letter-spacing: -.005em;
-  animation: invite 2.4s var(--ease) infinite;
+.accueil-fleche {
+  width: 10px; height: 10px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+  transform: rotate(45deg); animation: invite 2.2s var(--ease) infinite;
 }
-.accueil-entrer:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 12px; }
-.accueil-entrer .fleche {
-  width: 12px; height: 12px; border-left: 2.5px solid #fff; border-top: 2.5px solid #fff;
-  border-radius: 2px; transform: rotate(45deg); opacity: .9;
-}
-.accueil-consigne { opacity: .88; text-shadow: 0 1px 10px rgb(0 0 0 / .25); }
-@keyframes invite { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-7px); } }
-.accueil-barre { width: 134px; height: 5px; border-radius: 3px; background: rgb(255 255 255 / .9); margin-bottom: 4px; }
+@keyframes invite { 0%, 60%, 100% { translate: 0 0; } 30% { translate: 0 5px; } }
+.accueil-passer:focus-visible, .accueil-defile:focus-visible, .accueil-drop:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
-/* L'entrée de l'écran : l'heure descend en place, comme quand on allume un iPhone. */
-.accueil:not(.pret) .accueil-contenu { opacity: 0; transform: translateY(-14px) scale(.98); }
-.accueil.pret .accueil-contenu { transition: opacity .7s var(--ease), transform .8s var(--ease); }
-.accueil.tire .accueil-contenu, .accueil.tire .accueil-notifs { transition: none; }
+/* L'arrivée : chaque morceau monte en place, l'un après l'autre. */
+.accueil:not(.pret) :is(.accueil-moment, .accueil-titre, .accueil-phrase, .accueil-actions) { opacity: 0; transform: translateY(14px); }
+.accueil.pret :is(.accueil-moment, .accueil-titre, .accueil-phrase, .accueil-actions) { transition: opacity .7s var(--ease), transform .8s var(--ease); }
+.accueil.pret .accueil-titre { transition-delay: .06s; }
+.accueil.pret .accueil-phrase { transition-delay: .14s; }
+.accueil.pret .accueil-actions { transition-delay: .2s; }
+.accueil-drop { animation: drop-arrive .8s var(--ease) both; animation-delay: calc(.3s + var(--i, 0) * .08s); }
+@keyframes drop-arrive { from { opacity: 0; transform: translateY(24px); } }
+.accueil.tire :is(.accueil-coeur, .accueil-vitrine) { transition: none; }
 
-@media (min-width: 720px) {
-  .accueil { padding-top: 9vh; }
-  .accueil-notifs { margin-bottom: 30px; }
+/* Écran d'ordinateur peu haut : la vitrine se fait plus basse plutôt que d'être coupée. */
+@media (min-width: 601px) and (max-height: 880px) {
+  .accueil-drop-boite { height: 132px; }
+  .accueil-phrase { margin-top: 14px; }
+  .accueil-actions { margin-top: 22px; }
+  .accueil-moment { margin-bottom: 16px; }
+}
+@media (min-width: 601px) and (max-height: 720px) {
+  .accueil-phrase { display: none; }
+  .accueil-drop-boite { height: 112px; }
+}
+
+/* Téléphone : la même page, resserrée. */
+@media (max-width: 600px) {
+  .accueil { padding: 0 16px; }
+  .accueil-titre { font-size: clamp(34px, 10vw, 46px); }
+  .accueil-haut { height: 56px; }
+  .accueil-moment { margin-bottom: 16px; font-size: 12.5px; }
+  .accueil-phrase { margin-top: 14px; }
+  .accueil-actions { margin-top: 22px; width: 100%; }
+  .accueil-actions .btn { flex: 1 1 100%; padding: 13px 18px; }
+  .accueil-vitrine { gap: 8px; }
+  .accueil-drop { border-radius: 16px; }
+  .accueil-drop-boite { height: 112px; }
+  .accueil-drop-pied { padding: 0 9px 10px; gap: 5px; }
+  .accueil-drop-titre { font-size: 12.5px; }
+  .accueil-drop-prix { font-size: 11.5px; padding: 1px 7px; }
+}
+/* Petit écran en hauteur : la phrase cède sa place, le reste tient sans défiler. */
+@media (max-height: 700px) and (max-width: 600px) {
+  .accueil-phrase { display: none; }
+  .accueil-coeur { margin-top: 18px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .accueil, .accueil.pret .accueil-contenu { transition: none; }
-  .accueil-fond .tache, .accueil-entrer, .accueil-notif { animation: none; }
+  .accueil, .accueil.pret :is(.accueil-moment, .accueil-titre, .accueil-phrase, .accueil-actions) { transition: none; }
+  .accueil-fond::before, .accueil-fond::after, .accueil-direct, .accueil-fleche, .accueil-drop { animation: none; }
   .accueil.part { transform: none; opacity: 0; }
 }
