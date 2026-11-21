@@ -1,7 +1,7 @@
 {
-  "name": "makers.si — skills, prompts et produits digitaux pour l’IA",
+  "name": "makers.si — la boutique des produits digitaux",
   "short_name": "makers.si",
-  "description": "Une boutique de produits digitaux pour travailler avec l’IA — skills Claude, prompts, agents, guides — et tout ce que les membres offrent gratuitement. Chaque produit est relu avant d’être publié.",
+  "description": "Une boutique de produits digitaux faits par des créateurs : templates, design, code, formations, audio, photos et vidéos, skills et prompts pour l’IA — à acheter, ou offerts. Chaque produit est relu avant d’être publié.",
   "lang": "fr",
   "dir": "ltr",
   "start_url": "./",

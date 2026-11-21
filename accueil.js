@@ -28,7 +28,7 @@
   const fmtHeure = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
   const fmtDate = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
   const salut = h => (h >= 5 && h < 12 ? 'Bonjour.' : h >= 12 && h < 18 ? 'Bon après-midi.' : h >= 18 && h < 23 ? 'Bonsoir.' : 'Bonne nuit.');
-  const TYPES = { skill: 'Skill', prompt: 'Prompt', pdf: 'PDF', lien: 'Lien', idee: 'Idée', info: 'Actu', agent: 'Agent', mcp: 'MCP', sondage: 'Sondage', montage: 'Montage' };
+  const TYPES = { template: 'Template', design: 'Design', code: 'Code', formation: 'Formation', audio: 'Audio', media: 'Photo', skill: 'Skill', prompt: 'Prompt', pdf: 'PDF', lien: 'Lien', idee: 'Idée', info: 'Actu', agent: 'Agent', mcp: 'MCP', sondage: 'Sondage', montage: 'Montage' };
 
   const el = (tag, classe, texte) => {
     const e = document.createElement(tag);
@@ -70,7 +70,7 @@
     const suite = el('span', 'accueil-suite', 'Voici les drops à la une.');
     titre.append(bonjour, suite);
     const phrase = el('p', 'accueil-phrase',
-      'Des skills, des prompts et des produits digitaux pour travailler avec l’IA. Certains s’achètent, d’autres sont offerts, et tous sont relus avant d’être publiés.');
+      'Templates, design, code, formations, audio, photos, skills et prompts pour l’IA : des produits digitaux faits par des créateurs. Certains s’achètent, d’autres sont offerts, et tous sont relus avant d’être publiés.');
     const actions = el('div', 'accueil-actions');
     const entrer = el('button', 'btn primary accueil-entrer', 'Entrer dans la bibliothèque');
     entrer.type = 'button';

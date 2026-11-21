@@ -2,6 +2,51 @@
 
 // `fields` : ce que le formulaire de partage demande pour chaque type (le titre et la description sont toujours là).
 const TYPES = {
+  // Les grandes familles de produits digitaux. Leur contenu se livre en fichier (un
+  // ZIP le plus souvent) ou par un lien de téléchargement ; des images montrent le
+  // produit avant l'achat.
+  template: {
+    label: 'Template', short: 'Template', plural: 'Templates et modèles',
+    about: 'Des modèles prêts à l’emploi : Notion, Canva, Figma, Excel, CV, sites. Tu le copies, tu le remplis, il est à toi.',
+    hint: 'Notion, Canva, Figma, Excel, un CV, un site.', example: 'Ex. : « Planner Notion pour freelances »',
+    fields: ['file', 'url', 'images', 'tags'], fileLabel: 'Le fichier du produit <span class="muted">(ZIP, PDF, TXT)</span>',
+    titleEx: 'Un planner Notion pour gérer ses clients en freelance', descEx: 'Ce que contient le modèle, l’outil qu’il faut pour l’ouvrir, et pour qui il est fait.',
+  },
+  design: {
+    label: 'Design', short: 'Design', plural: 'Design et graphisme',
+    about: 'Des ressources graphiques : icônes, polices, mockups, illustrations, presets photo et LUT vidéo.',
+    hint: 'Icônes, polices, mockups, presets, LUT.', example: 'Ex. : « 40 presets Lightroom ciné »',
+    fields: ['file', 'url', 'images', 'tags'], fileLabel: 'Le fichier du produit <span class="muted">(ZIP, PDF, TXT)</span>',
+    titleEx: '40 presets Lightroom au rendu ciné', descEx: 'Ce qu’il y a dans le pack, les formats, et le logiciel qu’il faut.',
+  },
+  code: {
+    label: 'Code et outil', short: 'Code', plural: 'Code et outils',
+    about: 'Des scripts, des plugins, des thèmes et de petites applis, prêts à installer.',
+    hint: 'Un script, un plugin, un thème, une appli.', example: 'Ex. : « Thème WordPress pour restaurant »',
+    fields: ['file', 'url', 'images', 'tags'], fileLabel: 'Le fichier du produit <span class="muted">(ZIP, PDF, TXT)</span>',
+    titleEx: 'Un thème WordPress pour restaurant, réservation comprise', descEx: 'Ce qu’il fait, comment l’installer, et ce qu’il demande (langage, version).',
+  },
+  formation: {
+    label: 'Formation / ebook', short: 'Formation', plural: 'Formations et ebooks',
+    about: 'Des cours, des guides et des ebooks pour apprendre un métier ou un outil.',
+    hint: 'Un cours, un guide, un ebook.', example: 'Ex. : « Lancer sa boutique en 30 jours »',
+    fields: ['file', 'url', 'images', 'tags'], fileLabel: 'L’ebook ou le support <span class="muted">(PDF, ZIP)</span>',
+    titleEx: 'Lancer sa boutique en ligne en 30 jours', descEx: 'Ce qu’on sait faire à la fin, le niveau de départ, et la durée.',
+  },
+  audio: {
+    label: 'Audio / musique', short: 'Audio', plural: 'Audio et musique',
+    about: 'Des musiques, des sons, des boucles et des voix, pour tes vidéos et tes projets.',
+    hint: 'Une musique, des sons, des boucles.', example: 'Ex. : « 50 transitions sonores pour Reels »',
+    fields: ['file', 'url', 'images', 'tags'], fileLabel: 'Le pack <span class="muted">(ZIP)</span>',
+    titleEx: '50 transitions sonores pour Reels et TikTok', descEx: 'Ce qu’il y a dans le pack, les formats, et ce que tu as le droit d’en faire.',
+  },
+  media: {
+    label: 'Photo / vidéo', short: 'Photo', plural: 'Photos et vidéos',
+    about: 'Des photos, des plans vidéo et du B-roll, prêts à utiliser dans tes projets.',
+    hint: 'Des photos, des plans vidéo, du B-roll.', example: 'Ex. : « 30 photos d’Alger en 4K »',
+    fields: ['file', 'url', 'images', 'tags'], fileLabel: 'Le pack <span class="muted">(ZIP, ou un lien pour les gros fichiers)</span>',
+    titleEx: '30 photos d’Alger en 4K, libres d’utilisation', descEx: 'Le nombre de fichiers, la définition, et la licence.',
+  },
   skill: {
     label: 'Skill Claude', short: 'Skill', plural: 'Skills Claude',
     about: 'Un skill, c’est un mode d’emploi que Claude lit tout seul quand ta demande correspond. Ceux-ci sont prêts à installer, en trois étapes.',
@@ -126,6 +171,11 @@ const ICON = {
   poubelle: svg('<path d="M2.8 4.3h10.4M6.3 4.3V2.8h3.4v1.5M4.3 4.3l.6 8.4a1 1 0 0 0 1 .9h4.2a1 1 0 0 0 1-.9l.6-8.4"/>'),
   loupe: svg('<circle cx="7" cy="7" r="4.6"/><path d="M10.6 10.6 14 14"/>'),
   menu: svg('<path d="M2.5 4h11M2.5 8h11M2.5 12h11"/>'),
+  palette: svg('<path d="M8 2a6 6 0 0 0 0 12c.9 0 1.3-.5 1.3-1.1 0-.7-.6-1-.6-1.7 0-.6.5-1 1.1-1H11a3 3 0 0 0 3-3C14 4.3 11.3 2 8 2z"/><circle cx="5.3" cy="7" r=".8"/><circle cx="7.6" cy="4.8" r=".8"/><circle cx="10.4" cy="5.6" r=".8"/>'),
+  terminal: svg('<rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M4.8 6.3 6.8 8l-2 1.7M8.5 10h3"/>'),
+  chapeau: svg('<path d="M1.5 6.2 8 3l6.5 3.2L8 9.4z"/><path d="M4.2 7.6v3c1 .9 2.3 1.4 3.8 1.4s2.8-.5 3.8-1.4v-3M14.5 6.2v3.6"/>'),
+  note: svg('<path d="M6 12.2V3.8l7-1.5v8.4"/><circle cx="4.3" cy="12.2" r="1.7"/><circle cx="11.3" cy="10.7" r="1.7"/>'),
+  photo: svg('<rect x="2" y="3" width="12" height="10" rx="1.5"/><circle cx="6" cy="6.6" r="1.2"/><path d="m2.5 11.5 3.3-3 2.4 2.2 2.3-1.8 3 2.6"/>'),
   maison: svg('<path d="M2.5 7 8 2.5 13.5 7v6.5H2.5z"/><path d="M6.3 13.5V9.2h3.4v4.3"/>'),
   perso: svg('<circle cx="8" cy="5.4" r="2.6"/><path d="M2.9 13.6a5.1 5.1 0 0 1 10.2 0"/>'),
   // Un agent : une tête qui travaille toute seule.
@@ -148,7 +198,7 @@ const ICON = {
 // pour ne pas redemander les mêmes compteurs à chaque changement de page.
 // `modeles` vient du serveur (jamais recopié ici) : le formulaire ne peut donc
 // pas proposer une famille que le serveur refuserait.
-const S = { me: null, admin: false, pending: 0, nonLues: 0, promo: null, marche: null, stats: null, modeles: {}, site: { nuit: false }, limits: { pdfKb: 200, fileMb: 15, imageMb: 10, images: 3 } };
+const S = { me: null, admin: false, pending: 0, nonLues: 0, promo: null, marche: null, stats: null, modeles: {}, site: { nuit: false }, limits: { pdfKb: 15360, fileMb: 15, imageMb: 10, images: 3 } };
 
 // Une barre fine en haut de page dès le clic : la navigation demande un aller-retour
 // réseau, et sans ce signal on a l'impression que le clic n'a rien fait.
@@ -500,6 +550,7 @@ function header() {
 // on change de catégorie depuis n'importe quelle page. C'est ce qui fait la
 // différence entre une suite de pages et un outil.
 const TYPE_ICONE = {
+  template: 'grille', design: 'palette', code: 'terminal', formation: 'chapeau', audio: 'note', media: 'photo',
   skill: 'dossier', agent: 'agent', mcp: 'mcp', prompt: 'code', idee: 'ampoule',
   sondage: 'sondage', montage: 'play', pdf: 'doc', lien: 'out', info: 'megaphone',
 };
@@ -1304,7 +1355,7 @@ async function feedView(q) {
              offrent. La deuxième phrase suit les chiffres réels : tant que rien n'a de
              prix, elle le dit, au lieu d'annoncer une boutique pleine. -->
         <section class="start" aria-label="Bienvenue">
-          <div><b>Des skills, des prompts et des produits digitaux pour travailler avec l’IA.</b>
+          <div><b>Des produits digitaux faits par des créateurs : templates, design, code, formations, audio, et de quoi travailler avec l’IA.</b>
           <span>Certains s’achètent, d’autres sont offerts, et tout passe la même relecture avant d’être publié.
             ${stats.aVendre
               ? html`<a href="#/?prix=payant">${stats.aVendre} à vendre</a>, <a href="#/?prix=gratuit">${stats.gratuits} offert${stats.gratuits > 1 ? 's' : ''}</a>.`
@@ -1686,7 +1737,9 @@ function authView(mode) {
 
 function shareView(q) {
   if (!S.me) { go('#/rejoindre'); return; }
-  const first = TYPES[q.get('type')] ? q.get('type') : 'skill';
+  // Sans type demandé, la première famille de la liste : makers.si vend de tout, pas
+  // d'abord des skills.
+  const first = TYPES[q.get('type')] ? q.get('type') : Object.keys(TYPES)[0];
   render(html`
     <div class="narrow">
       <h1 class="page-title">New drop</h1>
@@ -1716,7 +1769,7 @@ function shareView(q) {
           <textarea id="s-options" name="options" rows="5" maxlength="600" placeholder="Opus&#10;Sonnet&#10;Haiku&#10;Ça dépend du jour"></textarea>
           <small>Une réponse par ligne, de 2 à 6. Chaque membre vote une fois et peut changer d’avis.</small></div>
         <div class="field" data-field="file"><label for="s-file" id="l-file">Ton PDF</label><input id="s-file" type="file" name="file" accept=".pdf,.md,.txt,.zip">
-          <small>PDF : ${S.limits.pdfKb} Ko maximum, pour que le site reste rapide. MD, TXT ou ZIP : ${S.limits.fileMb} Mo. Pas de vidéo : colle plutôt le lien.</small>
+          <small>PDF jusqu’à ${Math.round(S.limits.pdfKb / 1024)} Mo ; ZIP, MD ou TXT jusqu’à ${S.limits.fileMb} Mo. Une vidéo se met dans le ZIP, ou se partage par un lien.</small>
           <div id="pdf-aide" class="hidden"></div></div>
         <div class="field" data-field="images"><label for="s-images">Photos <span class="muted">(facultatif, 3 maximum)</span></label>
           <input id="s-images" type="file" name="images" accept="image/jpeg,image/png,image/webp" multiple>
@@ -1796,7 +1849,7 @@ function verifiePdf(input) {
   boite.classList.remove('hidden');
   boite.innerHTML = html`
     <div class="trop-lourd">
-      <b>Ce PDF est trop lourd : ${ko} Ko, soit ${fois} fois la limite de ${limite} Ko.</b>
+      <b>Ce PDF est trop lourd : ${(ko / 1024).toFixed(1).replace('.', ',')} Mo, soit ${fois} fois la limite de ${Math.round(limite / 1024)} Mo.</b>
       <p>On garde les documents légers pour que le site reste rapide, y compris en 4G. Trois solutions :</p>
 
       <h4>1. Le compresser sur ton ordinateur <span class="muted">(le plus sûr)</span></h4>
@@ -1959,7 +2012,7 @@ function helpView() {
       <details class="faq"><summary>Comment partager une vidéo ?</summary><p>On n’héberge pas de vidéo : la bibliothèque garde les skills, les prompts, les idées et les PDF. Mets ta vidéo sur YouTube, Drive ou Vimeo, puis fais un drop de type « Lien » : le nom de la vidéo en titre, son adresse dans le lien.</p></details>
       <details class="faq"><summary>Comment utiliser un skill ?</summary><p>${HOWTO}</p></details>
       <details class="faq"><summary>Pourquoi mon drop n’apparaît pas ?</summary><p>Chaque drop est relu avant d’être publié. Tu vois son statut dans « Mes drops » : en attente, publié ou refusé (avec le motif).</p></details>
-      <details class="faq"><summary>Pourquoi mon PDF est refusé ?</summary><p>Les PDF sont limités à ${S.limits.pdfKb} Ko, pour que le site reste rapide même en 4G. Si le tien dépasse, c’est presque toujours une image mal compressée à l’intérieur. Tu peux le réduire sur ton ordinateur (sur Mac : Aperçu → Exporter → Filtre Quartz → « Reduce File Size »), passer par un outil en ligne, ou simplement l’héberger ailleurs et coller le lien : un drop « PDF » accepte un lien à la place du fichier. Le formulaire te donne les trois solutions au moment où tu choisis le fichier.</p></details>
+      <details class="faq"><summary>Pourquoi mon PDF est refusé ?</summary><p>Les PDF sont limités à ${Math.round(S.limits.pdfKb / 1024)} Mo. Si le tien dépasse, c’est presque toujours une image mal compressée à l’intérieur. Tu peux le réduire sur ton ordinateur (sur Mac : Aperçu → Exporter → Filtre Quartz → « Reduce File Size »), passer par un outil en ligne, ou simplement l’héberger ailleurs et coller le lien : un drop « PDF » accepte un lien à la place du fichier. Le formulaire te donne les trois solutions au moment où tu choisis le fichier.</p></details>
       <details class="faq"><summary>Quelles photos puis-je ajouter ?</summary><p>JPG, PNG ou WebP, trois par drop, 10 Mo chacune. Elles sont réduites automatiquement et la position GPS est effacée.</p></details>
       <details class="faq"><summary>Je peux supprimer un de mes drops ?</summary><p>Oui, depuis « Mes drops », bouton « Supprimer ».</p></details>
 
@@ -2500,7 +2553,7 @@ async function adminView(q) {
 const LEGAL = ['confidentialite', 'conditions', 'cookies', 'charte', 'mentions-legales'];
 
 async function route() {
-  document.title = 'makers.si — skills, prompts et produits digitaux pour l’IA';
+  document.title = 'makers.si — la boutique des produits digitaux';
   const [path, qs] = (location.hash.slice(1) || '/').split('?');
   const q = new URLSearchParams(qs || '');
   header();

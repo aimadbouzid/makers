@@ -98,6 +98,12 @@
   --k-lien: #7fb0f7;          /* bleu */
   --k-info: #a09eef;          /* indigo */
   --k-montage: #f2b25f;       /* orange */
+  --k-template: #f472b6;      /* framboise */
+  --k-design: #a78bfa;        /* violet */
+  --k-code: #9ca3af;          /* graphite */
+  --k-formation: #f5a54a;     /* ambre */
+  --k-audio: #a3e635;         /* citron vert */
+  --k-media: #34d399;         /* vert d'eau */
 
   --star: #f2cf5c;
   --or: #f2cf5c;
@@ -191,6 +197,12 @@
   --k-lien: #0040dd;
   --k-info: #3634a3;
   --k-montage: #c93400;
+  --k-template: #b0207a;
+  --k-design: #7c3aed;
+  --k-code: #4b5563;
+  --k-formation: #a0570a;
+  --k-audio: #4d7c0f;
+  --k-media: #0f7a5c;
 
   --star: #8f6b00;
   --or: #8f6b00;
@@ -607,6 +619,8 @@ body.page-seule .logo { width: auto; }
   background: currentColor; flex: none;
 }
 .k-skill { --k: var(--k-skill); } .k-montage { --k: var(--k-montage); } .k-pdf { --k: var(--k-pdf); }
+.k-template { --k: var(--k-template); } .k-design { --k: var(--k-design); } .k-code { --k: var(--k-code); }
+.k-formation { --k: var(--k-formation); } .k-audio { --k: var(--k-audio); } .k-media { --k: var(--k-media); }
 .k-lien { --k: var(--k-lien); } .k-info { --k: var(--k-info); }
 .k-prompt { --k: var(--k-prompt); } .k-idee { --k: var(--k-idee); } .k-sondage { --k: var(--k-sondage); }
 .k-agent { --k: var(--k-agent); } .k-mcp { --k: var(--k-mcp); }
