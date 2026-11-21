@@ -2820,3 +2820,26 @@ body.rail-ouvert .rail { transform: none; }
   .gg-achat { bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   .wrap { padding-bottom: 96px; }
 }
+
+/* --- Téléphone : trois petites cases par ligne ---------------------------------------------
+   Chaque élément de la carte est réduit dans la même proportion, pour qu'elle reste lisible
+   à 110 px de large : l'affiche, la catégorie, le prix, le nom sur deux lignes, le bouton. */
+@media (max-width: 600px) {
+  .gg-grille { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 8px; }
+  .gg-image { border-radius: 14px; margin-bottom: 5px; }
+  .gg-cat { font-size: 10px; line-height: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gg-prix { font-size: 15px; line-height: 19px; margin: 1px 0 1px; }
+  .gg-nom { font-size: 12px; line-height: 16px; min-height: 32px; margin-bottom: 2px; }
+  .gg-info { font-size: 11px; line-height: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gg-bouton { height: 28px; margin-top: 8px; border-radius: 7px; font-size: 12px; }
+  .gg-fav { top: 5px; right: 5px; }
+  .gg-fav .vote .ico { width: 18px; height: 18px; }
+  .gg-fav .vote b { font-size: 10px; }
+  .gg-carte .medaille { top: 5px; left: 5px; height: 18px; padding: 0 6px; font-size: 10px; }
+  .gg-section .about-type { font-size: 13px; }
+}
+@media (max-width: 600px) {
+  .gg-titre { font-size: 21px; line-height: 28px; }
+  .gg-titre small { font-size: 14px; margin-left: 6px; }
+  .gg-choix summary { font-size: 14px; }
+}
