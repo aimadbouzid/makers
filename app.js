@@ -172,6 +172,12 @@ const ICON = {
   poubelle: svg('<path d="M2.8 4.3h10.4M6.3 4.3V2.8h3.4v1.5M4.3 4.3l.6 8.4a1 1 0 0 0 1 .9h4.2a1 1 0 0 0 1-.9l.6-8.4"/>'),
   loupe: svg('<circle cx="7" cy="7" r="4.6"/><path d="M10.6 10.6 14 14"/>'),
   menu: svg('<path d="M2.5 4h11M2.5 8h11M2.5 12h11"/>'),
+  globe: svg('<circle cx="8" cy="8" r="6.2"/><path d="M1.8 8h12.4M8 1.8c1.8 2 2.6 4 2.6 6.2S9.8 12.2 8 14.2C6.2 12.2 5.4 10.2 5.4 8S6.2 3.8 8 1.8z"/>'),
+  bouclier: svg('<path d="M8 1.8 13.2 3.8v4.1c0 3-2.2 5.3-5.2 6.3-3-1-5.2-3.3-5.2-6.3V3.8z"/><path d="M5.7 8.1 7.3 9.7 10.4 6.5"/>'),
+  chevron: svg('<path d="M4 6l4 4 4-4"/>'),
+  suivant: svg('<path d="M6 3.5 10.5 8 6 12.5"/>'),
+  infoRond: svg('<circle cx="8" cy="8" r="6.2"/><path d="M8 7.2v4M8 4.9v.1"/>'),
+  coeur: svg('<path d="M8 13.6S2 10 2 5.9A3.1 3.1 0 0 1 8 4.6a3.1 3.1 0 0 1 6 1.3C14 10 8 13.6 8 13.6z"/>'),
   palette: svg('<path d="M8 2a6 6 0 0 0 0 12c.9 0 1.3-.5 1.3-1.1 0-.7-.6-1-.6-1.7 0-.6.5-1 1.1-1H11a3 3 0 0 0 3-3C14 4.3 11.3 2 8 2z"/><circle cx="5.3" cy="7" r=".8"/><circle cx="7.6" cy="4.8" r=".8"/><circle cx="10.4" cy="5.6" r=".8"/>'),
   terminal: svg('<rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M4.8 6.3 6.8 8l-2 1.7M8.5 10h3"/>'),
   chapeau: svg('<path d="M1.5 6.2 8 3l6.5 3.2L8 9.4z"/><path d="M4.2 7.6v3c1 .9 2.3 1.4 3.8 1.4s2.8-.5 3.8-1.4v-3M14.5 6.2v3.6"/>'),
@@ -219,7 +225,7 @@ const memo = new Map();
 // parfois trois secondes à arriver, c'est la différence entre une page blanche et une
 // page qui est déjà là. Rien de privé n'y est gardé (ce sont les drops publics, vus
 // par ce visiteur), et la copie est effacée à la moindre action et à la déconnexion.
-const FIL_ACCUEIL = 'fil:t=&tag=&q=&s=top&p=&m=&prix=';
+const FIL_ACCUEIL = 'fil2:t=&tag=&q=&s=top&p=&m=&prix=';
 const CLE_FIL = 'mk-fil';
 const GARDE_MS = 7 * 86400000;
 function duCache(cle) {
@@ -375,11 +381,14 @@ async function apiStatique(chemin, method) {
     const tri = q.get('s') || 'top';
     // Le même filtre de vitrine que le serveur, pour que les deux copies répondent pareil.
     const prix = q.get('prix') || '';
+    const rayon = q.get('rayon') || '';
     let list = ouverts.filter(p => (!t || p.type === t)
       && (!fam || p.modele?.famille === fam)
       && (!tag || p.tags.includes(tag))
       && (prix !== 'payant' || p.prix > 0)
-      && (prix !== 'gratuit' || !(p.prix > 0)));
+      && (prix !== 'gratuit' || !(p.prix > 0))
+      && (rayon !== 'produits' || FAMILLES_PRODUIT.has(p.type))
+      && (rayon !== 'ia' || !FAMILLES_PRODUIT.has(p.type)));
     if (mot) {
       list = list.filter(p => [p.title, p.description, p.content, p.author, p.tags.join(' ')]
         .join(' ').toLowerCase().includes(mot));
@@ -511,11 +520,18 @@ function header() {
   const theme = (cle, mot, titre) => html`<button type="button" data-action="theme" data-theme="${cle}"
     aria-pressed="${String(choix === cle)}" aria-label="Thème ${mot} — ${titre}" title="${titre}">${mot}</button>`;
   $('#header').innerHTML = html`
+    <!-- La bande du haut, la barre et ses trois raccourcis à droite : la mise en page des
+         grandes boutiques de produits digitaux, que les acheteurs connaissent déjà. -->
+    <div class="gg-bande">
+      <span>${ICON.globe}Dinar algérien (DA) · Français</span>
+      ${STATIQUE ? '' : html`<a href="${S.me ? '#/partager' : '#/rejoindre'}">Vendre sur makers.si</a>`}
+    </div>
     <div class="bar">
-      <button class="menu-btn" type="button" data-action="menu" aria-label="Ouvrir les sections" aria-expanded="false">${ICON.menu}</button>
+      <button class="menu-btn" type="button" data-action="menu" aria-label="Ouvrir le catalogue" aria-expanded="false">${ICON.menu}</button>
       <a class="logo" href="#/" aria-label="makers.si, accueil">makers<i>.</i>si</a>
-      <button class="cmd" type="button" data-action="palette" aria-label="Chercher un drop ou taper une commande">
-        ${ICON.loupe}<span>Chercher, ou taper une commande…</span><kbd>⌘K</kbd>
+      <button class="gg-catalogue" type="button" data-action="menu" aria-label="Ouvrir le catalogue">${ICON.menu}<span>Catalogue</span></button>
+      <button class="cmd" type="button" data-action="palette" aria-label="Trouver un produit">
+        ${ICON.loupe}<span>Trouver un produit</span><kbd>⌘K</kbd>
       </button>
       <div class="bar-end">
         ${S.site?.nuit ? html`<div class="theme" role="group" aria-label="Apparence">
@@ -533,15 +549,14 @@ function header() {
             title="${S.nonLues ? `${S.nonLues} nouveauté${S.nonLues > 1 ? 's' : ''}` : 'Ce qui s’est passé'}">
             ${ICON.cloche}${S.nonLues ? html`<span class="pastille">${S.nonLues > 9 ? '9+' : S.nonLues}</span>` : ''}
           </a>` : ''}
+        <a class="gg-ico hide-sm" href="#/?prix=gratuit">${ICON.cadeau}<span>Offerts</span></a>
+        ${STATIQUE ? '' : html`<a class="gg-ico hide-sm" href="${S.me ? '#/mes-achats' : '#/connexion'}">${ICON.etiquette}<span>Achats</span></a>`}
         ${S.me
-          ? html`<span class="purse hide-sm" title="Gemmes qu’il te reste à donner cette semaine">${ICON.gem}${S.me.gemsLeft}</span>
-            <a class="who" href="#/mes-partages">@${S.me.pseudo}</a>`
+          ? html`<a class="gg-ico" href="#/mes-partages">${ICON.perso}<span>@${S.me.pseudo}</span></a>`
           : STATIQUE
-            ? html`<span class="lecture-seule hide-sm" title="Copie consultable : on lit tout, on n’écrit rien">${ICON.lock}lecture seule</span>`
-            : html`<a class="btn ghost hide-sm" href="#/connexion">Connexion</a>
-              <!-- Sur téléphone, la barre du bas porte déjà « Entrer » : garder
-                   ce bouton ici faisait déborder la barre du haut. -->
-              <a class="btn primary hide-sm" href="#/rejoindre">Rejoindre</a>`}
+            ? html`<span class="gg-ico hide-sm" title="Copie consultable : on lit tout, on n’écrit rien">${ICON.lock}<span>Lecture seule</span></span>`
+            // Sur téléphone, la barre du bas porte déjà « Connexion ».
+            : html`<a class="gg-ico hide-sm" href="#/connexion">${ICON.perso}<span>Connexion</span></a>`}
       </div>
     </div>`.s;
 }
@@ -1141,6 +1156,42 @@ function ligne(p, rang = null) {
 // de la carte pour rien, mais le début du prompt, le domaine du lien, l'extension
 // du fichier. La description est revenue dessous, en deux lignes : un titre seul
 // n'a jamais suffi à décider si on ouvre.
+// La rangée des catégories, sous la barre : une pastille colorée et un nom, comme sur
+// les grandes boutiques de produits digitaux.
+const CATEGORIES = [
+  ['#/?prix=payant', 'etiquette', 'À vendre', 'k-vente', p => p === 'payant'],
+  ['#/?prix=gratuit', 'cadeau', 'Offerts', 'k-offert', p => p === 'gratuit'],
+  ['#/?t=template', 'grille', 'Templates', 'k-template', (p, t) => t === 'template'],
+  ['#/?t=design', 'palette', 'Design', 'k-design', (p, t) => t === 'design'],
+  ['#/?t=code', 'terminal', 'Code', 'k-code', (p, t) => t === 'code'],
+  ['#/?t=formation', 'chapeau', 'Formations', 'k-formation', (p, t) => t === 'formation'],
+  ['#/?t=audio', 'note', 'Audio', 'k-audio', (p, t) => t === 'audio'],
+  ['#/?t=media', 'photo', 'Photos et vidéos', 'k-media', (p, t) => t === 'media'],
+  ['#/?t=skill', 'dossier', 'Skills Claude', 'k-skill', (p, t) => t === 'skill'],
+  ['#/?t=prompt', 'code', 'Prompts', 'k-prompt', (p, t) => t === 'prompt'],
+];
+function rangeeCategories(t = '', prix = '') {
+  return html`<nav class="gg-cats" aria-label="Catégories">${CATEGORIES.map(([href, ico, nom, k, actif]) =>
+    html`<a href="${href}" class="${k}${actif(prix, t) ? ' on' : ''}"><span class="gg-pic">${ICON[ico]}</span>${nom}</a>`)}</nav>`;
+}
+// Les grandes tuiles de l'accueil (images dans public/img/tuiles, fabriquées par
+// scripts/affiches-fabriquer.js). Le nom est du vrai texte posé par-dessus.
+const TUILES = [
+  ['capcut', 'CapCut', '#/?q=capcut'], ['templates', 'Templates', '#/?t=template'], ['notion', 'Notion', '#/?q=notion'],
+  ['excel', 'Excel', '#/?q=excel'], ['design', 'Design', '#/?t=design'], ['lightroom', 'Lightroom', '#/?q=lightroom'],
+  ['cv', 'CV et lettres', '#/?q=cv'], ['code', 'Code et outils', '#/?t=code'], ['formations', 'Formations', '#/?t=formation'],
+  ['audio', 'Sons et musique', '#/?t=audio'], ['photos', 'Photos et vidéos', '#/?t=media'],
+];
+function tuilesAccueil() {
+  return html`
+    <div class="gg-tuiles-cadre">
+      <div class="gg-tuiles" id="tuiles">${TUILES.map(([img, nom, href]) => html`
+        <a class="gg-tuile" href="${href}"><img src="img/tuiles/${img}.webp" alt="" width="180" height="225" loading="lazy"><span>${nom}</span></a>`)}
+      </div>
+      <button class="gg-tuiles-suite" type="button" data-action="tuiles" aria-label="Voir les catégories suivantes">${ICON.suivant}</button>
+    </div>`;
+}
+
 // Les familles « produit » (templates, design, code, formations, audio, photos et
 // vidéos, PDF) se présentent comme dans une boutique : une grande photo, le prix en
 // gros juste dessous, puis le titre. Les drops pour l'IA (skills, prompts, agents, MCP)
@@ -1152,20 +1203,23 @@ const enBoutique = p => FAMILLES_PRODUIT.has(p.type);
 const photoEntiere = i => { const r = (i.w || 16) / (i.h || 10); return r < 1.2 || r > 2.1; };
 function carteProduit(p, rang = null) {
   const podium = rang && rang <= 3 ? rang : 0;
-  const i = p.images?.[0];
-  const vu = apercu(p);
+  const a = p.affiche, i = p.images?.[0];
+  const f = p.file || (p.has?.fichier ? { ext: p.has.fichier.ext, size: p.has.fichier.size } : null);
+  // La carte d'une grande boutique : l'affiche carrée, la catégorie en petit, le prix en
+  // gros, le nom sur deux lignes, une ligne grise, et le bouton vert en bas.
   return html`
-    <article class="carte carte-produit k-${p.type} ${p.pinned ? 'pinned' : ''} ${podium ? 'podium rang-' + podium : ''}">
-      <div class="cp-cadre">
-        ${i ? html`<a class="cp-photo" href="#/p/${p.id}" tabindex="-1" aria-hidden="true"><img src="${i.thumb}" alt="" loading="lazy" class="${photoEntiere(i) ? 'entiere' : ''}"></a>`
-          : couverture(p)}
-        ${podium ? html`<span class="medaille" title="${rang}ᵉ au classement, ${p.points} points">n° ${rang}</span>` : ''}
-      </div>
-      <div class="cp-corps">
-        <span class="cp-type">${TYPES[p.type]?.short || p.type}${vu ? ` · ${vu}` : ''}${p.pinned ? ' · épinglé' : ''}</span>
-        <span class="cp-prix${p.prix ? '' : ' offert'}">${p.prix ? html`${prixLisible(p.prix)}<small>${p.devise || 'DA'}</small>` : 'Offert'}</span>
-        <a class="cp-titre" href="#/p/${p.id}">${fr(p.title)}</a>
-      </div>
+    <article class="carte gg-carte k-${p.type} ${podium ? 'podium rang-' + podium : ''}">
+      <a class="gg-carte-lien" href="#/p/${p.id}">
+        <span class="gg-image">${a ? html`<img src="${a.thumb}" alt="" loading="lazy" width="480" height="480">`
+          : i ? html`<img src="${i.thumb}" alt="" loading="lazy" class="contenue">` : boite(p)}</span>
+        <span class="gg-cat">${TYPES[p.type]?.label || p.type}</span>
+        <span class="gg-prix">${p.prix ? html`${prixLisible(p.prix)} ${p.devise || 'DA'}` : 'Offert'}</span>
+        <span class="gg-nom">${fr(p.title)}</span>
+        <span class="gg-info">${f ? `${f.ext.toUpperCase()} · ${size(f.size)}` : p.url ? domain(p.url) : 'À lire en ligne'}</span>
+      </a>
+      ${podium ? html`<span class="medaille" title="${rang}ᵉ au classement, ${p.points} points">n° ${rang}</span>` : ''}
+      <span class="gg-fav">${gemButton(p, { compact: true })}</span>
+      <a class="gg-bouton" href="#/p/${p.id}" tabindex="-1" aria-hidden="true">${p.prix && !p.achete ? 'Acheter' : 'Télécharger'}</a>
     </article>`;
 }
 
@@ -1349,12 +1403,20 @@ async function feedView(q) {
   const mod = q.get('m') || '';
   const prix = ['payant', 'gratuit'].includes(q.get('prix')) ? q.get('prix') : '';
   const params = new URLSearchParams({ t, tag, q: query, s: sort, p: prem, m: mod, prix });
-  const cle = 'fil:' + params;
+  const cle = 'fil2:' + params;
   const vu = duCache(cle);
-  const frais = Promise.all([api('/posts?' + params), api('/stats'), api('/top?periode=semaine'), api('/collections?limit=3')])
+  // Deux rayons, comme dans une boutique : les produits (grande affiche, prix, bouton) et,
+  // à part, ce qui sert à travailler avec l'IA (skills, prompts…), qui garde ses cartes.
+  // Une catégorie précise n'a qu'un rayon.
+  const unRayon = t ? (FAMILLES_PRODUIT.has(t) ? 'produits' : 'ia') : '';
+  const frais = Promise.all([
+    api('/posts?' + params + '&rayon=' + (unRayon || 'produits')),
+    api('/stats'), api('/top?periode=semaine'), api('/collections?limit=3'),
+    unRayon ? Promise.resolve(null) : api('/posts?' + params + '&rayon=ia&limit=8'),
+  ])
     .then(r => { enCache(cle, r); return r; });
   // Déjà vu : on réaffiche immédiatement et on rafraîchit derrière.
-  const [liste, stats, top, colls] = vu || await frais;
+  const [liste, stats, top, colls, listeIA] = vu || await frais;
   const { posts, total: combien, suite } = liste;
   const link = (over) => {
     const n = new URLSearchParams();
@@ -1379,28 +1441,8 @@ async function feedView(q) {
 
   render(html`
     <div>
-      ${S.me || !nu ? '' : html`
-        <!-- Le premier bloc que quelqu'un lit en arrivant. Il disait « Tu peux
-             tout lire sans compte / Un compte sert à partager, noter et voter » :
-             deux règles d'usage, exactes et froides, qui décrivaient un système
-             et pas un endroit. Ce qu'on a envie de savoir en poussant une porte,
-             c'est qui est là et pourquoi. -->
-        <!-- Le site s'est longtemps annoncé comme « la bibliothèque de la communauté ».
-             C'était une promesse qu'il ne tenait pas : tout le catalogue vient d'une
-             seule personne. Un visiteur ouvre trois cartes, voit le même auteur partout,
-             et cesse de croire le reste. Un auteur assumé, lui, est un produit complet
-             dès le premier jour — et le jour où des membres publient, la phrase change. -->
-        <!-- Ce que le site est : une boutique de produits digitaux, et ce que ses membres
-             offrent. La deuxième phrase suit les chiffres réels : tant que rien n'a de
-             prix, elle le dit, au lieu d'annoncer une boutique pleine. -->
-        <section class="start" aria-label="Bienvenue">
-          <div><b>Des produits digitaux faits par des créateurs : templates, design, code, formations, audio, et de quoi travailler avec l’IA.</b>
-          <span>Certains s’achètent, d’autres sont offerts, et tout passe la même relecture avant d’être publié.
-            ${stats.aVendre
-              ? html`<a href="#/?prix=payant">${stats.aVendre} à vendre</a>, <a href="#/?prix=gratuit">${stats.gratuits} offert${stats.gratuits > 1 ? 's' : ''}</a>.`
-              : html`Pour l’instant, tout ce qui est ici est <a href="#/?prix=gratuit">offert</a>.`}</span></div>
-          ${STATIQUE ? '' : html`<a class="btn primary seul-telephone" href="#/rejoindre">Nous rejoindre</a>`}
-        </section>`}
+      ${rangeeCategories(t, prix)}
+      ${nu ? tuilesAccueil() : ''}
 
       <!-- L'étagère : la sélection de la semaine, posée à l'entrée. Dans une
            bibliothèque, la table des nouveautés est devant la porte — pas dans
@@ -1421,36 +1463,34 @@ async function feedView(q) {
           </div>
         </section>` : ''}
 
-      <div class="toolbar">
-        <h1>${title}${combien ? html`<small>${combien} ${prix === 'payant' ? (combien > 1 ? 'produits' : 'produit') : (combien > 1 ? 'drops' : 'drop')}</small>` : ''}</h1>
-        <!-- Tant que personne n'a donné de gemme ni de note, « Top » et « Mieux notés »
-             affichent l'ordre des nouveautés sous un nom qui promet un classement. -->
-        ${stats?.gems || stats?.notes || sort !== 'top' ? html`<div class="tabs">
-          ${Object.entries(SORTS).map(([k, label]) => html`<a href="${link({ s: k })}" class="${sort === k ? 'on' : ''}">${label}</a>`)}
-        </div>` : ''}
-        <div class="tabs vues" role="group" aria-label="Affichage">
-          ${Object.entries(VUES).map(([k, label]) => html`<button type="button" data-action="vue" data-vue="${k}"
-            class="${vueFil === k ? 'on' : ''}" aria-pressed="${String(vueFil === k)}">${ICON[k === 'liste' ? 'lignes' : 'grille']}${label}</button>`)}
+      <!-- Le rayon principal : sur l'accueil, « Meilleures ventes » ; ailleurs, le nom de
+           la rubrique. Le menu à droite choisit ce qu'on regarde, comme « Tous les
+           produits » sur les grandes boutiques. -->
+      ${posts.length || !listeIA?.posts?.length ? html`
+      <section class="gg-section">
+        <div class="gg-tete">
+          <h1 class="gg-titre">${nu ? 'Meilleures ventes' : title}${combien ? html`<small>${combien}</small>` : ''}</h1>
+          <details class="gg-choix">
+            <summary>${prix === 'payant' ? 'À vendre' : prix === 'gratuit' ? 'Offerts' : 'Tous les produits'}${ICON.chevron}</summary>
+            <div class="gg-choix-menu">
+              <a href="${link({ prix: '' })}" class="${!prix ? 'on' : ''}">Tous les produits</a>
+              <a href="${link({ prix: 'payant' })}" class="${prix === 'payant' ? 'on' : ''}">À vendre</a>
+              <a href="${link({ prix: 'gratuit' })}" class="${prix === 'gratuit' ? 'on' : ''}">Offerts</a>
+              ${stats?.gems || stats?.notes ? Object.entries(SORTS).map(([k, label]) => html`<a href="${link({ s: k })}" class="${sort === k ? 'on' : ''}">Trier : ${label}</a>`) : ''}
+            </div>
+          </details>
         </div>
-      </div>
       ${prix === 'payant' && !query && !tag ? html`<p class="about-type">${ICON.etiquette} Des fichiers prêts à servir : templates, design, code, formations, audio, photos et vidéos, outils pour l’IA. L’aperçu, la description et le prix se voient librement ; le fichier s’ouvre une fois l’achat confirmé. Chaque produit est relu avant d’être mis en vente.</p>`
         : prix === 'gratuit' && !query && !tag ? html`<p class="about-type">${ICON.cadeau} Tout ce qui est offert : à lire, à copier, à installer, sans rien payer et sans créer de compte.</p>`
         : prem ? html`<p class="about-type">${ICON.lock} Drops réservés. Tu vois le sujet de chacun ; le contenu demande l’accès à l’espace privé.</p>`
         : mod ? html`<p class="about-type">${ICON.etincelle} Ce que des membres ont essayé sur ${nomModele}, et qui a marché chez eux. On range les familles, pas les versions : la version exacte est écrite à côté de chaque drop.</p>`
           : t && !query && !tag ? html`<p class="about-type">${TYPES[t].about}</p>` : ''}
-      <div class="${vueFil === 'cartes' ? 'grille' : 'list'}">
-        ${posts.length ? (() => {
-          // Le classement ne numérote que le tri « Top », et saute les partages épinglés
-          // comme les places payées : ils sont en tête pour une autre raison que leurs points.
-          // Sans ça une place achetée porterait la médaille du premier, et payer ressemblerait
-          // à gagner — exactement ce que la charte promet qui n'arrive pas.
-          const classe = sort === 'top' && !query && !tag;
-          let rang = 0;
-          // Et seulement ce qui a des points : sans une gemme ni une étoile, « n° 1 » ne
-          // classe rien, il invente un gagnant. Même règle que le Top 5, mis en sommeil
-          // tant que rien n'est classé.
-          return posts.map(p => item(p, classe && !p.pinned && !p.promo && p.points > 0 ? ++rang : null));
-        })() : html`
+        <div class="${unRayon === 'ia' ? (vueFil === 'cartes' ? 'grille' : 'list') : 'gg-grille'}" id="liste-principale">
+          ${posts.length ? (() => {
+            const classe = sort === 'top' && !query && !tag;
+            let rang = 0;
+            return posts.map(p => (unRayon === 'ia' ? item : carte)(p, classe && !p.pinned && !p.promo && p.points > 0 ? ++rang : null));
+          })() : html`
           <div class="empty">
             <!-- Une rubrique vide disait « Rien ici pour l'instant » : un constat,
                  et une impression de site mort. Elle dit maintenant à qui arrive
@@ -1466,8 +1506,19 @@ async function feedView(q) {
             ${STATIQUE ? '' : prix === 'payant'
               ? html`<a class="btn primary" href="${S.me ? '#/partager' : '#/rejoindre'}">${ICON.etiquette}${S.me ? 'Mettre un produit en vente' : 'Rejoindre pour vendre'}</a>`
               : html`<a class="btn primary" href="${S.me ? '#/partager' : '#/rejoindre'}">${S.me ? 'New drop' : 'Rejoindre pour faire un drop'}</a>`}</div>`}
-      </div>
-      ${suite ? html`<div class="plus"><button class="btn" data-action="plus" data-suite="${suite}" data-params="${params}">Voir plus<span class="muted"> · ${combien - posts.length} restants</span></button></div>` : ''}
+        </div>
+        ${suite ? html`<div class="plus"><button class="btn" data-action="plus" data-cible="liste-principale" data-suite="${suite}" data-params="${params}&rayon=${unRayon || 'produits'}">Voir plus<span class="muted"> · ${combien - posts.length} restants</span></button></div>` : ''}
+      </section>` : ''}
+
+      <!-- Le rayon de l'IA : les skills, prompts, agents et le reste gardent leurs cartes. -->
+      ${listeIA?.posts?.length ? html`
+      <section class="gg-section">
+        <div class="gg-tete">
+          <h2 class="gg-titre">${nu ? 'Pour travailler avec Claude et l’IA' : 'Skills, prompts et outils IA'}<small>${listeIA.total}</small></h2>
+        </div>
+        <div class="grille" id="liste-ia">${listeIA.posts.map(p => carte(p))}</div>
+        ${listeIA.suite ? html`<div class="plus"><button class="btn" data-action="plus" data-cible="liste-ia" data-suite="${listeIA.suite}" data-params="${params}&rayon=ia">Voir plus<span class="muted"> · ${listeIA.total - listeIA.posts.length} restants</span></button></div>` : ''}
+      </section>` : ''}
 
       <!-- Le colophon. Ce qui remplissait la colonne de droite se lit mieux à la
            fin du catalogue, en petit : c'est la fin de l'objet, pas un encart
@@ -1625,41 +1676,89 @@ async function profilView(pseudo) {
     </div>`);
 }
 
-// La fiche d'un produit, comme dans une boutique : la grande photo, et à côté (dessous
-// sur téléphone) le fil, le titre, le prix et le bouton. La description et le contenu
-// viennent après, sous « À propos du produit ».
-function ficheHaut(p) {
-  const i = p.images?.[0];
+// La fiche d'un produit, comme sur les grandes boutiques de produits digitaux : à
+// gauche l'affiche, au centre le titre, ce qu'on reçoit, l'encadré « À savoir » et la
+// description ; à droite la carte d'achat, qui reste à l'écran pendant qu'on lit.
+function boutonAchat(p) {
+  const f = p.file;
+  const telecharger = f ? html`<a class="gg-acheter" href="${f.href}" target="_blank" rel="noopener">${f.ext === 'pdf' ? 'Ouvrir le PDF' : 'Télécharger'}</a>`
+    : p.url ? html`<a class="gg-acheter" href="${p.url}" target="_blank" rel="noopener noreferrer nofollow">Ouvrir le lien</a>`
+      : html`<a class="gg-acheter" href="#contenu" data-action="vers-contenu">Voir le contenu</a>`;
+  if (!p.locked) {
+    return html`${telecharger}<p class="gg-achat-note">${p.prix ? 'Il est à toi : tu peux le retélécharger quand tu veux.' : 'Gratuit, sans compte et sans inscription.'}</p>`;
+  }
+  if (STATIQUE || !S.marche?.ouvert) {
+    return html`<button class="gg-acheter" type="button" disabled>Bientôt en vente</button>
+      <p class="gg-achat-note">La vente n’est pas encore ouverte : ce produit pourra s’acheter très bientôt.</p>`;
+  }
+  return S.me
+    ? html`<button class="gg-acheter" type="button" data-action="acheter" data-id="${p.id}" data-prix="${p.prix} ${p.devise || ''}">Acheter</button>
+      <p class="gg-achat-note">Tu reçois une référence et l’adresse où payer. Le fichier s’ouvre dès que le paiement est vérifié.</p>`
+    : html`<a class="gg-acheter" href="#/rejoindre">Acheter</a>
+      <p class="gg-achat-note">Il faut un compte pour acheter : il se crée en une minute.</p>`;
+}
+function ficheProduit(p) {
+  const a = p.affiche, i = p.images?.[0];
   const f = p.file || (p.has?.fichier ? { ext: p.has.fichier.ext, size: p.has.fichier.size } : null);
+  const recu = [
+    f ? `Fichier ${f.ext.toUpperCase()} · ${size(f.size)}` : p.url ? `Lien · ${domain(p.url)}` : 'Contenu à lire en ligne',
+    (p.content || p.has?.content) ? 'Mode d’emploi inclus' : '',
+    ...(p.has?.chemins || (p.tree || []).map(x => x.path)).slice(0, 6),
+  ].filter(Boolean);
+  // L'aperçu lisible du produit (la vraie page d'une facture, d'un CV…) : sur la fiche
+  // d'un produit fermé, c'est la couverture ; sur un produit ouvert, sa première image.
+  const apercu = i && (i.couverture || !p.locked) ? i : null;
   return html`
-    <div class="fiche-haut">
-      <figure class="fiche-photo">
-        ${i ? html`<a href="${i.src}" target="_blank" rel="noopener"><img src="${i.src}" width="${i.w}" height="${i.h}" alt="Aperçu : ${p.title}" class="${photoEntiere(i) ? 'entiere' : ''}"></a>`
-          : html`<div class="pack-hero k-${p.type}" aria-hidden="true">${boite(p)}</div>`}
-      </figure>
-      <div class="fiche-info">
-        <nav class="fiche-fil" aria-label="Fil d’Ariane"><a href="#/">Accueil</a><span aria-hidden="true">›</span><a href="#/?t=${p.type}">${TYPES[p.type]?.plural || p.type}</a></nav>
-        <h1>${fr(p.title)}</h1>
-        <div class="fiche-meta">${auteurLien(p)}<span>${ago(p.approvedAt || p.createdAt)}</span>${
-          p.starsCount ? html`<span>★ ${String(p.stars).replace('.', ',')} · ${p.starsCount} note${p.starsCount > 1 ? 's' : ''}</span>` : ''}${
-          p.commentsCount ? html`<span>${p.commentsCount} avis</span>` : ''}</div>
-        ${p.locked ? lockedBox(p) : html`
-          <div class="locked achat fiche-offert">
-            <div class="achat-haut">
-              <span class="achat-prix">${p.achete ? 'Acheté' : 'Offert'}</span>
-              ${f ? html`<span class="achat-etat">${f.ext.toUpperCase()} · ${size(f.size)}</span>` : ''}
-            </div>
-            ${p.file ? html`<a class="btn primary achat-bouton" href="${p.file.href}" target="_blank" rel="noopener">${ICON.file}${p.file.ext === 'pdf' ? 'Ouvrir le PDF' : 'Télécharger'}</a>`
-              : p.url ? html`<a class="btn primary achat-bouton" href="${p.url}" target="_blank" rel="noopener noreferrer nofollow">${ICON.out}Ouvrir le lien</a>`
-              : html`<a class="btn primary achat-bouton" href="#contenu" data-action="vers-contenu">Voir le contenu</a>`}
-            <p class="muted">${p.achete ? 'Il est à toi : tu peux le retélécharger quand tu veux.' : 'Gratuit, sans compte et sans inscription.'}</p>
-          </div>`}
-        <ul class="fiche-garanties">
-          <li>${ICON.check}Relu par makers.si avant d’être publié</li>
-          <li>${ICON.check}${p.locked ? 'Le fichier s’ouvre dès que le paiement est vérifié' : 'Téléchargement direct, sans attente'}</li>
-          <li>${ICON.check}Un problème ? <a href="#/aide">L’aide répond</a></li>
-        </ul>
+    <nav class="gg-fil" aria-label="Fil d’Ariane"><a href="#/">Accueil</a>${ICON.suivant}<a href="#/?t=${p.type}">${TYPES[p.type]?.plural || p.type}</a>${ICON.suivant}<span>${fr(p.title)}</span></nav>
+    ${p.status === 'pending' ? html`<div class="notice">En attente de validation. Toi seul(e) vois ce drop pour l’instant.</div>` : ''}
+    ${p.status === 'rejected' ? html`<div class="notice bad">Refusé${p.rejectReason ? ' : ' + p.rejectReason : '.'}</div>` : ''}
+    <div class="gg-fiche">
+      <div class="gg-fiche-image">
+        ${a ? html`<a href="${a.src}" target="_blank" rel="noopener"><img src="${a.src}" width="1000" height="1000" alt="${p.title}"></a>`
+          : i ? html`<a href="${i.src}" target="_blank" rel="noopener"><img src="${i.src}" alt="${p.title}" class="contenue"></a>`
+            : html`<div class="pack-hero k-${p.type}" aria-hidden="true">${boite(p)}</div>`}
       </div>
+      <div class="gg-fiche-centre">
+        <h1>${fr(p.title)}</h1>
+        <div class="gg-note">
+          ${p.starsCount ? html`<span>★ ${String(p.stars).replace('.', ',')}</span><span>·</span><span>${p.starsCount} note${p.starsCount > 1 ? 's' : ''}</span><span>·</span>` : ''}
+          <span>${p.commentsCount ? `${p.commentsCount} avis` : 'Nouveau'}</span>
+          <span class="gg-note-fav">${gemButton(p)}</span>
+        </div>
+        <div class="gg-fiche-achat-mobile">
+          <div class="gg-achat-prix">${p.prix ? html`${prixLisible(p.prix)} ${p.devise || 'DA'}` : 'Offert'}</div>
+        </div>
+        <div class="gg-options">
+          <div class="gg-options-titre">Ce que tu reçois<span>*</span></div>
+          <div class="gg-puces">${recu.map((x, k) => html`<span class="gg-puce${k === 0 ? ' on' : ''}">${x}</span>`)}</div>
+        </div>
+        <div class="gg-asavoir">
+          <p class="gg-asavoir-titre">${ICON.infoRond}À savoir</p>
+          <p>${p.locked
+            ? 'Le paiement se fait par versement. Dès qu’il est vérifié, le fichier s’ouvre ici et dans « Mes achats », et tu peux le retélécharger quand tu veux.'
+            : 'Ce produit est offert : le téléchargement démarre tout de suite, sans compte. Chaque produit est relu par makers.si avant d’être publié.'}</p>
+        </div>
+        <section class="gg-apropos" id="contenu">
+          <h2>À propos du produit</h2>
+          <div class="gg-apropos-corps">
+            <p class="lead">${fr(p.description)}</p>
+            ${apercu ? html`<figure class="gg-apercu"><a href="${apercu.src}" target="_blank" rel="noopener"><img src="${apercu.src}" alt="Aperçu : ${p.title}" loading="lazy"></a><figcaption>Aperçu du produit</figcaption></figure>` : ''}
+            ${postBody(p, { fiche: true })}
+            ${p.tags.length ? html`<div class="fiche-tags">${p.tags.map(tagLink)}</div>` : ''}
+          </div>
+        </section>
+        ${p.locked ? html`<section class="gg-avis"><h2>Avis <span>0</span></h2><p class="muted">Pas encore d’avis sur ce produit.</p></section>` : ''}
+      </div>
+      <aside class="gg-achat">
+        <div class="gg-achat-carte">
+          <div class="gg-achat-prix">${p.prix ? html`${prixLisible(p.prix)} ${p.devise || 'DA'}` : 'Offert'}</div>
+          <div class="gg-vendeur">${auteurLien(p)}<span>· ${TYPES[p.type]?.label || p.type}</span></div>
+          ${boutonAchat(p)}
+          <details class="gg-securite"><summary>${ICON.bouclier}Chaque produit est relu avant d’être publié${ICON.chevron}</summary>
+            <p>makers.si vérifie chaque produit avant de le mettre en ligne : le fichier s’ouvre, il correspond à la description, il ne contient rien de dangereux. Un souci ? <a href="#/aide">L’aide répond</a>.</p>
+          </details>
+        </div>
+      </aside>
     </div>`;
 }
 
@@ -1682,16 +1781,7 @@ async function postView(id) {
   render(html`
     <div class="narrow post k-${p.type}${enBoutique(p) ? ' fiche' : ''}">
       <a class="back" href="#/">← Tous les drops</a>
-      ${enBoutique(p) ? html`
-        ${p.status === 'pending' ? html`<div class="notice">En attente de validation. Toi seul(e) vois ce drop pour l’instant.</div>` : ''}
-        ${p.status === 'rejected' ? html`<div class="notice bad">Refusé${p.rejectReason ? ' : ' + p.rejectReason : '.'}</div>` : ''}
-        ${ficheHaut(p)}
-        <section class="fiche-section" id="contenu">
-          <h2>À propos du produit</h2>
-          <p class="lead">${fr(p.description)}</p>
-          ${postBody(p, { fiche: true })}
-          ${p.tags.length ? html`<div class="fiche-tags">${p.tags.map(tagLink)}</div>` : ''}
-        </section>` : html`
+      ${enBoutique(p) ? ficheProduit(p) : html`
       ${p.images?.[0]?.couverture
         // Un produit en vente montre son aperçu à plat et en grand, avant tout le reste :
         // c'est ce que l'acheteur veut voir. Collé sur la face d'une boîte, il devenait
@@ -2728,6 +2818,7 @@ document.addEventListener('click', async (e) => {
   const el = e.target.closest('[data-action]');
   if (!el) return;
   const { action, id } = el.dataset;
+  if (action === 'tuiles') { const r = document.getElementById('tuiles'); r?.scrollBy({ left: r.clientWidth * 0.8, behavior: 'smooth' }); return; }
   // « Voir le contenu » d'une fiche : une ancre classique changerait la route du site.
   if (action === 'vers-contenu') { e.preventDefault(); document.getElementById('contenu')?.scrollIntoView({ behavior: 'smooth' }); return; }
   try {
@@ -2786,7 +2877,7 @@ document.addEventListener('click', async (e) => {
       el.textContent = 'Chargement…';
       try {
         const { posts, suite, total } = await api(`/posts?${el.dataset.params}&offset=${el.dataset.suite}`);
-        const liste = $('.grille, .list');
+        const liste = (el.dataset.cible && document.getElementById(el.dataset.cible)) || $('.grille, .list');
         // La numérotation du classement reprend là où la page précédente s'est arrêtée.
         const classe = !!$('.rang, .rang-n, .medaille');
         // On repart du nombre de rangs déjà affichés, pas du nombre de partages : les épingles
@@ -2796,7 +2887,7 @@ document.addEventListener('click', async (e) => {
         applyBars(liste);
         if (suite) {
           el.dataset.suite = suite;
-          el.innerHTML = libelle.replace(/· \d+ restants/, `· ${total - $$('.item, .carte').length} restants`);
+          el.innerHTML = libelle.replace(/· \d+ restants/, `· ${total - liste.querySelectorAll('.item, .carte').length} restants`);
           el.disabled = false;
         } else {
           el.closest('.plus').remove();
@@ -3164,7 +3255,7 @@ window.makers = {
 // sur la page d'accueil, ses données partent en même temps que /api/me. C'est un
 // aller-retour entier de gagné avant le premier affichage.
 if ((location.hash || '#/') === '#/') {
-  prechauffer(['/posts?t=&tag=&q=&s=top&p=&m=&prix=', '/stats', '/top?periode=semaine', '/collections?limit=3']);
+  prechauffer(['/posts?t=&tag=&q=&s=top&p=&m=&prix=&rayon=produits', '/stats', '/top?periode=semaine', '/collections?limit=3', '/posts?t=&tag=&q=&s=top&p=&m=&prix=&rayon=ia&limit=8']);
 }
 await refreshMe();
 route();
