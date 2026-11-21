@@ -1550,15 +1550,18 @@ async function solveChallenge(c) {
 function authView(mode) {
   if (S.me) { go('#/'); return; }
   const join = mode === 'join';
+  // Une carte centrée, comme les pages de connexion d'aujourd'hui : on vient faire une
+  // seule chose ici, rien d'autre ne doit attirer l'œil.
   render(html`
-    <div class="narrow">
+    <div class="narrow auth">
+      <div class="auth-carte">
       <h1 class="page-title">${join ? 'Rejoindre la communauté' : 'Connexion'}</h1>
       <p class="page-sub">${join ? 'Gratuit. Ton email reste privé, il sert seulement à te recontacter si besoin.' : 'Content de te revoir.'}</p>
       ${join ? html`
-        <ul class="steps">
-          <li><b>Lire</b> : skills Claude, prompts, idées, PDF, liens.</li>
-          <li><b>Faire un drop</b> : tes trouvailles, relues avant publication.</li>
-          <li><b>Voter</b> : gemmes, étoiles et sondages, pour faire remonter le meilleur.</li>
+        <ul class="atouts">
+          <li>${ICON.doc}<span><b>Lire</b> les skills, prompts et guides</span></li>
+          <li>${ICON.plus}<span><b>Faire un drop</b>, relu avant publication</span></li>
+          <li>${ICON.gem}<span><b>Voter</b> pour faire remonter le meilleur</span></li>
         </ul>` : ''}
       <form data-form="${join ? 'join' : 'login'}" novalidate>
         <div class="field"><label for="f-pseudo">${join ? 'Pseudo' : 'Pseudo ou email'}</label>
@@ -1572,9 +1575,10 @@ function authView(mode) {
           <span>J’accepte les <a href="#/conditions" target="_blank">conditions d’utilisation</a>, la <a href="#/charte" target="_blank">charte de la communauté</a> et la <a href="#/confidentialite" target="_blank">politique de confidentialité</a>.</span></label></div>` : ''}
         ${join ? html`<div class="trap" aria-hidden="true"><label>Ne remplis pas ce champ<input type="text" name="site" tabindex="-1" autocomplete="off"></label></div>` : ''}
         <p class="form-error" role="alert"></p>
-        <button class="btn primary" type="submit">${join ? 'Créer mon compte' : 'Me connecter'}</button>
+        <button class="btn primary auth-envoi" type="submit">${join ? 'Créer mon compte' : 'Me connecter'}</button>
         ${join ? html`<p class="switch">Une vérification anti-robot tourne toute seule à l’envoi. Il n’y a pas d’image à déchiffrer, et rien n’est envoyé à un service extérieur.</p>` : ''}
       </form>
+      </div>
       <p class="switch">${join ? html`Déjà membre ? <a href="#/connexion">Connexion</a>` : html`Pas encore de compte ? <a href="#/rejoindre">Rejoindre</a>`}</p>
     </div>`);
   // Le défi est demandé dès l'ouverture de la page : au moment de l'envoi, il est prêt,
@@ -1593,7 +1597,7 @@ function shareView(q) {
         <h2 class="step"><span>1</span>Qu’est-ce que tu partages ?</h2>
         <div class="typecards">
           ${Object.entries(TYPES).map(([k, v]) => html`<input type="radio" name="type" id="t-${k}" value="${k}" ${k === first ? 'checked' : ''}>
-            <label for="t-${k}"><b>${v.label}</b><span>${v.hint}</span><em>${v.example}</em></label>`)}
+            <label for="t-${k}" class="k-${k}"><i class="tc-ico">${ICON[TYPE_ICONE[k]] || ''}</i><b>${v.label}</b><span>${v.hint}</span><em>${v.example}</em></label>`)}
         </div>
 
         <h2 class="step"><span>2</span>Les détails</h2>
