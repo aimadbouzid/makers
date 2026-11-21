@@ -1032,7 +1032,8 @@ function apercu(p) {
   if (p.url) return domain(p.url);
   // La couverture d'un produit en vente n'est pas une « photo » qu'on reçoit : la
   // compter faisait écrire « 1 photo » sous un pack de LUT.
-  const photos = (p.images || []).filter(i => !i.couverture).length;
+  // Un prompt, une idée ou un skill a une image d'aperçu, pas des photos à recevoir.
+  const photos = ['prompt', 'idee', 'skill', 'agent', 'mcp'].includes(p.type) ? 0 : (p.images || []).filter(i => !i.couverture).length;
   if (photos) return `${photos} photo${photos > 1 ? 's' : ''}`;
   return '';
 }
@@ -2844,6 +2845,18 @@ async function refreshMe() {
     window.makersTheme?.permettre?.(S.site.nuit);
   } catch { /* hors ligne : on reste visiteur */ }
 }
+
+// Une image qui n'arrive pas (ligne qui perd des paquets) est redemandée, jusqu'à trois
+// fois, en laissant un peu plus de temps à chaque essai, au lieu de rester un carré vide.
+document.addEventListener('error', (e) => {
+  const i = e.target;
+  if (!(i instanceof HTMLImageElement)) return;
+  const essai = Number(i.dataset.essai || 0);
+  if (essai >= 3) return;
+  i.dataset.essai = String(essai + 1);
+  const src = i.getAttribute('src');
+  setTimeout(() => { i.removeAttribute('src'); i.setAttribute('src', src); }, 1200 * (essai + 1));
+}, true);
 
 // --- Événements ----------------------------------------------------------------
 document.addEventListener('click', async (e) => {

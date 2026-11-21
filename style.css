@@ -2914,3 +2914,24 @@ body.rail-ouvert .rail { transform: none; }
   .gg-bouton { height: 24px; margin-top: 6px; font-size: 11px; border-radius: 6px; }
   .gg-fav .vote .ico { width: 16px; height: 16px; }
 }
+
+/* --- Bouton d'achat et couverture plus petits (22 novembre 2026) ---------------------------- */
+.gg-acheter { height: 38px; margin-top: 14px; border-radius: 10px; font-size: 14px; font-weight: 600; }
+.gg-achat-prix { font-size: 22px; line-height: 28px; }
+.gg-achat-carte { padding: 18px; border-radius: 22px; }
+.gg-fiche { grid-template-columns: 140px minmax(0, 1fr) 300px; gap: 28px; }
+.gg-fiche-image a { width: 140px; height: 140px; border-radius: 20px; }
+.post.fiche .post-actions, .post.fiche .reponses, .post.fiche .report { margin-left: 168px; }
+.gg-apercu { max-width: 440px; }
+.gg-apercu a { border-radius: 14px; }
+@media (max-width: 1180px) { .gg-fiche { grid-template-columns: 140px minmax(0, 1fr); } }
+@media (max-width: 760px) {
+  .gg-fiche { grid-template-columns: minmax(0, 1fr); }
+  .gg-fiche-image { padding: 12px; }
+  .gg-fiche-image a { width: 120px; height: 120px; border-radius: 18px; }
+  .post.fiche .post-actions, .post.fiche .reponses, .post.fiche .report { margin-left: 0; }
+  .gg-achat-carte { padding: 6px 6px 6px 14px; border-radius: 14px; }
+  .gg-achat-carte .gg-achat-prix { font-size: 15px; line-height: 19px; }
+  .gg-achat-carte .gg-acheter { height: 34px; font-size: 13px; border-radius: 9px; max-width: 140px; }
+  .gg-apercu { max-width: none; }
+}
