@@ -154,6 +154,7 @@ const ICON = {
   copy: svg('<rect x="5.5" y="5.5" width="8" height="8" rx="1"/><path d="M10.5 5.5v-3h-8v8h3"/>'),
   gem: svg('<path d="M8 2 14 8 8 14 2 8z"/>'),
   star: svg('<path d="M8 1.8l1.85 3.9 4.15.6-3 3 .7 4.2L8 11.5l-3.7 2 .7-4.2-3-3 4.15-.6z"/>'),
+  check: svg('<path d="M3 8.5l3.2 3.2L13 4.8"/>'),
   lock: svg('<rect x="2.8" y="7" width="10.4" height="7" rx="1.6"/><path d="M5.3 7V5a2.7 2.7 0 0 1 5.4 0v2"/>'),
   cup: svg('<path d="M4.5 2h7v3.5a3.5 3.5 0 0 1-7 0z"/><path d="M4.5 3H2.5v1a2.5 2.5 0 0 0 2 2.45M11.5 3h2v1a2.5 2.5 0 0 1-2 2.45"/><path d="M8 9v2.5M5.5 14h5l-.5-2.5h-4z"/>'),
   vote: svg('<path d="M3 8.5 6.5 12 13 4.5"/>'),
@@ -1140,7 +1141,36 @@ function ligne(p, rang = null) {
 // de la carte pour rien, mais le début du prompt, le domaine du lien, l'extension
 // du fichier. La description est revenue dessous, en deux lignes : un titre seul
 // n'a jamais suffi à décider si on ouvre.
+// Les familles « produit » (templates, design, code, formations, audio, photos et
+// vidéos, PDF) se présentent comme dans une boutique : une grande photo, le prix en
+// gros juste dessous, puis le titre. Les drops pour l'IA (skills, prompts, agents, MCP)
+// et le reste gardent leur boîte : ils n'ont pas de photo à montrer.
+const FAMILLES_PRODUIT = new Set(['template', 'design', 'code', 'formation', 'audio', 'media', 'pdf']);
+const enBoutique = p => FAMILLES_PRODUIT.has(p.type);
+// Une photo très haute (cadre vertical) ou très large (bande audio) est montrée entière
+// plutôt que rognée : on ne coupe pas la moitié de ce qu'on vend.
+const photoEntiere = i => { const r = (i.w || 16) / (i.h || 10); return r < 1.2 || r > 2.1; };
+function carteProduit(p, rang = null) {
+  const podium = rang && rang <= 3 ? rang : 0;
+  const i = p.images?.[0];
+  const vu = apercu(p);
+  return html`
+    <article class="carte carte-produit k-${p.type} ${p.pinned ? 'pinned' : ''} ${podium ? 'podium rang-' + podium : ''}">
+      <div class="cp-cadre">
+        ${i ? html`<a class="cp-photo" href="#/p/${p.id}" tabindex="-1" aria-hidden="true"><img src="${i.thumb}" alt="" loading="lazy" class="${photoEntiere(i) ? 'entiere' : ''}"></a>`
+          : couverture(p)}
+        ${podium ? html`<span class="medaille" title="${rang}ᵉ au classement, ${p.points} points">n° ${rang}</span>` : ''}
+      </div>
+      <div class="cp-corps">
+        <span class="cp-type">${TYPES[p.type]?.short || p.type}${vu ? ` · ${vu}` : ''}${p.pinned ? ' · épinglé' : ''}</span>
+        <span class="cp-prix${p.prix ? '' : ' offert'}">${p.prix ? html`${prixLisible(p.prix)}<small>${p.devise || 'DA'}</small>` : 'Offert'}</span>
+        <a class="cp-titre" href="#/p/${p.id}">${fr(p.title)}</a>
+      </div>
+    </article>`;
+}
+
 function carte(p, rang = null) {
+  if (enBoutique(p)) return carteProduit(p, rang);
   const podium = rang && rang <= 3 ? rang : 0;
   // « PDF » écrit sous une pastille qui dit déjà « PDF » n'apprend rien à personne,
   // et c'est ce mot en trop qui faisait passer le pied de la carte à la ligne.
@@ -1282,13 +1312,14 @@ function lockedBox(p) {
     </div>`;
 }
 
-function postBody(p, { howto = false } = {}) {
+function postBody(p, { howto = false, fiche = false } = {}) {
+  const photos = (p.images || []).filter(i => !i.couverture).slice(fiche ? 1 : 0);
   return html`
-    <p class="lead">${fr(p.description)}</p>
-    ${p.locked ? lockedBox(p) : ''}
+    ${fiche ? '' : html`<p class="lead">${fr(p.description)}</p>`}
+    ${p.locked && !fiche ? lockedBox(p) : ''}
     ${pollView(p)}
     ${treeView(p)}
-    ${p.images?.some(i => !i.couverture) ? html`<div class="gallery">${p.images.filter(i => !i.couverture).map(i => html`<a href="${i.src}" target="_blank" rel="noopener"><img src="${i.src}" width="${i.w}" height="${i.h}" alt="Photo du drop : ${p.title}" loading="lazy"></a>`)}</div>` : ''}
+    ${photos.length ? html`<div class="gallery">${photos.map(i => html`<a href="${i.src}" target="_blank" rel="noopener"><img src="${i.src}" width="${i.w}" height="${i.h}" alt="Photo du drop : ${p.title}" loading="lazy"></a>`)}</div>` : ''}
     ${p.imagesProcessing ? html`<div class="notice">${p.imagesProcessing} photo${p.imagesProcessing > 1 ? 's' : ''} en cours de compression. Recharge la page dans quelques secondes.</div>` : ''}
     ${p.content ? html`
       ${howto && p.type === 'skill' ? etapesSkill(slugDe(p.title), false) : ''}
@@ -1297,12 +1328,12 @@ function postBody(p, { howto = false } = {}) {
         <div class="block-head"><span>${BLOCK_LABEL[p.type] || 'contenu'}</span><button class="btn small" data-action="copy" data-id="${p.id}">${ICON.copy}Copier</button></div>
         <pre class="code" data-copy="${p.id}">${p.content}</pre>
       </div>` : ''}
-    ${p.file ? html`
+    ${p.file && !fiche ? html`
       <div class="block"><a class="attach" href="${p.file.href}" target="_blank" rel="noopener">
         ${ICON.file}<div><b>${p.file.name}</b><small>${p.file.ext.toUpperCase()} · ${size(p.file.size)}</small></div>
         <span class="go">${p.file.ext === 'pdf' || p.file.ext === 'png' || p.file.ext === 'jpg' ? 'Ouvrir' : 'Télécharger'}</span>
       </a></div>` : ''}
-    ${p.url ? html`
+    ${p.url && !fiche ? html`
       <div class="block"><a class="attach" href="${p.url}" target="_blank" rel="noopener noreferrer nofollow">
         ${ICON.out}<div><b>${domain(p.url)}</b><small>${p.url.length > 70 ? p.url.slice(0, 70) + '…' : p.url}</small></div>
         <span class="go">Ouvrir le lien</span>
@@ -1594,6 +1625,44 @@ async function profilView(pseudo) {
     </div>`);
 }
 
+// La fiche d'un produit, comme dans une boutique : la grande photo, et à côté (dessous
+// sur téléphone) le fil, le titre, le prix et le bouton. La description et le contenu
+// viennent après, sous « À propos du produit ».
+function ficheHaut(p) {
+  const i = p.images?.[0];
+  const f = p.file || (p.has?.fichier ? { ext: p.has.fichier.ext, size: p.has.fichier.size } : null);
+  return html`
+    <div class="fiche-haut">
+      <figure class="fiche-photo">
+        ${i ? html`<a href="${i.src}" target="_blank" rel="noopener"><img src="${i.src}" width="${i.w}" height="${i.h}" alt="Aperçu : ${p.title}" class="${photoEntiere(i) ? 'entiere' : ''}"></a>`
+          : html`<div class="pack-hero k-${p.type}" aria-hidden="true">${boite(p)}</div>`}
+      </figure>
+      <div class="fiche-info">
+        <nav class="fiche-fil" aria-label="Fil d’Ariane"><a href="#/">Accueil</a><span aria-hidden="true">›</span><a href="#/?t=${p.type}">${TYPES[p.type]?.plural || p.type}</a></nav>
+        <h1>${fr(p.title)}</h1>
+        <div class="fiche-meta">${auteurLien(p)}<span>${ago(p.approvedAt || p.createdAt)}</span>${
+          p.starsCount ? html`<span>★ ${String(p.stars).replace('.', ',')} · ${p.starsCount} note${p.starsCount > 1 ? 's' : ''}</span>` : ''}${
+          p.commentsCount ? html`<span>${p.commentsCount} avis</span>` : ''}</div>
+        ${p.locked ? lockedBox(p) : html`
+          <div class="locked achat fiche-offert">
+            <div class="achat-haut">
+              <span class="achat-prix">${p.achete ? 'Acheté' : 'Offert'}</span>
+              ${f ? html`<span class="achat-etat">${f.ext.toUpperCase()} · ${size(f.size)}</span>` : ''}
+            </div>
+            ${p.file ? html`<a class="btn primary achat-bouton" href="${p.file.href}" target="_blank" rel="noopener">${ICON.file}${p.file.ext === 'pdf' ? 'Ouvrir le PDF' : 'Télécharger'}</a>`
+              : p.url ? html`<a class="btn primary achat-bouton" href="${p.url}" target="_blank" rel="noopener noreferrer nofollow">${ICON.out}Ouvrir le lien</a>`
+              : html`<a class="btn primary achat-bouton" href="#contenu" data-action="vers-contenu">Voir le contenu</a>`}
+            <p class="muted">${p.achete ? 'Il est à toi : tu peux le retélécharger quand tu veux.' : 'Gratuit, sans compte et sans inscription.'}</p>
+          </div>`}
+        <ul class="fiche-garanties">
+          <li>${ICON.check}Relu par makers.si avant d’être publié</li>
+          <li>${ICON.check}${p.locked ? 'Le fichier s’ouvre dès que le paiement est vérifié' : 'Téléchargement direct, sans attente'}</li>
+          <li>${ICON.check}Un problème ? <a href="#/aide">L’aide répond</a></li>
+        </ul>
+      </div>
+    </div>`;
+}
+
 async function postView(id) {
   let p;
   try { p = (await api('/posts/' + id)).post; } catch { return render(html`<div class="narrow"><a class="back" href="#/">← Retour</a><div class="empty">Ce drop n’existe pas ou n’est pas encore publié.</div></div>`); }
@@ -1611,8 +1680,18 @@ async function postView(id) {
   // page de skill est verte, une page de prompt est cyan — chaque type a son
   // identité au lieu d'un violet unique partout.
   render(html`
-    <div class="narrow post k-${p.type}">
+    <div class="narrow post k-${p.type}${enBoutique(p) ? ' fiche' : ''}">
       <a class="back" href="#/">← Tous les drops</a>
+      ${enBoutique(p) ? html`
+        ${p.status === 'pending' ? html`<div class="notice">En attente de validation. Toi seul(e) vois ce drop pour l’instant.</div>` : ''}
+        ${p.status === 'rejected' ? html`<div class="notice bad">Refusé${p.rejectReason ? ' : ' + p.rejectReason : '.'}</div>` : ''}
+        ${ficheHaut(p)}
+        <section class="fiche-section" id="contenu">
+          <h2>À propos du produit</h2>
+          <p class="lead">${fr(p.description)}</p>
+          ${postBody(p, { fiche: true })}
+          ${p.tags.length ? html`<div class="fiche-tags">${p.tags.map(tagLink)}</div>` : ''}
+        </section>` : html`
       ${p.images?.[0]?.couverture
         // Un produit en vente montre son aperçu à plat et en grand, avant tout le reste :
         // c'est ce que l'acheteur veut voir. Collé sur la face d'une boîte, il devenait
@@ -1628,7 +1707,7 @@ async function postView(id) {
       <h1>${fr(p.title)}</h1>
       <div class="post-meta">${auteurLien(p)}<span>${ago(p.approvedAt || p.createdAt)}</span>${
         p.modele ? html`<span class="modele-ligne">essayé sur ${modeleBadge(p)}</span>` : ''}${p.tags.map(tagLink)}</div>
-      ${postBody(p, { howto: true })}
+      ${postBody(p, { howto: true })}`}
       <!-- Sur la copie publiée, la barre d'actions ne contient que ce qui a quelque
            chose à dire : pas d'étoiles cliquables qui ne noteront rien, pas de
            « Pas encore noté » répété sous chaque drop. -->
@@ -2649,6 +2728,8 @@ document.addEventListener('click', async (e) => {
   const el = e.target.closest('[data-action]');
   if (!el) return;
   const { action, id } = el.dataset;
+  // « Voir le contenu » d'une fiche : une ancre classique changerait la route du site.
+  if (action === 'vers-contenu') { e.preventDefault(); document.getElementById('contenu')?.scrollIntoView({ behavior: 'smooth' }); return; }
   try {
     if (action === 'comment-delete') {
       if (!confirm('Supprimer ce commentaire ? C’est définitif.')) return;

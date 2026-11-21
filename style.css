@@ -2471,3 +2471,60 @@ input[type=text], input[type=email], input[type=password], input[type=url], inpu
 .vitrine-vente img { display: block; width: 100%; height: auto; }
 .vitrine-vente.petite a { max-width: 480px; }
 .vitrine-vente figcaption { margin-top: 8px; font-size: 13px; color: var(--muted); }
+
+/* === Style boutique : cartes et fiches des familles « produit » ======================
+   Inspiré des grandes boutiques de produits digitaux : la photo d'abord, en entier,
+   le prix en gros juste dessous, le titre ensuite. Les drops pour l'IA gardent la boîte. */
+.carte-produit .cp-cadre { position: relative; }
+.cp-photo {
+  display: block; aspect-ratio: 16 / 10; overflow: hidden;
+  background: var(--surface-2);
+}
+.cp-photo img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .5s var(--ease); }
+.cp-photo img.entiere { object-fit: contain; }
+.carte-produit:hover .cp-photo img { transform: scale(1.035); }
+@media (prefers-reduced-motion: reduce) { .carte-produit:hover .cp-photo img { transform: none; } }
+.cp-corps { display: flex; flex-direction: column; gap: 4px; padding: 13px 16px 16px; flex: 1; }
+.cp-type { font: 500 12.5px var(--font); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cp-prix { font: 800 23px/1.1 var(--font); letter-spacing: -.025em; color: var(--ink); font-variant-numeric: tabular-nums; }
+.cp-prix small { font-size: 14px; font-weight: 700; margin-left: 4px; letter-spacing: 0; }
+.cp-prix.offert { color: var(--ok); }
+.cp-titre {
+  font: 500 15px/1.32 var(--font); color: var(--ink); text-decoration: none;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.cp-titre::after { content: ''; position: absolute; inset: 0; z-index: 1; } /* toute la carte est cliquable */
+.cp-titre:hover { color: var(--accent); }
+.carte-produit .medaille { z-index: 3; }
+@media (max-width: 600px) {
+  .cp-corps { padding: 10px 12px 13px; }
+  .cp-prix { font-size: 19px; }
+  .cp-titre { font-size: 14px; }
+}
+
+/* La fiche produit */
+.post.fiche { max-width: 1080px; }
+.fiche-haut { display: grid; gap: 22px; margin: 4px 0 30px; }
+@media (min-width: 880px) {
+  .fiche-haut { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 34px; align-items: start; }
+  .fiche-info { position: sticky; top: 84px; }
+}
+.fiche-photo { margin: 0; }
+.fiche-photo a { display: block; border-radius: 22px; overflow: hidden; background: var(--surface-2); box-shadow: var(--contour, 0 0 0 1px var(--line)), var(--ombre-2); }
+.fiche-photo img { display: block; width: 100%; height: auto; }
+.fiche-photo img.entiere { max-height: 70vh; width: auto; margin: 0 auto; }
+.fiche-fil { display: flex; gap: 7px; flex-wrap: wrap; font: 13px var(--font); color: var(--muted); margin-bottom: 8px; }
+.fiche-fil a { color: var(--muted); text-decoration: none; }
+.fiche-fil a:hover { color: var(--accent); }
+.post.fiche .fiche-info h1 { margin: 0 0 10px; font-size: clamp(24px, 3.2vw, 32px); }
+.fiche-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font: 13.5px var(--font); color: var(--muted); margin-bottom: 16px; }
+.fiche-info .locked.achat { margin: 0; }
+.fiche-offert .achat-prix { color: var(--ok); }
+.fiche-offert .achat-bouton { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+.fiche-garanties { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 9px; font: 14px/1.4 var(--font); color: var(--ink-soft); }
+.fiche-garanties li { display: flex; gap: 9px; align-items: flex-start; }
+.fiche-garanties svg { flex: none; width: 16px; height: 16px; margin-top: 2px; color: var(--ok); }
+.fiche-section { border-top: 1px solid var(--line); padding-top: 24px; max-width: 760px; scroll-margin-top: 80px; }
+.fiche-section h2 { font: 700 21px var(--font); letter-spacing: -.015em; margin: 0 0 12px; }
+.fiche-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.post.fiche .post-actions, .post.fiche .reponses, .post.fiche .report { max-width: 760px; }
