@@ -162,16 +162,38 @@ function charge(actif) {
 // Revenir sur une page devient instantané, même si le réseau est lent.
 const CACHE_MS = 60000;
 const memo = new Map();
+// La page d'accueil est aussi gardée sur l'appareil, d'une visite à l'autre : à
+// l'ouverture, elle s'affiche tout de suite avec ce qu'on avait vu la dernière fois,
+// et se met à jour dès que le serveur répond. Sur une ligne où les données mettent
+// parfois trois secondes à arriver, c'est la différence entre une page blanche et une
+// page qui est déjà là. Rien de privé n'y est gardé (ce sont les drops publics, vus
+// par ce visiteur), et la copie est effacée à la moindre action et à la déconnexion.
+const FIL_ACCUEIL = 'fil:t=&tag=&q=&s=top&p=&m=&prix=';
+const CLE_FIL = 'mk-fil';
+const GARDE_MS = 7 * 86400000;
 function duCache(cle) {
   const e = memo.get(cle);
-  return e && Date.now() - e.at < CACHE_MS ? e.valeur : null;
+  if (e && Date.now() - e.at < CACHE_MS) return e.valeur;
+  if (cle === FIL_ACCUEIL) {
+    try {
+      const d = JSON.parse(localStorage.getItem(CLE_FIL) || 'null');
+      if (d && d.cle === cle && Date.now() - d.at < GARDE_MS) return d.valeur;
+    } catch { /* stockage illisible ou bloqué : on attend le réseau */ }
+  }
+  return null;
 }
 function enCache(cle, valeur) {
   memo.set(cle, { valeur, at: Date.now() });
   // Après une gemme, une étoile ou un vote, les compteurs affichés sont périmés.
   if (memo.size > 40) memo.delete(memo.keys().next().value);
+  if (cle === FIL_ACCUEIL) {
+    try { localStorage.setItem(CLE_FIL, JSON.stringify({ cle, at: Date.now(), valeur })); } catch { /* plein ou bloqué */ }
+  }
 }
-const videCache = () => memo.clear();
+const videCache = () => {
+  memo.clear();
+  try { localStorage.removeItem(CLE_FIL); } catch { /* rien à effacer */ }
+};
 
 // --- Mode lecture seule -------------------------------------------------------------
 // Une copie du site peut être publiée sur un hébergement de fichiers (GitHub Pages),
@@ -329,7 +351,30 @@ async function apiStatique(chemin, method) {
   throw Object.assign(new Error('Indisponible dans cette copie du site.'), { status: 404 });
 }
 
-async function api(path, { method = 'GET', body } = {}) {
+// Une même lecture n'est demandée qu'une fois. Sur une ligne lente — depuis l'Algérie,
+// un aller-retour vers le serveur coûte souvent 300 ms, parfois plus d'une seconde —
+// chaque requête en double se paie. Deux parties de la page qui veulent la même chose
+// au même moment (le rail et le fil veulent tous deux les compteurs) partagent donc la
+// réponse, et elle reste partagée quelques secondes. Toute écriture vide cette mémoire :
+// après une gemme ou une publication, on relit toujours le vrai état.
+const enVol = new Map();
+const PARTAGE_MS = 4000;
+function api(path, opts = {}) {
+  if ((opts.method && opts.method !== 'GET') || opts.body) { enVol.clear(); return appel(path, opts); }
+  const deja = enVol.get(path);
+  if (deja) return deja;
+  const p = appel(path, opts);
+  enVol.set(path, p);
+  p.then(() => setTimeout(() => { if (enVol.get(path) === p) enVol.delete(path); }, PARTAGE_MS),
+    () => { if (enVol.get(path) === p) enVol.delete(path); });
+  return p;
+}
+// Lance des lectures sans les attendre : la réponse sera prête quand la page la demandera.
+// (Le service worker sert ce fichier depuis l'appareil et le revérifie derrière : une
+// mise en ligne arrive chez chacun à la visite qui suit, sans rien vider à la main.)
+const prechauffer = chemins => chemins.forEach(c => api(c).catch(() => {}));
+
+async function appel(path, { method = 'GET', body } = {}) {
   const isForm = body instanceof FormData;
   charge(true);
   try {
@@ -1363,6 +1408,11 @@ async function feedView(q) {
           </section>` : ''}
       </div>
     </div>`);
+
+  // Un repère de temps, lisible dans les outils du navigateur (Performance) : quand le
+  // fil s'est dessiné, et d'où venaient ses données. C'est ce qui permet de vérifier,
+  // sur une vraie ligne, que la réouverture n'attend plus le réseau.
+  if (!performance.getEntriesByName('fil-affiche').length) performance.mark('fil-affiche', { detail: vu ? 'appareil' : 'serveur' });
 
   // Affiché depuis le cache : si la version fraîche diffère, on remet la page à jour sans
   // la faire sauter (même position de défilement, l'utilisateur ne voit qu'un changement de chiffres).
@@ -2958,6 +3008,12 @@ window.makers = {
   types: Object.entries(TYPES).map(([cle, v]) => ({ cle, label: v.plural, court: v.short })),
 };
 
+// Au démarrage, ne pas attendre de savoir qui est connecté pour demander le reste :
+// sur la page d'accueil, ses données partent en même temps que /api/me. C'est un
+// aller-retour entier de gagné avant le premier affichage.
+if ((location.hash || '#/') === '#/') {
+  prechauffer(['/posts?t=&tag=&q=&s=top&p=&m=&prix=', '/stats', '/top?periode=semaine', '/collections?limit=3']);
+}
 await refreshMe();
 route();
 
@@ -2969,6 +3025,13 @@ route();
 // Après le premier affichage, jamais avant : installer ne doit pas retarder la page.
 // Et si la page est déjà chargée — ce qui arrive, ce module attend le réseau plus
 // haut — on n'attend pas un événement `load` qui est déjà passé.
+// Une fois la page affichée et ses données arrivées, la coquille gardée sur l'appareil
+// est revérifiée (voir rafraichir dans sw.js) : la prochaine ouverture aura la dernière
+// version. Quatre secondes d'attente pour ne jamais disputer la ligne aux données.
+if (!STATIQUE && 'serviceWorker' in navigator) {
+  setTimeout(() => navigator.serviceWorker.controller?.postMessage('rafraichir'), 4000);
+}
+
 if (!STATIQUE && 'serviceWorker' in navigator) {
   const installe = () => navigator.serviceWorker.register('/sw.js')
     .catch(() => { /* pas de hors ligne sur cet appareil : le site marche quand même */ });

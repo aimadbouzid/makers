@@ -24,6 +24,11 @@
        sur Windows). Six fichiers et 115 Ko de moins avant la première ligne de
        texte — et le texte s'affiche à la première image, sans attendre. -->
   <link rel="stylesheet" href="style.css">
+  <!-- Le code de l'application part en même temps que le style, au lieu d'attendre
+       que le navigateur arrive au bas de la page pour le découvrir : sur une ligne
+       lente, c'est un aller-retour entier de gagné avant le premier affichage. -->
+  <link rel="modulepreload" href="app.js">
+  <link rel="modulepreload" href="atelier.js">
   <!-- Le thème est posé avant le premier affichage, sinon on verrait un éclair
        de nuit avant de passer au papier. Un fichier, pas une balise en ligne :
        la politique de sécurité du site refuse les scripts écrits dans le HTML. -->
