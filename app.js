@@ -1214,7 +1214,7 @@ function tuilesAccueil() {
   return html`
     <div class="gg-tuiles-cadre">
       <div class="gg-tuiles" id="tuiles">${TUILES.map(([img, nom, href]) => html`
-        <a class="gg-tuile" href="${href}"><img src="img/tuiles/${img}.webp" alt="" width="180" height="225" loading="lazy"><span>${nom}</span></a>`)}
+        <a class="gg-tuile" href="${href}"><img src="img/tuiles/${img}.webp" alt="" width="180" height="225" decoding="async"><span>${nom}</span></a>`)}
       </div>
       <button class="gg-tuiles-suite" type="button" data-action="tuiles" aria-label="Voir les catégories suivantes">${ICON.suivant}</button>
     </div>`;
