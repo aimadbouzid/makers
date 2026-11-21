@@ -2760,3 +2760,63 @@ body.rail-ouvert .rail { transform: none; }
   .site-header .cmd { flex: 1; width: auto; justify-content: flex-start; }
   .site-header .cmd span { display: inline; }
 }
+
+/* --- Deuxième passe : les écarts relevés côte à côte -------------------------------------- */
+/* Les titres et les prix : une capitale large et grasse, comme sur les grandes boutiques.
+   Archivo (licence OFL) a un axe de largeur : on l'élargit à 125 %. */
+@font-face {
+  font-family: 'Archivo'; src: url('fonts/archivo-wdth.woff2') format('woff2');
+  font-weight: 100 900; font-stretch: 62% 125%; font-style: normal; font-display: swap;
+}
+:root { --gg-titre: 'Archivo', 'Geist', ui-sans-serif, system-ui, sans-serif; }
+.gg-titre, .gg-prix, .gg-achat-prix, .gg-tuile span, .gg-apropos h2, .gg-avis h2, .site-header .logo {
+  font-family: var(--gg-titre); font-stretch: 125%;
+}
+.gg-titre { font-weight: 700; letter-spacing: -.02em; }
+.gg-prix { font-weight: 700; letter-spacing: -.01em; }
+.gg-achat-prix { font-weight: 700; letter-spacing: -.02em; }
+.gg-tuile span { font-weight: 700; letter-spacing: -.01em; font-size: 18px; }
+.site-header .logo { font-weight: 800; font-size: 26px; letter-spacing: -.04em; }
+.post.fiche .gg-fiche-centre h1 { font-family: var(--gg-titre); font-stretch: 112%; font-weight: 700; }
+
+/* Les icônes pleines de la barre du haut */
+.ico-plein { width: 24px; height: 24px; flex: none; }
+.gg-ico .ico-plein { width: 24px; height: 24px; }
+
+/* Le cœur des cartes : blanc, contour seulement, comme le « favori » */
+.gg-fav .vote .ico { stroke: #fff; stroke-width: 1.8; fill: none; width: 24px; height: 24px; }
+.gg-fav .vote.on .ico { fill: #ff4d6d; stroke: #ff4d6d; }
+.gg-note-fav .vote .ico { width: 18px; height: 18px; }
+.gg-note-fav .vote .vote-mot { margin-left: 6px; }
+
+/* Le bouton d'aide flottant */
+.gg-support { position: fixed; right: 24px; bottom: 24px; z-index: 30; width: 64px; height: 64px; border-radius: 16px;
+  background: #fff; color: var(--gg-ink); box-shadow: 0 4px 20px rgb(23 23 23 / .16); text-decoration: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font: 500 12px var(--font); }
+.gg-support svg { width: 24px; height: 24px; }
+.gg-support:hover { box-shadow: 0 6px 26px rgb(23 23 23 / .24); }
+
+/* La barre du bas des téléphones : plate et blanche, cinq onglets, icône pleine et nom */
+@media (max-width: 700px) {
+  .gg-support { display: none; }
+  .site-header .menu-btn { display: none; }
+  .barre-bas, .barre-bas.compacte {
+    left: 0; right: 0; bottom: 0; height: auto; border-radius: 0; gap: 0;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+    background: #fff !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+    border: 0; box-shadow: 0 -1px 0 rgb(23 23 23 / .06), 0 -8px 24px rgb(23 23 23 / .06);
+  }
+  .barre-bas::before, .barre-bas .indicateur { display: none !important; }
+  .barre-bas > a, .barre-bas > button, .barre-bas.compacte a {
+    flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    padding: 2px 0; background: none !important; border: 0; box-shadow: none !important; color: var(--gg-gris);
+    font: 500 11px/14px var(--font); text-decoration: none; cursor: pointer;
+  }
+  .barre-bas a.appoint { background: none !important; color: var(--gg-gris); }
+  .barre-bas .p { width: auto; height: 26px; padding: 0; background: none !important; display: grid; place-items: center; position: relative; }
+  .barre-bas .ico, .barre-bas .ico-plein { width: 24px; height: 24px; }
+  .barre-bas .l, .barre-bas.compacte .l { display: block; opacity: 1; max-height: none; font: 500 11px/14px var(--font); }
+  .barre-bas a.on { color: var(--gg-ink); }
+  .gg-achat { bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
+  .wrap { padding-bottom: 96px; }
+}

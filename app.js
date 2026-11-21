@@ -178,6 +178,14 @@ const ICON = {
   suivant: svg('<path d="M6 3.5 10.5 8 6 12.5"/>'),
   infoRond: svg('<circle cx="8" cy="8" r="6.2"/><path d="M8 7.2v4M8 4.9v.1"/>'),
   coeur: svg('<path d="M8 13.6S2 10 2 5.9A3.1 3.1 0 0 1 8 4.6a3.1 3.1 0 0 1 6 1.3C14 10 8 13.6 8 13.6z"/>'),
+  pleinCadeau: raw(`<svg class="ico ico-plein" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 11h7v10H5a1 1 0 0 1-1-1zm9 0h7v9a1 1 0 0 1-1 1h-6zM3 7h18v3H3zm9-1.2C11.1 3.6 9.4 2.5 8 3c-1.6.6-1.4 3 .4 3.6.9.3 2.4.4 3.6.4zm0 0c.9-2.2 2.6-3.3 4-2.8 1.6.6 1.4 3-.4 3.6-.9.3-2.4.4-3.6.4z"/></svg>`),
+  pleinBoite: raw(`<svg class="ico ico-plein" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2 3 6.5l9 4.5 9-4.5zM2.5 8v9.2L11 21.5V12.7zm19 0L13 12.7v8.8l8.5-4.3z"/></svg>`),
+  pleinPerso: raw(`<svg class="ico ico-plein" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="7.5" r="4.5"/><path d="M3.5 21c0-4.4 3.8-7.5 8.5-7.5s8.5 3.1 8.5 7.5z"/></svg>`),
+  pleinMaison: raw(`<svg class="ico ico-plein" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3 2.5 11h2.5v9.5h5.5v-6h3v6H19V11h2.5z"/></svg>`),
+  pleinGrille: raw(`<svg class="ico ico-plein" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>`),
+  pleinPlus: raw(`<svg class="ico ico-plein" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10.5 3h3v7.5H21v3h-7.5V21h-3v-7.5H3v-3h7.5z"/></svg>`),
+  pleinCoeur: raw(`<svg class="ico ico-plein" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-8.5-5.2-8.5-11.2A4.8 4.8 0 0 1 12 6.6a4.8 4.8 0 0 1 8.5 3.2C20.5 15.8 12 21 12 21z"/></svg>`),
+  bulleAide: raw(`<svg class="ico ico-plein" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-7l-5 4v-4H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm4 7.2a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4zm4 0a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4zm4 0a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z"/></svg>`),
   palette: svg('<path d="M8 2a6 6 0 0 0 0 12c.9 0 1.3-.5 1.3-1.1 0-.7-.6-1-.6-1.7 0-.6.5-1 1.1-1H11a3 3 0 0 0 3-3C14 4.3 11.3 2 8 2z"/><circle cx="5.3" cy="7" r=".8"/><circle cx="7.6" cy="4.8" r=".8"/><circle cx="10.4" cy="5.6" r=".8"/>'),
   terminal: svg('<rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M4.8 6.3 6.8 8l-2 1.7M8.5 10h3"/>'),
   chapeau: svg('<path d="M1.5 6.2 8 3l6.5 3.2L8 9.4z"/><path d="M4.2 7.6v3c1 .9 2.3 1.4 3.8 1.4s2.8-.5 3.8-1.4v-3M14.5 6.2v3.6"/>'),
@@ -228,14 +236,27 @@ const memo = new Map();
 const FIL_ACCUEIL = 'fil2:t=&tag=&q=&s=top&p=&m=&prix=';
 const CLE_FIL = 'mk-fil';
 const GARDE_MS = 7 * 86400000;
+// L'amorce : les données de l'accueil que le serveur a écrites dans la page.
+let amorce;
+function lisAmorce() {
+  if (amorce === undefined) {
+    try { amorce = JSON.parse(document.getElementById('amorce')?.textContent || 'null'); } catch { amorce = null; }
+  }
+  return amorce;
+}
 function duCache(cle) {
   const e = memo.get(cle);
   if (e && Date.now() - e.at < CACHE_MS) return e.valeur;
   if (cle === FIL_ACCUEIL) {
+    // La plus récente des deux copies : celle de l'appareil, ou celle écrite dans la page.
+    let d = null;
     try {
-      const d = JSON.parse(localStorage.getItem(CLE_FIL) || 'null');
-      if (d && d.cle === cle && Date.now() - d.at < GARDE_MS) return d.valeur;
-    } catch { /* stockage illisible ou bloqué : on attend le réseau */ }
+      d = JSON.parse(localStorage.getItem(CLE_FIL) || 'null');
+      if (!d || d.cle !== cle) d = null;
+    } catch { /* stockage illisible ou bloqué */ }
+    const a = lisAmorce();
+    if (a && (!d || a.at > d.at)) d = a;
+    if (d && Date.now() - d.at < GARDE_MS) return d.valeur;
   }
   return null;
 }
@@ -418,6 +439,10 @@ async function apiStatique(chemin, method) {
 // réponse, et elle reste partagée quelques secondes. Toute écriture vide cette mémoire :
 // après une gemme ou une publication, on relit toujours le vrai état.
 const enVol = new Map();
+// Les drops déjà reçus dans une liste, par id : on ouvre leur fiche tout de suite avec ce
+// qu'on sait, et on la complète quand le serveur répond.
+const vus = new Map();
+const retiens = liste => { for (const p of liste || []) vus.set(p.id, p); };
 const PARTAGE_MS = 4000;
 function api(path, opts = {}) {
   if ((opts.method && opts.method !== 'GET') || opts.body) { enVol.clear(); return appel(path, opts); }
@@ -549,14 +574,14 @@ function header() {
             title="${S.nonLues ? `${S.nonLues} nouveauté${S.nonLues > 1 ? 's' : ''}` : 'Ce qui s’est passé'}">
             ${ICON.cloche}${S.nonLues ? html`<span class="pastille">${S.nonLues > 9 ? '9+' : S.nonLues}</span>` : ''}
           </a>` : ''}
-        <a class="gg-ico hide-sm" href="#/?prix=gratuit">${ICON.cadeau}<span>Offerts</span></a>
-        ${STATIQUE ? '' : html`<a class="gg-ico hide-sm" href="${S.me ? '#/mes-achats' : '#/connexion'}">${ICON.etiquette}<span>Achats</span></a>`}
+        <a class="gg-ico hide-sm" href="#/?prix=gratuit">${ICON.pleinCadeau}<span>Offerts</span></a>
+        ${STATIQUE ? '' : html`<a class="gg-ico hide-sm" href="${S.me ? '#/mes-achats' : '#/connexion'}">${ICON.pleinBoite}<span>Achats</span></a>`}
         ${S.me
-          ? html`<a class="gg-ico" href="#/mes-partages">${ICON.perso}<span>@${S.me.pseudo}</span></a>`
+          ? html`<a class="gg-ico" href="#/mes-partages">${ICON.pleinPerso}<span>@${S.me.pseudo}</span></a>`
           : STATIQUE
             ? html`<span class="gg-ico hide-sm" title="Copie consultable : on lit tout, on n’écrit rien">${ICON.lock}<span>Lecture seule</span></span>`
             // Sur téléphone, la barre du bas porte déjà « Connexion ».
-            : html`<a class="gg-ico hide-sm" href="#/connexion">${ICON.perso}<span>Connexion</span></a>`}
+            : html`<a class="gg-ico hide-sm" href="#/connexion">${ICON.pleinPerso}<span>Connexion</span></a>`}
       </div>
     </div>`.s;
 }
@@ -685,17 +710,20 @@ function barreBasHTML(path) {
   // et son nom dessous. `aria-current` dit aux lecteurs d'écran où l'on est.
   // Un compte (les notifications non lues) se pose en badge rouge sur l'icône.
   const onglet = (href, icone, nom, actif, classe = '', compte = 0) => html`<a href="${href}" class="${classe}${actif ? ' on' : ''}"${actif ? html` aria-current="page"` : ''}${compte ? html` aria-label="${nom}, ${compte} nouveauté${compte > 1 ? 's' : ''}"` : ''}><span class="p">${icone}${compte ? html`<span class="pastille-compte" aria-hidden="true">${compte > 9 ? '9+' : compte}</span>` : ''}</span><span class="l">${nom}</span></a>`;
+  // Comme sur les grandes boutiques : Accueil, Catalogue (le tiroir des rubriques),
+  // puis New drop, Achats, Profil. Des icônes pleines, le nom dessous.
   return html`
-    ${onglet('#/', ICON.maison, 'Biblio', path === '/' && !enBoutique)}
-    ${onglet('#/?prix=payant', ICON.etiquette, 'Boutique', enBoutique)}
-    ${onglet('#/collections', ICON.lignes, 'Parcours', path === '/collections')}
+    ${onglet('#/', ICON.pleinMaison, 'Accueil', path === '/' && !enBoutique)}
+    <button type="button" data-action="menu" class="onglet-bouton" aria-label="Ouvrir le catalogue"><span class="p">${ICON.pleinGrille}</span><span class="l">Catalogue</span></button>
+    ${STATIQUE ? onglet('#/?prix=payant', ICON.pleinBoite, 'À vendre', enBoutique) : ''}
     ${STATIQUE
       ? onglet('#/aide', ICON.ampoule, 'Aide', path === '/aide')
       // « New drop » n'est pas un endroit mais un geste : un bouton plein, qui ne se
       // confond jamais avec l'onglet de la page où l'on se trouve.
-      : onglet(S.me ? '#/partager' : '#/rejoindre', ICON.plus, 'New drop', path === '/partager', 'appoint')}
-    ${S.stats?.gems ? onglet('#/top', ICON.cup, 'Top', path === '/top') : ''}
-    ${STATIQUE ? '' : onglet(S.me ? '#/mes-partages' : '#/connexion', ICON.perso, S.me ? 'Moi' : 'Connexion', path === '/mes-partages' || path === '/connexion', '', S.me ? S.nonLues : 0)}`;
+      : onglet(S.me ? '#/partager' : '#/rejoindre', ICON.pleinPlus, 'New drop', path === '/partager')}
+    ${STATIQUE ? '' : onglet(S.me ? '#/mes-achats' : '#/connexion', ICON.pleinBoite, 'Achats', path === '/mes-achats')}
+    ${STATIQUE ? onglet('#/?prix=gratuit', ICON.pleinCadeau, 'Offerts', path === '/' && !enBoutique && false)
+      : onglet(S.me ? '#/mes-partages' : '#/connexion', ICON.pleinPerso, S.me ? 'Profil' : 'Connexion', path === '/mes-partages' || path === '/connexion', '', S.me ? S.nonLues : 0)}`;
 }
 
 // Une seule pastille pour toute la barre, qui glisse d'un onglet à l'autre quand on
@@ -830,18 +858,18 @@ const auteurLien = p => p.authorLink
 // c'est la première chose qu'un visiteur lit. Le <b> reste dans la page, vide :
 // le gestionnaire du clic y écrit le nouveau total, et le CSS le cache tant
 // qu'il est vide. Sans lui, la première gemme donnée ferait planter l'affichage.
-function gemButton(p, { compact = false, court = false } = {}) {
+function gemButton(p, { compact = false, court = false, coeur = false } = {}) {
   // Sur la copie publiée, personne ne peut voter : un bouton qui ne sait pas répondre
   // n'a rien à faire là. On garde le compte quand il y a quelque chose à compter, et
   // rien du tout sinon — trente boutons morts, c'est trente promesses non tenues.
   if (STATIQUE) {
     return p.gems ? html`<span class="vote fige" title="${p.gems} gemme${p.gems > 1 ? 's' : ''}"
-      >${ICON.gem}<b>${p.gems}</b></span>` : '';
+      >${coeur ? ICON.coeur : ICON.gem}<b>${p.gems}</b></span>` : '';
   }
   const title = p.gemmed ? 'Reprendre ma gemme' : 'Donner une gemme';
   const mot = !compact && !court;
   return html`<button class="vote ${compact ? 'compacte' : ''} ${court ? 'court' : ''} ${p.gemmed ? 'on' : ''}" data-action="gem" data-id="${p.id}"
-    aria-pressed="${String(p.gemmed)}" aria-label="${title}" title="${title}">${ICON.gem}<b>${p.gems || ''}</b>${mot ? html`<span class="vote-mot">${p.gems ? `gemme${p.gems > 1 ? 's' : ''}` : 'Donner une gemme'}</span>` : ''}</button>`;
+    aria-pressed="${String(p.gemmed)}" aria-label="${title}" title="${title}">${coeur ? ICON.coeur : ICON.gem}<b>${p.gems || ''}</b>${mot ? html`<span class="vote-mot">${coeur ? (p.gemmed ? 'Dans mes favoris' : 'Ajouter aux favoris') : p.gems ? `gemme${p.gems > 1 ? 's' : ''}` : 'Donner une gemme'}</span>` : ''}</button>`;
 }
 
 // Note : dans la liste, une étoile et le chiffre ; sur la page d'un partage, cinq étoiles cliquables.
@@ -1218,7 +1246,7 @@ function carteProduit(p, rang = null) {
         <span class="gg-info">${f ? `${f.ext.toUpperCase()} · ${size(f.size)}` : p.url ? domain(p.url) : 'À lire en ligne'}</span>
       </a>
       ${podium ? html`<span class="medaille" title="${rang}ᵉ au classement, ${p.points} points">n° ${rang}</span>` : ''}
-      <span class="gg-fav">${gemButton(p, { compact: true })}</span>
+      <span class="gg-fav">${gemButton(p, { compact: true, coeur: true })}</span>
       <a class="gg-bouton" href="#/p/${p.id}" tabindex="-1" aria-hidden="true">${p.prix && !p.achete ? 'Acheter' : 'Télécharger'}</a>
     </article>`;
 }
@@ -1417,6 +1445,7 @@ async function feedView(q) {
     .then(r => { enCache(cle, r); return r; });
   // Déjà vu : on réaffiche immédiatement et on rafraîchit derrière.
   const [liste, stats, top, colls, listeIA] = vu || await frais;
+  retiens(liste?.posts); retiens(listeIA?.posts);
   const { posts, total: combien, suite } = liste;
   const link = (over) => {
     const n = new URLSearchParams();
@@ -1723,7 +1752,7 @@ function ficheProduit(p) {
         <div class="gg-note">
           ${p.starsCount ? html`<span>★ ${String(p.stars).replace('.', ',')}</span><span>·</span><span>${p.starsCount} note${p.starsCount > 1 ? 's' : ''}</span><span>·</span>` : ''}
           <span>${p.commentsCount ? `${p.commentsCount} avis` : 'Nouveau'}</span>
-          <span class="gg-note-fav">${gemButton(p)}</span>
+          <span class="gg-note-fav">${gemButton(p, { coeur: true })}</span>
         </div>
         <div class="gg-fiche-achat-mobile">
           <div class="gg-achat-prix">${p.prix ? html`${prixLisible(p.prix)} ${p.devise || 'DA'}` : 'Offert'}</div>
@@ -1763,21 +1792,24 @@ function ficheProduit(p) {
 }
 
 async function postView(id) {
+  // Déjà vu dans une liste : la fiche s'affiche tout de suite, sans attendre le serveur.
+  const deja = vus.get(id);
+  if (deja) dessinePost(deja, []);
   let p;
-  try { p = (await api('/posts/' + id)).post; } catch { return render(html`<div class="narrow"><a class="back" href="#/">← Retour</a><div class="empty">Ce drop n’existe pas ou n’est pas encore publié.</div></div>`); }
-  document.title = p.title + ' – makers.si';
-  // Les réponses ne doivent pas empêcher le partage de s'afficher : si elles ne
-  // viennent pas (copie consultable, partage réservé), la page se contente du reste.
+  try { p = (await api('/posts/' + id)).post; } catch { if (deja) return; return render(html`<div class="narrow"><a class="back" href="#/">← Retour</a><div class="empty">Ce drop n’existe pas ou n’est pas encore publié.</div></div>`); }
   let reponses = [];
-  // Un partage fermé (vendu, privé) n'ouvre pas ses réponses : inutile de les demander
-  // pour recevoir un refus qui s'inscrit en erreur dans la console.
   if (!p.locked) {
     try { reponses = (await api(`/posts/${id}/comments`)).comments || []; } catch { reponses = []; }
   }
-  // La classe du type porte la couleur de la catégorie à toute la page : les
-  // numéros des étapes, l'icône d'une pièce jointe, le filet du dossier. Une
-  // page de skill est verte, une page de prompt est cyan — chaque type a son
-  // identité au lieu d'un violet unique partout.
+  // Entre-temps, on a pu ouvrir une autre page : on ne réécrit pas celle-là.
+  if ((location.hash.slice(1) || '/').split('?')[0] !== '/p/' + id) return;
+  const y = window.scrollY;
+  dessinePost(p, reponses);
+  if (deja) window.scrollTo(0, y);
+}
+
+function dessinePost(p, reponses) {
+  document.title = p.title + ' – makers.si';
   render(html`
     <div class="narrow post k-${p.type}${enBoutique(p) ? ' fiche' : ''}">
       <a class="back" href="#/">← Tous les drops</a>
@@ -2877,6 +2909,7 @@ document.addEventListener('click', async (e) => {
       el.textContent = 'Chargement…';
       try {
         const { posts, suite, total } = await api(`/posts?${el.dataset.params}&offset=${el.dataset.suite}`);
+        retiens(posts);
         const liste = (el.dataset.cible && document.getElementById(el.dataset.cible)) || $('.grille, .list');
         // La numérotation du classement reprend là où la page précédente s'est arrêtée.
         const classe = !!$('.rang, .rang-n, .medaille');
@@ -3257,8 +3290,24 @@ window.makers = {
 if ((location.hash || '#/') === '#/') {
   prechauffer(['/posts?t=&tag=&q=&s=top&p=&m=&prix=&rayon=produits', '/stats', '/top?periode=semaine', '/collections?limit=3', '/posts?t=&tag=&q=&s=top&p=&m=&prix=&rayon=ia&limit=8']);
 }
-await refreshMe();
-route();
+// Les pages publiques s'affichent sans attendre de savoir qui est connecté : /api/me
+// part en même temps, et la page n'est redessinée que si sa réponse change quelque
+// chose (un membre connecté, l'admin, la vente ouverte). Les autres pages attendent.
+{
+  const [chemin] = (location.hash.slice(1) || '/').split('?');
+  const publique = chemin === '/' || chemin.startsWith('/p/') || chemin.startsWith('/membre/') || chemin === '/top'
+    || chemin === '/collections' || ['/aide', '/charte', '/conditions', '/confidentialite', '/cookies', '/mentions-legales'].includes(chemin);
+  if (publique) {
+    const etat = () => JSON.stringify([S.me?.id, S.admin, S.marche?.ouvert, S.pending]);
+    const avant = etat();
+    route();
+    await refreshMe();
+    if (etat() !== avant) route(); else { header(); rail(); }
+  } else {
+    await refreshMe();
+    route();
+  }
+}
 
 // --- Installation et hors ligne ----------------------------------------------------
 // Uniquement sur le site complet : la copie publiée n'embarque pas de service worker
