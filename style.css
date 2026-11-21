@@ -2764,11 +2764,7 @@ body.rail-ouvert .rail { transform: none; }
 /* --- Deuxième passe : les écarts relevés côte à côte -------------------------------------- */
 /* Les titres et les prix : une capitale large et grasse, comme sur les grandes boutiques.
    Archivo (licence OFL) a un axe de largeur : on l'élargit à 125 %. */
-@font-face {
-  font-family: 'Archivo'; src: url('fonts/archivo-wdth.woff2') format('woff2');
-  font-weight: 100 900; font-stretch: 62% 125%; font-style: normal; font-display: swap;
-}
-:root { --gg-titre: 'Archivo', 'Geist', ui-sans-serif, system-ui, sans-serif; }
+:root { --gg-titre: var(--font); }
 .gg-titre, .gg-prix, .gg-achat-prix, .gg-tuile span, .gg-apropos h2, .gg-avis h2, .site-header .logo {
   font-family: var(--gg-titre); font-stretch: 125%;
 }
@@ -2842,4 +2838,79 @@ body.rail-ouvert .rail { transform: none; }
   .gg-titre { font-size: 21px; line-height: 28px; }
   .gg-titre small { font-size: 14px; margin-left: 6px; }
   .gg-choix summary { font-size: 14px; }
+}
+
+/* === Tailles plus sobres (22 novembre 2026) ===============================================
+   Une seule police (Geist), et tout un cran plus petit : le logo, les titres, les textes,
+   les prix et les boutons verts. */
+.gg-titre, .gg-prix, .gg-achat-prix, .gg-tuile span, .gg-apropos h2, .gg-avis h2, .site-header .logo,
+.post.fiche .gg-fiche-centre h1 { font-family: var(--font); font-stretch: 100%; }
+.site-header .logo { font-size: 21px; font-weight: 700; letter-spacing: -.04em; }
+.site-header .bar { height: 64px; }
+.gg-catalogue { height: 46px; padding: 0 18px; border-radius: 14px; font-size: 15px; }
+.site-header .cmd { height: 46px; border-radius: 14px; font-size: 15px; }
+.gg-ico span { font-size: 12px; line-height: 16px; }
+.gg-ico .ico-plein { width: 22px; height: 22px; }
+.gg-bande { font-size: 13px; }
+.gg-cats a { font-size: 14px; }
+.gg-pic { width: 24px; height: 24px; border-radius: 7px; }
+.gg-pic .ico { width: 14px; height: 14px; }
+.gg-tuile span { font-size: 15px; font-weight: 700; letter-spacing: -.01em; }
+.gg-titre { font-size: 24px; line-height: 32px; font-weight: 700; letter-spacing: -.02em; }
+.gg-titre small { font-size: 14px; }
+.gg-choix summary { font-size: 14px; }
+.gg-cat { font-size: 11px; line-height: 15px; }
+.gg-prix { font-size: 17px; line-height: 22px; font-weight: 700; letter-spacing: -.01em; }
+.gg-nom { font-size: 13px; line-height: 18px; min-height: 36px; }
+.gg-info { font-size: 12px; line-height: 17px; }
+.gg-bouton { height: 28px; margin-top: 10px; font-size: 13px; font-weight: 600; border-radius: 8px; }
+.post.fiche .gg-fiche-centre h1 { font-size: 21px; line-height: 28px; font-weight: 700; }
+.gg-note, .gg-options-titre, .gg-puce { font-size: 14px; line-height: 20px; }
+.gg-puce { padding: 6px 12px; border-radius: 16px; }
+.gg-apropos h2, .gg-avis h2 { font-size: 19px; line-height: 26px; }
+.gg-apropos .lead { font-size: 15px; line-height: 23px; }
+.gg-achat-prix { font-size: 26px; line-height: 32px; font-weight: 700; }
+.gg-acheter { height: 46px; margin-top: 16px; border-radius: 12px; font-size: 16px; }
+.gg-achat-carte { padding: 20px; border-radius: 28px; }
+.gg-fiche { grid-template-columns: 180px minmax(0, 1fr) 340px; }
+.gg-fiche-image a { width: 180px; height: 180px; border-radius: 26px; }
+.post.fiche .post-actions, .post.fiche .reponses, .post.fiche .report { margin-left: 212px; }
+.gg-support { width: 54px; height: 54px; border-radius: 14px; font-size: 11px; }
+.gg-support svg { width: 20px; height: 20px; }
+@media (max-width: 1180px) { .gg-fiche { grid-template-columns: 180px minmax(0, 1fr); } }
+@media (max-width: 760px) {
+  .gg-fiche { grid-template-columns: minmax(0, 1fr); }
+  .gg-fiche-image a { width: 160px; height: 160px; }
+  .post.fiche .post-actions, .post.fiche .reponses, .post.fiche .report { margin-left: 0; }
+  .gg-achat-carte { padding: 7px 7px 7px 16px; border-radius: 16px; }
+  .gg-achat-carte .gg-achat-prix { font-size: 16px; line-height: 20px; }
+  .gg-achat-carte .gg-acheter { height: 38px; font-size: 14px; border-radius: 10px; max-width: 180px; }
+}
+@media (max-width: 700px) {
+  .site-header .bar { height: 56px; gap: 10px; }
+  .site-header .logo { font-size: 17px; }
+  .site-header .cmd { height: 38px; border-radius: 12px; font-size: 13px; padding: 0 12px; gap: 8px; }
+  .site-header .cmd .ico { width: 16px; height: 16px; }
+  .gg-cats { gap: 16px; padding-bottom: 12px; }
+  .gg-cats a { font-size: 13px; gap: 6px; }
+  .gg-pic { width: 22px; height: 22px; border-radius: 6px; }
+  .gg-tuile { width: 120px; height: 150px; border-radius: 20px; }
+  .gg-tuile span { font-size: 13px; left: 10px; bottom: 10px; }
+  .gg-tuiles { gap: 10px; }
+  .post.fiche .gg-fiche-centre h1 { font-size: 18px; line-height: 24px; }
+  .gg-achat-prix { font-size: 20px; }
+  .barre-bas .l, .barre-bas.compacte .l { font-size: 10px; line-height: 13px; }
+  .barre-bas .ico, .barre-bas .ico-plein { width: 22px; height: 22px; }
+}
+@media (max-width: 600px) {
+  .gg-titre { font-size: 17px; line-height: 24px; }
+  .gg-titre small { font-size: 12px; }
+  .gg-choix summary { font-size: 13px; }
+  .gg-tete { margin-bottom: 12px; }
+  .gg-cat { font-size: 9.5px; line-height: 12px; }
+  .gg-prix { font-size: 13px; line-height: 17px; }
+  .gg-nom { font-size: 11px; line-height: 15px; min-height: 30px; }
+  .gg-info { font-size: 10px; line-height: 13px; }
+  .gg-bouton { height: 24px; margin-top: 6px; font-size: 11px; border-radius: 6px; }
+  .gg-fav .vote .ico { width: 16px; height: 16px; }
 }
