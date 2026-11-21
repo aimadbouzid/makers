@@ -2407,3 +2407,44 @@ input[type=text], input[type=email], input[type=password], input[type=url], inpu
   .tc-ico { width: 30px; height: 30px; margin-bottom: 8px; }
   .auth-carte { padding: 24px 18px 20px; border-radius: 22px; }
 }
+
+/* La barre du bas, deuxième passage.
+   - Une seule pastille, qui glisse d'un onglet à l'autre (public/app.js,
+     placeIndicateur) : on voit d'où l'on vient et où l'on va.
+   - Une matière de verre plus franche : plus transparente, plus saturée, avec un
+     reflet en haut, comme une plaque de verre qui prend la lumière.
+   - Un badge rouge sur « Moi » quand quelque chose attend. */
+@media (max-width: 700px) {
+  .barre-bas .indicateur {
+    position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none;
+    border-radius: 16px; opacity: 0;
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    box-shadow: inset 0 0 0 .5px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+  .barre-bas .indicateur.visible { opacity: 1; }
+  .barre-bas .indicateur.anime { transition: transform .45s var(--ease), width .45s var(--ease), height .45s var(--ease), opacity .2s var(--ease-doux); }
+  .barre-bas a { position: relative; z-index: 1; }
+  /* La pastille propre à chaque onglet ne sert plus que si l'indicateur manque. */
+  .barre-bas:has(.indicateur.visible) a.on:not(.appoint) .p::before { opacity: 0; }
+
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    .barre-bas {
+      background: color-mix(in srgb, var(--surface) 56%, transparent);
+      -webkit-backdrop-filter: blur(24px) saturate(210%) brightness(1.04);
+      backdrop-filter: blur(24px) saturate(210%) brightness(1.04);
+    }
+  }
+  .barre-bas::before {
+    content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; border-radius: inherit;
+    background: linear-gradient(180deg, rgb(255 255 255 / .5), rgb(255 255 255 / 0) 46%);
+    opacity: .7;
+  }
+
+  .barre-bas .pastille-compte {
+    position: absolute; top: -3px; right: 7px; min-width: 17px; height: 17px; padding: 0 5px;
+    border-radius: 999px; background: #ff3b30; color: #fff;
+    font: 700 11px/17px var(--font); text-align: center; font-variant-numeric: tabular-nums;
+    box-shadow: 0 0 0 2px var(--surface);
+  }
+  @media (prefers-reduced-motion: reduce) { .barre-bas .indicateur.anime { transition: opacity .2s; } }
+}

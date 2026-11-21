@@ -571,7 +571,8 @@ function barreBasHTML(path) {
   const enBoutique = path === '/' && new URLSearchParams(location.hash.split('?')[1] || '').get('prix') === 'payant';
   // Un onglet : une pastille autour de l'icône (elle se colore sur la page en cours),
   // et son nom dessous. `aria-current` dit aux lecteurs d'écran où l'on est.
-  const onglet = (href, icone, nom, actif, classe = '') => html`<a href="${href}" class="${classe}${actif ? ' on' : ''}"${actif ? html` aria-current="page"` : ''}><span class="p">${icone}</span><span class="l">${nom}</span></a>`;
+  // Un compte (les notifications non lues) se pose en badge rouge sur l'icône.
+  const onglet = (href, icone, nom, actif, classe = '', compte = 0) => html`<a href="${href}" class="${classe}${actif ? ' on' : ''}"${actif ? html` aria-current="page"` : ''}${compte ? html` aria-label="${nom}, ${compte} nouveauté${compte > 1 ? 's' : ''}"` : ''}><span class="p">${icone}${compte ? html`<span class="pastille-compte" aria-hidden="true">${compte > 9 ? '9+' : compte}</span>` : ''}</span><span class="l">${nom}</span></a>`;
   return html`
     ${onglet('#/', ICON.maison, 'Biblio', path === '/' && !enBoutique)}
     ${onglet('#/?prix=payant', ICON.etiquette, 'Boutique', enBoutique)}
@@ -582,7 +583,50 @@ function barreBasHTML(path) {
       // confond jamais avec l'onglet de la page où l'on se trouve.
       : onglet(S.me ? '#/partager' : '#/rejoindre', ICON.plus, 'New drop', path === '/partager', 'appoint')}
     ${S.stats?.gems ? onglet('#/top', ICON.cup, 'Top', path === '/top') : ''}
-    ${STATIQUE ? '' : onglet(S.me ? '#/mes-partages' : '#/connexion', ICON.perso, S.me ? 'Moi' : 'Connexion', path === '/mes-partages' || path === '/connexion')}`;
+    ${STATIQUE ? '' : onglet(S.me ? '#/mes-partages' : '#/connexion', ICON.perso, S.me ? 'Moi' : 'Connexion', path === '/mes-partages' || path === '/connexion', '', S.me ? S.nonLues : 0)}`;
+}
+
+// Une seule pastille pour toute la barre, qui glisse d'un onglet à l'autre quand on
+// change de page — au lieu de disparaître ici et d'apparaître là. Elle part de sa
+// dernière position connue (la barre est redessinée à chaque page) et rejoint la
+// nouvelle. Quand la barre se réduit ou change de taille, elle suit sans glisser.
+let indicateurAvant = null;
+function placeIndicateur(b, { glisse = true } = {}) {
+  if (!b) return;
+  let ind = b.querySelector('.indicateur');
+  if (!ind) {
+    ind = document.createElement('span');
+    ind.className = 'indicateur';
+    ind.setAttribute('aria-hidden', 'true');
+    b.prepend(ind);
+  }
+  const cible = b.querySelector('a.on:not(.appoint) .p');
+  const rb = b.getBoundingClientRect();
+  if (!cible || !rb.width) { ind.classList.remove('visible'); return; }
+  const r = cible.getBoundingClientRect();
+  const pos = { x: r.left - rb.left, y: r.top - rb.top, w: r.width, h: r.height };
+  const pose = p => {
+    ind.style.transform = `translate(${p.x}px, ${p.y}px)`;
+    ind.style.width = p.w + 'px';
+    ind.style.height = p.h + 'px';
+  };
+  ind.classList.remove('anime');
+  if (glisse && indicateurAvant && ind.classList.contains('visible') === false) {
+    pose(indicateurAvant);
+    ind.classList.add('visible');
+    ind.getBoundingClientRect(); // le point de départ est posé avant le mouvement
+  }
+  if (glisse && indicateurAvant) ind.classList.add('anime');
+  pose(pos);
+  ind.classList.add('visible');
+  indicateurAvant = pos;
+}
+{
+  const b = document.getElementById('barre-bas');
+  if (b && 'ResizeObserver' in window) new ResizeObserver(() => placeIndicateur(b, { glisse: false })).observe(b);
+  // Un toucher se sent, là où le téléphone le permet (Android) : une vibration de
+  // quelques millisecondes, comme les onglets d'une application.
+  b?.addEventListener('click', e => { if (e.target.closest('a')) navigator.vibrate?.(8); });
 }
 
 // Comme sur iOS 26, la barre du téléphone se réduit à ses icônes quand on descend dans
@@ -612,7 +656,11 @@ async function rail() {
   const dessine = () => {
     const r = $('#rail'), b = $('#barre-bas');
     if (r) r.innerHTML = railHTML(S.stats, path, q).s;
-    if (b) { b.innerHTML = barreBasHTML(path).s; b.classList.remove('compacte'); }
+    if (b) {
+      b.innerHTML = barreBasHTML(path).s;
+      b.classList.remove('compacte');
+      placeIndicateur(b);
+    }
   };
   dessine();
   if (S.stats) return;
