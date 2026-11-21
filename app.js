@@ -984,8 +984,12 @@ function apercu(p) {
   if (p.treeCount) return `${p.treeCount} fichier${p.treeCount > 1 ? 's' : ''}`;
   if (p.poll) return `${p.poll.total} vote${p.poll.total > 1 ? 's' : ''}`;
   if (p.file) return p.file.ext.toUpperCase();
+  if (p.has?.fichier) return p.has.fichier.ext.toUpperCase();
   if (p.url) return domain(p.url);
-  if (p.images?.length) return `${p.images.length} photo${p.images.length > 1 ? 's' : ''}`;
+  // La couverture d'un produit en vente n'est pas une « photo » qu'on reçoit : la
+  // compter faisait écrire « 1 photo » sous un pack de LUT.
+  const photos = (p.images || []).filter(i => !i.couverture).length;
+  if (photos) return `${photos} photo${photos > 1 ? 's' : ''}`;
   return '';
 }
 
@@ -1225,15 +1229,19 @@ function reponsesView(p, liste) {
     </section>`;
 }
 
+// Ce qu'un acheteur reçoit, dit avec ses mots à lui : « le mode d'emploi », pas « un
+// contenu à copier » ; et la couverture, déjà visible, n'est pas comptée comme une photo.
+const RECU_TEXTE = { prompt: 'le prompt complet', skill: 'le skill', agent: 'la consigne de l’agent', mcp: 'la configuration', idee: 'l’idée en détail', montage: 'les étapes' };
 function lockedBox(p) {
   const bits = [];
   if (p.has?.tree) bits.push(`un dossier de ${p.has.tree} fichier${p.has.tree > 1 ? 's' : ''}`);
-  if (p.has?.content) bits.push('un contenu à copier');
+  if (p.has?.file) bits.push(p.has.fichier ? `le fichier ${p.has.fichier.ext.toUpperCase()}` : 'un fichier');
+  if (p.has?.content) bits.push(RECU_TEXTE[p.type] || 'le mode d’emploi');
   if (p.has?.poll) bits.push('un sondage');
-  if (p.has?.file) bits.push('un fichier');
   if (p.has?.url) bits.push('un lien');
-  if (p.has?.images) bits.push(`${p.has.images} photo${p.has.images > 1 ? 's' : ''}`);
-  const dedans = bits.length ? bits.join(', ') : 'du contenu';
+  const photos = (p.has?.images || 0) - (p.images?.[0]?.couverture ? 1 : 0);
+  if (photos > 0) bits.push(`${photos} photo${photos > 1 ? 's' : ''} en grand`);
+  const dedans = !bits.length ? 'du contenu' : bits.length === 1 ? bits[0] : bits.slice(0, -1).join(', ') + ' et ' + bits.at(-1);
   // Deux verrous différents, deux explications différentes : un abonnement d'un côté,
   // un achat de l'autre. Les confondre ferait croire qu'on paie deux fois.
   if (p.prix) {
@@ -1245,7 +1253,7 @@ function lockedBox(p) {
           <span class="achat-prix">${prixLisible(p.prix)}<small>${p.devise || 'DA'}</small></span>
           <span class="achat-etat">${ICON.lock}Contenu fermé</span>
         </div>
-        <p>Ce drop contient ${dedans}. Il s’ouvre une fois l’achat confirmé ; le titre, la description et les tags restent publics.</p>
+        <p>Après l’achat, tu reçois ${dedans}. ${p.images?.[0]?.couverture ? 'L’aperçu, la description et le prix restent visibles par tous.' : 'La description et le prix restent visibles par tous.'}</p>
         ${p.has?.chemins?.length ? html`<div class="recu"><b>Ce que tu reçois</b>
           <ul class="recu-liste">${p.has.chemins.map(c => html`<li>${ICON.doc}<span class="mono">${c}</span></li>`)}</ul></div>`
           : p.has?.fichier ? html`<div class="recu"><b>Ce que tu reçois</b>
@@ -1280,7 +1288,7 @@ function postBody(p, { howto = false } = {}) {
     ${p.locked ? lockedBox(p) : ''}
     ${pollView(p)}
     ${treeView(p)}
-    ${p.images?.length ? html`<div class="gallery">${p.images.map(i => html`<a href="${i.src}" target="_blank" rel="noopener"><img src="${i.src}" width="${i.w}" height="${i.h}" alt="Photo du drop : ${p.title}" loading="lazy"></a>`)}</div>` : ''}
+    ${p.images?.some(i => !i.couverture) ? html`<div class="gallery">${p.images.filter(i => !i.couverture).map(i => html`<a href="${i.src}" target="_blank" rel="noopener"><img src="${i.src}" width="${i.w}" height="${i.h}" alt="Photo du drop : ${p.title}" loading="lazy"></a>`)}</div>` : ''}
     ${p.imagesProcessing ? html`<div class="notice">${p.imagesProcessing} photo${p.imagesProcessing > 1 ? 's' : ''} en cours de compression. Recharge la page dans quelques secondes.</div>` : ''}
     ${p.content ? html`
       ${howto && p.type === 'skill' ? etapesSkill(slugDe(p.title), false) : ''}
@@ -1384,15 +1392,17 @@ async function feedView(q) {
 
       <div class="toolbar">
         <h1>${title}${combien ? html`<small>${combien} ${prix === 'payant' ? (combien > 1 ? 'produits' : 'produit') : (combien > 1 ? 'drops' : 'drop')}</small>` : ''}</h1>
-        <div class="tabs">
+        <!-- Tant que personne n'a donné de gemme ni de note, « Top » et « Mieux notés »
+             affichent l'ordre des nouveautés sous un nom qui promet un classement. -->
+        ${stats?.gems || stats?.notes || sort !== 'top' ? html`<div class="tabs">
           ${Object.entries(SORTS).map(([k, label]) => html`<a href="${link({ s: k })}" class="${sort === k ? 'on' : ''}">${label}</a>`)}
-        </div>
+        </div>` : ''}
         <div class="tabs vues" role="group" aria-label="Affichage">
           ${Object.entries(VUES).map(([k, label]) => html`<button type="button" data-action="vue" data-vue="${k}"
             class="${vueFil === k ? 'on' : ''}" aria-pressed="${String(vueFil === k)}">${ICON[k === 'liste' ? 'lignes' : 'grille']}${label}</button>`)}
         </div>
       </div>
-      ${prix === 'payant' && !query && !tag ? html`<p class="about-type">${ICON.etiquette} Des produits digitaux fabriqués par des membres : skills, prompts, agents, guides. Le titre, la description et le prix se lisent librement ; le contenu s’ouvre une fois acheté. Chaque produit passe la même relecture que le reste avant d’être mis en vente.</p>`
+      ${prix === 'payant' && !query && !tag ? html`<p class="about-type">${ICON.etiquette} Des fichiers prêts à servir : templates, design, code, formations, audio, photos et vidéos, outils pour l’IA. L’aperçu, la description et le prix se voient librement ; le fichier s’ouvre une fois l’achat confirmé. Chaque produit est relu avant d’être mis en vente.</p>`
         : prix === 'gratuit' && !query && !tag ? html`<p class="about-type">${ICON.cadeau} Tout ce qui est offert : à lire, à copier, à installer, sans rien payer et sans créer de compte.</p>`
         : prem ? html`<p class="about-type">${ICON.lock} Drops réservés. Tu vois le sujet de chacun ; le contenu demande l’accès à l’espace privé.</p>`
         : mod ? html`<p class="about-type">${ICON.etincelle} Ce que des membres ont essayé sur ${nomModele}, et qui a marché chez eux. On range les familles, pas les versions : la version exacte est écrite à côté de chaque drop.</p>`
@@ -1603,7 +1613,15 @@ async function postView(id) {
   render(html`
     <div class="narrow post k-${p.type}">
       <a class="back" href="#/">← Tous les drops</a>
-      ${p.type !== 'lien' ? html`<div class="pack-hero k-${p.type}" aria-hidden="true">${boite(p)}</div>` : ''}
+      ${p.images?.[0]?.couverture
+        // Un produit en vente montre son aperçu à plat et en grand, avant tout le reste :
+        // c'est ce que l'acheteur veut voir. Collé sur la face d'une boîte, il devenait
+        // illisible, et la photo lisible était rangée sous la carte d'achat.
+        ? html`<figure class="vitrine-vente${p.images[0].vitrine ? '' : ' petite'}">
+            <a href="${p.images[0].src}" target="_blank" rel="noopener"><img src="${p.images[0].src}" width="${p.images[0].w}" height="${p.images[0].h}" alt="Aperçu : ${p.title}"></a>
+            <figcaption>Aperçu${p.images[0].vitrine ? ' · touche pour l’agrandir' : ''}</figcaption>
+          </figure>`
+        : p.type !== 'lien' ? html`<div class="pack-hero k-${p.type}" aria-hidden="true">${boite(p)}</div>` : ''}
       ${p.status === 'pending' ? html`<div class="notice">En attente de validation. Toi seul(e) vois ce drop pour l’instant.</div>` : ''}
       ${p.status === 'rejected' ? html`<div class="notice bad">Refusé${p.rejectReason ? ' : ' + p.rejectReason : '.'}</div>` : ''}
       <div>${kind(p.type)}${p.premium ? html` <span class="pin lock">${ICON.lock}espace privé</span>` : ''}${p.promo ? html` ${sponsoBadge(p)}` : ''}</div>

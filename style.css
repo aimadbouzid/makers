@@ -2462,3 +2462,12 @@ input[type=text], input[type=email], input[type=password], input[type=url], inpu
   }
   @media (prefers-reduced-motion: reduce) { .barre-bas .indicateur.anime { transition: opacity .2s; } }
 }
+
+/* --- L'aperçu d'un produit en vente -------------------------------------------
+   À plat, en grand, en haut de la fiche : c'est ce que l'acheteur vient voir. Une
+   vignette de 480 px (photo d'un membre) n'est pas agrandie au-delà de sa taille. */
+.vitrine-vente { margin: 6px 0 18px; }
+.vitrine-vente a { display: block; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); background: var(--surface-2); box-shadow: var(--ombre-2); }
+.vitrine-vente img { display: block; width: 100%; height: auto; }
+.vitrine-vente.petite a { max-width: 480px; }
+.vitrine-vente figcaption { margin-top: 8px; font-size: 13px; color: var(--muted); }
