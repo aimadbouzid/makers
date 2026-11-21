@@ -1744,7 +1744,7 @@ function ficheProduit(p) {
     ${p.status === 'rejected' ? html`<div class="notice bad">Refusé${p.rejectReason ? ' : ' + p.rejectReason : '.'}</div>` : ''}
     <div class="gg-fiche">
       <div class="gg-fiche-image">
-        ${a ? html`<a href="${a.src}" target="_blank" rel="noopener"><img src="${a.src}" width="1000" height="1000" alt="${p.title}"></a>`
+        ${a ? html`<a href="${a.src}" target="_blank" rel="noopener"><img src="${a.thumb}" width="400" height="400" alt="${p.title}"></a>`
           : i ? html`<a href="${i.src}" target="_blank" rel="noopener"><img src="${i.src}" alt="${p.title}" class="contenue"></a>`
             : html`<div class="pack-hero k-${p.type}" aria-hidden="true">${boite(p)}</div>`}
       </div>
