@@ -2935,3 +2935,22 @@ body.rail-ouvert .rail { transform: none; }
   .gg-achat-carte .gg-acheter { height: 34px; font-size: 13px; border-radius: 9px; max-width: 140px; }
   .gg-apercu { max-width: none; }
 }
+
+/* --- Des cases plus petites (22 novembre 2026) ---------------------------------------------
+   Huit affiches par ligne sur un grand écran (environ 160 px), puis de moins en moins
+   jusqu'à trois sur téléphone. */
+.gg-grille { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 26px 16px; }
+@media (max-width: 1280px) { .gg-grille { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
+@media (max-width: 1100px) { .gg-grille { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .gg-grille { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .gg-grille { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px 10px; } }
+@media (max-width: 600px) { .gg-grille { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 8px; } }
+@media (min-width: 601px) {
+  .gg-image { border-radius: 16px; }
+  .gg-cat { font-size: 10.5px; }
+  .gg-prix { font-size: 15px; line-height: 20px; }
+  .gg-nom { font-size: 12px; line-height: 16px; min-height: 32px; }
+  .gg-info { font-size: 11px; }
+  .gg-bouton { height: 26px; font-size: 12px; margin-top: 8px; }
+  .gg-fav .vote .ico { width: 20px; height: 20px; }
+}
