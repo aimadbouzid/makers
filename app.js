@@ -233,7 +233,7 @@ const memo = new Map();
 // parfois trois secondes à arriver, c'est la différence entre une page blanche et une
 // page qui est déjà là. Rien de privé n'y est gardé (ce sont les drops publics, vus
 // par ce visiteur), et la copie est effacée à la moindre action et à la déconnexion.
-const FIL_ACCUEIL = 'fil3:t=&tag=&q=&s=top&p=&m=&prix=';
+const FIL_ACCUEIL = 'fil4:t=&tag=&q=&s=top&p=&m=&prix=';
 const CLE_FIL = 'mk-fil';
 const GARDE_MS = 7 * 86400000;
 // L'amorce : les données de l'accueil que le serveur a écrites dans la page.
@@ -313,8 +313,12 @@ async function apiStatique(chemin, method) {
   if (base === '/vitrine') {
     const ouv = posts.filter(p => !p.premium && FAMILLES_PRODUIT.has(p.type));
     const ordre = (a, b) => b.points - a.points || (b.approvedAt || 0) - (a.approvedAt || 0);
-    const enTete = new Set(melangeVitrine(ouv.slice().sort(ordre)).slice(0, 16).map(p => p.id));
-    return { rayons: RAYONS_VITRINE.map(r => {
+    const enTete = new Set(melangeVitrine(ouv.slice().sort(ordre)).slice(0, 8).map(p => p.id));
+    const iaOuv = posts.filter(p => !p.premium && !p.pinned);
+    return { ia: RAYONS_IA_VITRINE.map(r => {
+      const tous = iaOuv.filter(r.garde).sort(ordre);
+      return { cle: r.cle, titre: r.titre, sous: r.sous, lien: r.lien, total: tous.length, posts: tous.slice(0, 10).map(pourListe) };
+    }).filter(r => r.total >= 3), rayons: RAYONS_VITRINE.map(r => {
       const tous = ouv.filter(r.garde).sort((a, b) => (enTete.has(a.id) - enTete.has(b.id)) || ordre(a, b));
       return { cle: r.cle, titre: r.titre, lien: r.lien, total: tous.length, posts: tous.slice(0, 12).map(pourListe) };
     }).filter(r => r.total >= 3) };
@@ -1198,6 +1202,10 @@ function ligne(p, rang = null) {
 // La rangée des catégories, sous la barre : une pastille colorée et un nom, comme sur
 // les grandes boutiques de produits digitaux.
 const CATEGORIES = [
+  ['#/?t=skill', 'dossier', 'Skills Claude', 'k-skill', (p, t) => t === 'skill'],
+  ['#/?t=prompt', 'code', 'Prompts', 'k-prompt', (p, t) => t === 'prompt'],
+  ['#/?t=lien', 'out', 'Dépôts GitHub', 'k-lien', (p, t) => t === 'lien'],
+  ['#/?t=idee', 'ampoule', 'Idées', 'k-idee', (p, t) => t === 'idee'],
   ['#/?prix=payant', 'etiquette', 'À vendre', 'k-vente', p => p === 'payant'],
   ['#/?prix=gratuit', 'cadeau', 'Offerts', 'k-offert', p => p === 'gratuit'],
   ['#/?t=template', 'grille', 'Templates', 'k-template', (p, t) => t === 'template'],
@@ -1206,8 +1214,6 @@ const CATEGORIES = [
   ['#/?t=formation', 'chapeau', 'Formations', 'k-formation', (p, t) => t === 'formation'],
   ['#/?t=audio', 'note', 'Audio', 'k-audio', (p, t) => t === 'audio'],
   ['#/?t=media', 'photo', 'Photos et vidéos', 'k-media', (p, t) => t === 'media'],
-  ['#/?t=skill', 'dossier', 'Skills Claude', 'k-skill', (p, t) => t === 'skill'],
-  ['#/?t=prompt', 'code', 'Prompts', 'k-prompt', (p, t) => t === 'prompt'],
 ];
 function rangeeCategories(t = '', prix = '') {
   return html`<nav class="gg-cats" aria-label="Catégories">${CATEGORIES.map(([href, ico, nom, k, actif]) =>
@@ -1216,6 +1222,8 @@ function rangeeCategories(t = '', prix = '') {
 // Les grandes tuiles de l'accueil (images dans public/img/tuiles, fabriquées par
 // scripts/affiches-fabriquer.js). Le nom est du vrai texte posé par-dessus.
 const TUILES = [
+  ['skills', 'Skills Claude', '#/?t=skill'], ['prompts', 'Prompts', '#/?t=prompt'],
+  ['depots', 'Dépôts GitHub', '#/?t=lien'], ['idees', 'Idées pour Claude', '#/?t=idee'],
   ['capcut', 'CapCut', '#/?q=capcut'], ['templates', 'Templates', '#/?t=template'], ['notion', 'Notion', '#/?q=notion'],
   ['excel', 'Excel', '#/?q=excel'], ['design', 'Design', '#/?t=design'], ['lightroom', 'Lightroom', '#/?q=lightroom'],
   ['cv', 'CV et lettres', '#/?q=cv'], ['code', 'Code et outils', '#/?t=code'], ['formations', 'Formations', '#/?t=formation'],
@@ -1250,6 +1258,14 @@ const RAYONS_VITRINE = [
   { cle: 'code', titre: 'Code et outils', lien: '#/?t=code', garde: p => p.type === 'code' },
   { cle: 'formation', titre: 'Formations et guides', lien: '#/?t=formation', garde: p => p.type === 'formation' || p.type === 'pdf' },
 ];
+// Les rayons IA (même liste que RAYONS_IA dans src/posts.js, pour la copie publiée).
+const RAYONS_IA_VITRINE = [
+  { cle: 'skill', titre: 'Skills pour Claude', sous: 'Un dossier à installer, et Claude sait faire une chose de plus.', lien: '#/?t=skill', garde: p => p.type === 'skill' },
+  { cle: 'prompt', titre: 'Prompts qui marchent', sous: 'À copier tels quels : testés, réglés, prêts.', lien: '#/?t=prompt', garde: p => p.type === 'prompt' },
+  { cle: 'lien', titre: 'Dépôts et ressources', sous: 'Le meilleur de GitHub pour Claude, trié pour toi.', lien: '#/?t=lien', garde: p => p.type === 'lien' },
+  { cle: 'idee', titre: 'Idées à confier à Claude', sous: 'Le travail qui t’ennuie, et comment le lui donner.', lien: '#/?t=idee', garde: p => p.type === 'idee' || p.type === 'montage' },
+  { cle: 'agent', titre: 'Agents et MCP', sous: 'Pour aller plus loin.', lien: '#/?t=agent', garde: p => p.type === 'agent' || p.type === 'mcp' },
+];
 // Un rayon : son titre, « Tout voir », et une rangée d'affiches qui défile sur le côté.
 function rayonVitrine(r) {
   return html`
@@ -1261,8 +1277,9 @@ function rayonVitrine(r) {
       <div class="gg-rail">${r.posts.map(p => carteProduit(p))}</div>
     </section>`;
 }
-// Le rayon Claude : un bloc à part, avec sa voix.
-function rayonClaude(listeIA) {
+// Le cœur de l'accueil : tout ce qui sert à travailler avec Claude, dans un bloc à part, avec
+// sa voix — une ouverture, puis un rayon par famille (skills, prompts, dépôts, idées).
+function rayonClaude(rayonsIA) {
   return html`
     <section class="gg-claude">
       <div class="gg-claude-tete">
@@ -1270,11 +1287,17 @@ function rayonClaude(listeIA) {
         <h2>Pour travailler avec Claude</h2>
         <p class="gg-claude-sous">Des skills qui s’installent en une minute, des prompts qui marchent du premier coup, et des idées pour lui confier le travail qui t’ennuie. Toi, tu gardes le plaisir.</p>
         <nav class="gg-claude-puces" aria-label="Rubriques pour Claude">
-          <a href="#/?t=skill">Skills</a><a href="#/?t=prompt">Prompts</a><a href="#/?t=idee">Idées</a><a href="#/?t=lien">Liens et dépôts</a>
+          ${rayonsIA.map(r => html`<a href="${r.lien}">${r.titre}<span>${r.total}</span></a>`)}
         </nav>
       </div>
-      <div class="gg-claude-rail">${listeIA.posts.filter(p => p.type !== 'info').map(p => carte(p))}</div>
-      <a class="gg-claude-tout" href="#/?t=skill">Voir tout ce qui marche avec Claude${ICON.suivant}</a>
+      ${rayonsIA.map(r => html`
+        <div class="gg-claude-rayon">
+          <div class="gg-claude-rayon-tete">
+            <div><h3>${r.titre}</h3><p>${r.sous}</p></div>
+            <a class="gg-claude-tout" href="${r.lien}">Tout voir${ICON.suivant}</a>
+          </div>
+          <div class="gg-claude-rail">${r.posts.map(p => carte(p))}</div>
+        </div>`)}
     </section>`;
 }
 
@@ -1488,16 +1511,17 @@ async function feedView(q) {
   const mod = q.get('m') || '';
   const prix = ['payant', 'gratuit'].includes(q.get('prix')) ? q.get('prix') : '';
   const params = new URLSearchParams({ t, tag, q: query, s: sort, p: prem, m: mod, prix });
-  const cle = 'fil3:' + params;
+  const cle = 'fil4:' + params;
   const vu = duCache(cle);
   // Deux rayons, comme dans une boutique : les produits (grande affiche, prix, bouton) et,
   // à part, ce qui sert à travailler avec l'IA (skills, prompts…), qui garde ses cartes.
   // Une catégorie précise n'a qu'un rayon.
-  const unRayon = t ? (FAMILLES_PRODUIT.has(t) ? 'produits' : 'ia') : '';
+  const r = q.get('r') === 'produits' ? 'produits' : '';
+  const unRayon = t ? (FAMILLES_PRODUIT.has(t) ? 'produits' : 'ia') : r;
   // Sur l'accueil, « Meilleures ventes » montre deux rangées, puis viennent les rayons.
-  const surAccueil = !t && !tag && !query && !prem && !mod && !prix;
+  const surAccueil = !t && !tag && !query && !prem && !mod && !prix && !r;
   const frais = Promise.all([
-    api('/posts?' + params + '&rayon=' + (unRayon || 'produits') + (surAccueil ? '&melange=1&limit=16' : '')),
+    api('/posts?' + params + '&rayon=' + (unRayon || 'produits') + (surAccueil ? '&melange=1&limit=8' : '')),
     api('/stats'), api('/top?periode=semaine'), api('/collections?limit=3'),
     unRayon ? Promise.resolve(null) : api('/posts?' + params + '&rayon=ia&limit=8'),
     surAccueil ? api('/vitrine') : Promise.resolve(null),
@@ -1510,7 +1534,7 @@ async function feedView(q) {
   const { posts, total: combien, suite } = liste;
   const link = (over) => {
     const n = new URLSearchParams();
-    const merged = { t, tag, q: query, s: sort, p: prem, m: mod, prix, ...over };
+    const merged = { t, tag, q: query, s: sort, p: prem, m: mod, prix, r, ...over };
     for (const [k, v] of Object.entries(merged)) if (v && !(k === 's' && v === 'top')) n.set(k, v);
     const s = n.toString();
     return '#/' + (s ? '?' + s : '');
@@ -1522,17 +1546,18 @@ async function feedView(q) {
         : prix === 'gratuit' ? (t ? `${TYPES[t].plural} offerts` : 'Offert')
           : t && mod ? `${TYPES[t].plural} essayés sur ${nomModele}`
             : mod ? `Essayé sur ${nomModele}`
-              : t ? TYPES[t].plural : 'Tous les drops';
+              : t ? TYPES[t].plural : r ? 'Produits digitaux' : 'Tous les drops';
   // Le rail affiche les mêmes compteurs sur toutes les pages : il les prend ici
   // plutôt que de redemander la même chose au serveur.
   S.stats = stats;
   rail();
-  const nu = !t && !tag && !query && !prem && !mod && !prix;
+  const nu = !t && !tag && !query && !prem && !mod && !prix && !r;
 
   render(html`
     <div>
       ${rangeeCategories(t, prix)}
       ${nu ? tuilesAccueil() : ''}
+      ${nu && vitrine?.ia?.length ? rayonClaude(vitrine.ia) : ''}
 
       <!-- L'étagère : la sélection de la semaine, posée à l'entrée. Dans une
            bibliothèque, la table des nouveautés est devant la porte — pas dans
@@ -1559,7 +1584,7 @@ async function feedView(q) {
       ${posts.length || !listeIA?.posts?.length ? html`
       <section class="gg-section">
         <div class="gg-tete">
-          <h1 class="gg-titre">${nu ? 'Meilleures ventes' : title}${combien ? html`<small>${combien}</small>` : ''}</h1>
+          <h1 class="gg-titre">${nu ? 'Produits digitaux · meilleures ventes' : title}${combien ? html`<small>${combien}</small>` : ''}</h1>
           <details class="gg-choix">
             <summary>${prix === 'payant' ? 'À vendre' : prix === 'gratuit' ? 'Offerts' : 'Tous les produits'}${ICON.chevron}</summary>
             <div class="gg-choix-menu">
@@ -1600,9 +1625,8 @@ async function feedView(q) {
         ${suite ? html`<div class="plus"><button class="btn" data-action="plus" data-cible="liste-principale" data-suite="${suite}" data-params="${params}&rayon=${unRayon || 'produits'}${nu ? '&melange=1' : ''}">Voir plus<span class="muted"> · ${combien - posts.length} restants</span></button></div>` : ''}
       </section>` : ''}
 
-      ${(vitrine?.rayons || []).slice(0, 4).map(rayonVitrine)}
-      ${nu && listeIA?.posts?.length ? rayonClaude(listeIA) : ''}
-      ${(vitrine?.rayons || []).slice(4).map(rayonVitrine)}
+      ${(vitrine?.rayons || []).slice(0, 2).map(rayonVitrine)}
+      ${nu ? html`<div class="gg-tout-produits"><a class="btn" href="#/?r=produits">Voir les ${stats?.byType ? Object.entries(stats.byType).filter(([k]) => FAMILLES_PRODUIT.has(k)).reduce((a, [, n]) => a + n, 0) : ''} produits digitaux${ICON.suivant}</a></div>` : ''}
 
       <!-- Le rayon de l'IA : les skills, prompts, agents et le reste gardent leurs cartes. -->
       ${!nu && listeIA?.posts?.length ? html`
@@ -3374,7 +3398,7 @@ window.makers = {
 // sur la page d'accueil, ses données partent en même temps que /api/me. C'est un
 // aller-retour entier de gagné avant le premier affichage.
 if ((location.hash || '#/') === '#/') {
-  prechauffer(['/posts?t=&tag=&q=&s=top&p=&m=&prix=&rayon=produits&melange=1&limit=16', '/stats', '/top?periode=semaine', '/collections?limit=3', '/posts?t=&tag=&q=&s=top&p=&m=&prix=&rayon=ia&limit=8', '/vitrine']);
+  prechauffer(['/posts?t=&tag=&q=&s=top&p=&m=&prix=&rayon=produits&melange=1&limit=8', '/stats', '/top?periode=semaine', '/collections?limit=3', '/posts?t=&tag=&q=&s=top&p=&m=&prix=&rayon=ia&limit=8', '/vitrine']);
 }
 // Les pages publiques s'affichent sans attendre de savoir qui est connecté : /api/me
 // part en même temps, et la page n'est redessinée que si sa réponse change quelque

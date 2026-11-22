@@ -3028,3 +3028,28 @@ body.rail-ouvert .rail { transform: none; }
 img.img-absente { visibility: hidden; }
 .gg-apercu:has(img.img-absente) { display: none; }
 .gg-fiche-image a:has(img.img-absente), .accueil-drop-boite:has(img.img-absente) { background: #eff2f6; }
+
+/* === L'accueil d'abord pour Claude (22 novembre 2026) ======================================
+   Le bloc Claude ouvre la page et porte plusieurs rayons (skills, prompts, dépôts, idées) :
+   environ 70 % de l'accueil. Les produits digitaux suivent, en plus court. */
+.gg-claude { margin-top: 24px; padding-bottom: 28px; }
+.gg-claude-puces a { display: inline-flex; align-items: center; gap: 6px; }
+.gg-claude-puces a span { font-size: 12px; opacity: .65; font-variant-numeric: tabular-nums; }
+.gg-claude-rayon { position: relative; z-index: 1; margin-top: 26px; padding-top: 22px; border-top: 1px solid rgb(255 255 255 / .1); }
+.gg-claude-rayon:first-of-type { border-top: 0; padding-top: 4px; }
+.gg-claude-rayon-tete { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.gg-claude-rayon-tete h3 { margin: 0; font: 700 19px/26px var(--font); letter-spacing: -.01em; color: #fff; }
+.gg-claude-rayon-tete p { margin: 2px 0 0; font: 400 14px/20px var(--font); color: #cbbdb3; }
+.gg-claude-rayon-tete .gg-claude-tout { margin: 0; flex: none; }
+.gg-tout-produits { display: flex; justify-content: center; margin: 30px 0 10px; }
+.gg-tout-produits .btn { display: inline-flex; align-items: center; gap: 6px; height: 42px; padding: 0 20px; border-radius: 12px; font: 600 14px var(--font); }
+.gg-tout-produits .btn .ico { width: 14px; height: 14px; }
+@media (max-width: 600px) {
+  .gg-claude { margin-top: 18px; }
+  .gg-claude-rayon { margin-top: 20px; padding-top: 18px; }
+  .gg-claude-rayon-tete h3 { font-size: 16px; line-height: 22px; }
+  .gg-claude-rayon-tete p { font-size: 12.5px; line-height: 17px; }
+}
+/* Cartes IA un peu plus étroites : on en voit davantage sur la largeur. */
+.gg-claude-rail { grid-auto-columns: 230px; }
+@media (max-width: 600px) { .gg-claude-rail { grid-auto-columns: 58%; gap: 10px; } }
