@@ -3014,3 +3014,10 @@ body.rail-ouvert .rail { transform: none; }
 .accueil-drop-boite.affiche img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .4s var(--ease); }
 .accueil-drop:hover .accueil-drop-boite.affiche img { transform: scale(1.04); }
 @media (max-width: 700px) { .accueil-drop-boite.affiche { height: auto; margin: 8px 8px 6px; border-radius: 12px; } }
+
+/* --- Boutons d'achat et de téléchargement en violet (22 novembre 2026) ---------------------
+   Le violet de la charte du site (celui de la famille Design), à la place du vert.
+   Blanc sur ce violet : contraste de 5,7 pour 1, lisible. */
+:root { --gg-vert: #7c3aed; --gg-vert-fort: #6d28d9; }
+.gg-bouton, .gg-acheter { box-shadow: 0 6px 16px -8px rgb(124 58 237 / .55); }
+.gg-acheter:disabled { box-shadow: none; }
