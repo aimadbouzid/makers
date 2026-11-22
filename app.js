@@ -2910,17 +2910,26 @@ async function refreshMe() {
   } catch { /* hors ligne : on reste visiteur */ }
 }
 
-// Une image qui n'arrive pas (ligne qui perd des paquets) est redemandée, jusqu'à trois
-// fois, en laissant un peu plus de temps à chaque essai, au lieu de rester un carré vide.
+// Une image qui n'arrive pas (ligne qui perd des paquets) est redemandée, jusqu'à cinq
+// fois, en laissant de plus en plus de temps entre les essais. Si elle n'arrive toujours
+// pas, elle s'efface proprement (un carré gris, jamais l'icône d'image cassée ni son texte
+// de remplacement) et elle est redemandée dès que la connexion revient.
+const ATTENTES_IMAGE = [1000, 2000, 4000, 7000, 10000];
+const redemande = i => { const src = i.getAttribute('src'); i.removeAttribute('src'); i.setAttribute('src', src); };
 document.addEventListener('error', (e) => {
   const i = e.target;
   if (!(i instanceof HTMLImageElement)) return;
   const essai = Number(i.dataset.essai || 0);
-  if (essai >= 3) return;
+  if (essai >= ATTENTES_IMAGE.length) { i.classList.add('img-absente'); return; }
   i.dataset.essai = String(essai + 1);
-  const src = i.getAttribute('src');
-  setTimeout(() => { i.removeAttribute('src'); i.setAttribute('src', src); }, 1200 * (essai + 1));
+  setTimeout(() => redemande(i), ATTENTES_IMAGE[essai]);
 }, true);
+document.addEventListener('load', (e) => {
+  if (e.target instanceof HTMLImageElement) e.target.classList.remove('img-absente');
+}, true);
+const relanceImages = () => $$('img.img-absente').forEach(i => { i.dataset.essai = '0'; redemande(i); });
+window.addEventListener('online', relanceImages);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) relanceImages(); });
 
 // --- Événements ----------------------------------------------------------------
 document.addEventListener('click', async (e) => {

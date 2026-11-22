@@ -3023,3 +3023,8 @@ body.rail-ouvert .rail { transform: none; }
 .gg-acheter:disabled { box-shadow: none; }
 /* Carte réduite à l'essentiel : un peu d'air entre l'affiche et le prix. */
 .gg-image { margin-bottom: 8px; }
+
+/* Une image qui n'a pas pu arriver : pas d'icône cassée ni de texte, un fond neutre. */
+img.img-absente { visibility: hidden; }
+.gg-apercu:has(img.img-absente) { display: none; }
+.gg-fiche-image a:has(img.img-absente), .accueil-drop-boite:has(img.img-absente) { background: #eff2f6; }
