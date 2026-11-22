@@ -3021,3 +3021,5 @@ body.rail-ouvert .rail { transform: none; }
 :root { --gg-vert: #7c3aed; --gg-vert-fort: #6d28d9; }
 .gg-bouton, .gg-acheter { box-shadow: 0 6px 16px -8px rgb(124 58 237 / .55); }
 .gg-acheter:disabled { box-shadow: none; }
+/* Carte réduite à l'essentiel : un peu d'air entre l'affiche et le prix. */
+.gg-image { margin-bottom: 8px; }

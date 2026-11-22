@@ -1290,7 +1290,8 @@ const photoEntiere = i => { const r = (i.w || 16) / (i.h || 10); return r < 1.2 
 function carteProduit(p, rang = null) {
   const podium = rang && rang <= 3 ? rang : 0;
   const a = p.affiche, i = p.images?.[0];
-  const f = p.file || (p.has?.fichier ? { ext: p.has.fichier.ext, size: p.has.fichier.size } : null);
+  // La carte ne dit que l'essentiel : l'affiche, le prix, le nom et le bouton. La catégorie
+  // et le format (« ZIP · 1,3 Mo ») sont sur la fiche du produit.
   // La carte d'une grande boutique : l'affiche carrée, la catégorie en petit, le prix en
   // gros, le nom sur deux lignes, une ligne grise, et le bouton vert en bas.
   return html`
@@ -1298,10 +1299,8 @@ function carteProduit(p, rang = null) {
       <a class="gg-carte-lien" href="#/p/${p.id}">
         <span class="gg-image">${a ? html`<img src="${a.thumb}" alt="" loading="lazy" width="480" height="480">`
           : i ? html`<img src="${i.thumb}" alt="" loading="lazy" class="contenue">` : boite(p)}</span>
-        <span class="gg-cat">${TYPES[p.type]?.label || p.type}</span>
         <span class="gg-prix">${p.prix ? html`${prixLisible(p.prix)} ${p.devise || 'DA'}` : 'Offert'}</span>
         <span class="gg-nom">${fr(p.title)}</span>
-        <span class="gg-info">${f ? `${f.ext.toUpperCase()} · ${size(f.size)}` : p.url ? domain(p.url) : 'À lire en ligne'}</span>
       </a>
       ${podium ? html`<span class="medaille" title="${rang}ᵉ au classement, ${p.points} points">n° ${rang}</span>` : ''}
       <span class="gg-fav">${gemButton(p, { compact: true, coeur: true })}</span>
