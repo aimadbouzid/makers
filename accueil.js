@@ -139,9 +139,14 @@
     // La vitrine montre des produits : ceux qui sont à vendre d'abord, puis les autres
     // drops faits ici. Les liens vers d'autres sites n'y vont pas — ce ne sont pas des
     // packs, et une vitrine de liens ressemble à un annuaire.
-    const choix = posts.filter(p => !p.pinned && p.type !== 'lien' && p.type !== 'info')
-      .sort((a, b) => (b.prix > 0) - (a.prix > 0) || (b.approvedAt || 0) - (a.approvedAt || 0))
-      .slice(0, 3);
+    // Trois produits de trois familles différentes, ceux qui ont une affiche d'abord : la
+    // vitrine de l'accueil donne tout de suite une idée de la variété du site.
+    const candidats = posts.filter(p => !p.pinned && p.type !== 'lien' && p.type !== 'info')
+      .sort((a, b) => !!b.affiche - !!a.affiche || (b.prix > 0) - (a.prix > 0) || (b.approvedAt || 0) - (a.approvedAt || 0));
+    const famille = p => (/capcut/i.test(p.title) ? 'capcut' : p.type);
+    const vues = new Set(), choix = [];
+    for (const p of candidats) { if (choix.length < 3 && !vues.has(famille(p))) { vues.add(famille(p)); choix.push(p); } }
+    for (const p of candidats) { if (choix.length < 3 && !choix.includes(p)) choix.push(p); }
     const recent = posts.some(p => !p.pinned && Date.now() - (p.approvedAt || 0) < 7 * 86400000);
     if (recent) suite.textContent = 'Voici les derniers drops.';
     choix.forEach((p, i) => {
@@ -150,8 +155,15 @@
       const pied = el('span', 'accueil-drop-pied');
       pied.append(el('span', 'accueil-drop-titre', p.title),
         el('span', 'accueil-drop-prix' + (p.prix ? '' : ' offert'), p.prix ? `${p.prix} ${p.devise || 'DA'}` : 'Offert'));
-      const cadre = el('span', 'accueil-drop-boite');
-      cadre.append(boite(p));
+      // L'affiche carrée du produit, comme dans la boutique ; la boîte reste pour un drop
+      // qui n'a pas d'image.
+      const image = p.affiche?.thumb || p.images?.[0]?.thumb;
+      const cadre = el('span', 'accueil-drop-boite' + (image ? ' affiche' : ''));
+      if (image) {
+        const img = document.createElement('img');
+        img.src = image; img.alt = ''; img.width = 400; img.height = 400; img.decoding = 'async';
+        cadre.append(img);
+      } else cadre.append(boite(p));
       a.append(cadre, pied);
       a.addEventListener('click', e => { e.preventDefault(); ouvrir('#/p/' + p.id); });
       conteneur.append(a);

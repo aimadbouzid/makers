@@ -3008,3 +3008,9 @@ body.rail-ouvert .rail { transform: none; }
   .gg-claude-puces a { font-size: 13px; padding: 6px 12px; }
   .gg-claude-rail { grid-auto-columns: 72%; }
 }
+
+/* L'écran d'accueil montre les affiches carrées des produits, comme la boutique. */
+.accueil-drop-boite.affiche { height: auto; aspect-ratio: 1 / 1; margin: 10px 10px 8px; border-radius: 14px; overflow: hidden; background: #eff2f6; }
+.accueil-drop-boite.affiche img { display: block; width: 100%; height: 100%; object-fit: cover; transition: transform .4s var(--ease); }
+.accueil-drop:hover .accueil-drop-boite.affiche img { transform: scale(1.04); }
+@media (max-width: 700px) { .accueil-drop-boite.affiche { height: auto; margin: 8px 8px 6px; border-radius: 12px; } }
