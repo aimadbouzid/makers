@@ -233,7 +233,7 @@ const memo = new Map();
 // parfois trois secondes à arriver, c'est la différence entre une page blanche et une
 // page qui est déjà là. Rien de privé n'y est gardé (ce sont les drops publics, vus
 // par ce visiteur), et la copie est effacée à la moindre action et à la déconnexion.
-const FIL_ACCUEIL = 'fil2:t=&tag=&q=&s=top&p=&m=&prix=';
+const FIL_ACCUEIL = 'fil3:t=&tag=&q=&s=top&p=&m=&prix=';
 const CLE_FIL = 'mk-fil';
 const GARDE_MS = 7 * 86400000;
 // L'amorce : les données de l'accueil que le serveur a écrites dans la page.
@@ -310,6 +310,15 @@ async function apiStatique(chemin, method) {
   // n'a pas d'horloge, donc elle ne sait pas combien de places sont libres à cet instant.
   if (base === '/me') return { member: null, admin: false, pending: 0, limits, promo, modeles, site };
   if (base === '/stats') return stats;
+  if (base === '/vitrine') {
+    const ouv = posts.filter(p => !p.premium && FAMILLES_PRODUIT.has(p.type));
+    const ordre = (a, b) => b.points - a.points || (b.approvedAt || 0) - (a.approvedAt || 0);
+    const enTete = new Set(melangeVitrine(ouv.slice().sort(ordre)).slice(0, 16).map(p => p.id));
+    return { rayons: RAYONS_VITRINE.map(r => {
+      const tous = ouv.filter(r.garde).sort((a, b) => (enTete.has(a.id) - enTete.has(b.id)) || ordre(a, b));
+      return { cle: r.cle, titre: r.titre, lien: r.lien, total: tous.length, posts: tous.slice(0, 12).map(pourListe) };
+    }).filter(r => r.total >= 3) };
+  }
 
   const points = p => p.points;
   const ouverts = posts.filter(p => !p.premium);
@@ -420,6 +429,7 @@ async function apiStatique(chemin, method) {
       if (tri === 'etoiles') return b.stars - a.stars || b.starsCount - a.starsCount || (b.approvedAt || 0) - (a.approvedAt || 0);
       return (b.approvedAt || 0) - (a.approvedAt || 0);
     });
+    if (q.get('melange') === '1') list = melangeVitrine(list);
     const n = Math.min(100, Math.max(1, Number(q.get('limit')) || 30));
     const depuis = Math.max(0, Number(q.get('offset')) || 0);
     const page = list.slice(depuis, depuis + n);
@@ -1221,6 +1231,53 @@ function tuilesAccueil() {
     </div>`;
 }
 
+// Même mélange que melange() dans src/posts.js, pour la copie publiée.
+const melangeVitrine = liste => {
+  const groupes = new Map();
+  for (const p of liste) { const k = /capcut/i.test(p.title) ? 'capcut' : p.type === 'pdf' ? 'formation' : p.type; if (!groupes.has(k)) groupes.set(k, []); groupes.get(k).push(p); }
+  const files = [...groupes.values()], sortie = [];
+  while (files.some(f => f.length)) for (const f of files) if (f.length) sortie.push(f.shift());
+  return sortie;
+};
+// Les rayons de l'accueil (même liste que RAYONS dans src/posts.js, pour la copie publiée).
+const RAYONS_VITRINE = [
+  { cle: 'capcut', titre: 'Pour CapCut', lien: '#/?q=capcut', garde: p => /capcut/i.test(p.title + ' ' + p.tags.join(' ')) },
+  { cle: 'template', titre: 'Templates et modèles', lien: '#/?t=template', garde: p => p.type === 'template' && !/notion|excel|classeur/i.test(p.title) },
+  { cle: 'bureau', titre: 'Notion et Excel', lien: '#/?q=notion', garde: p => /notion|excel|classeur/i.test(p.title) },
+  { cle: 'design', titre: 'Design et graphisme', lien: '#/?t=design', garde: p => p.type === 'design' && !/capcut/i.test(p.title) },
+  { cle: 'media', titre: 'Photos et vidéos', lien: '#/?t=media', garde: p => p.type === 'media' },
+  { cle: 'audio', titre: 'Sons et musique', lien: '#/?t=audio', garde: p => p.type === 'audio' },
+  { cle: 'code', titre: 'Code et outils', lien: '#/?t=code', garde: p => p.type === 'code' },
+  { cle: 'formation', titre: 'Formations et guides', lien: '#/?t=formation', garde: p => p.type === 'formation' || p.type === 'pdf' },
+];
+// Un rayon : son titre, « Tout voir », et une rangée d'affiches qui défile sur le côté.
+function rayonVitrine(r) {
+  return html`
+    <section class="gg-section gg-rayon">
+      <div class="gg-tete">
+        <h2 class="gg-titre">${r.titre}<small>${r.total}</small></h2>
+        <a class="gg-tout" href="${r.lien}">Tout voir${ICON.suivant}</a>
+      </div>
+      <div class="gg-rail">${r.posts.map(p => carteProduit(p))}</div>
+    </section>`;
+}
+// Le rayon Claude : un bloc à part, avec sa voix.
+function rayonClaude(listeIA) {
+  return html`
+    <section class="gg-claude">
+      <div class="gg-claude-tete">
+        <p class="gg-claude-sur">${ICON.etincelle}Ton assistant, en mieux</p>
+        <h2>Pour travailler avec Claude</h2>
+        <p class="gg-claude-sous">Des skills qui s’installent en une minute, des prompts qui marchent du premier coup, et des idées pour lui confier le travail qui t’ennuie. Toi, tu gardes le plaisir.</p>
+        <nav class="gg-claude-puces" aria-label="Rubriques pour Claude">
+          <a href="#/?t=skill">Skills</a><a href="#/?t=prompt">Prompts</a><a href="#/?t=idee">Idées</a><a href="#/?t=lien">Liens et dépôts</a>
+        </nav>
+      </div>
+      <div class="gg-claude-rail">${listeIA.posts.filter(p => p.type !== 'info').map(p => carte(p))}</div>
+      <a class="gg-claude-tout" href="#/?t=skill">Voir tout ce qui marche avec Claude${ICON.suivant}</a>
+    </section>`;
+}
+
 // Les familles « produit » (templates, design, code, formations, audio, photos et
 // vidéos, PDF) se présentent comme dans une boutique : une grande photo, le prix en
 // gros juste dessous, puis le titre. Les drops pour l'IA (skills, prompts, agents, MCP)
@@ -1432,21 +1489,25 @@ async function feedView(q) {
   const mod = q.get('m') || '';
   const prix = ['payant', 'gratuit'].includes(q.get('prix')) ? q.get('prix') : '';
   const params = new URLSearchParams({ t, tag, q: query, s: sort, p: prem, m: mod, prix });
-  const cle = 'fil2:' + params;
+  const cle = 'fil3:' + params;
   const vu = duCache(cle);
   // Deux rayons, comme dans une boutique : les produits (grande affiche, prix, bouton) et,
   // à part, ce qui sert à travailler avec l'IA (skills, prompts…), qui garde ses cartes.
   // Une catégorie précise n'a qu'un rayon.
   const unRayon = t ? (FAMILLES_PRODUIT.has(t) ? 'produits' : 'ia') : '';
+  // Sur l'accueil, « Meilleures ventes » montre deux rangées, puis viennent les rayons.
+  const surAccueil = !t && !tag && !query && !prem && !mod && !prix;
   const frais = Promise.all([
-    api('/posts?' + params + '&rayon=' + (unRayon || 'produits')),
+    api('/posts?' + params + '&rayon=' + (unRayon || 'produits') + (surAccueil ? '&melange=1&limit=16' : '')),
     api('/stats'), api('/top?periode=semaine'), api('/collections?limit=3'),
     unRayon ? Promise.resolve(null) : api('/posts?' + params + '&rayon=ia&limit=8'),
+    surAccueil ? api('/vitrine') : Promise.resolve(null),
   ])
     .then(r => { enCache(cle, r); return r; });
   // Déjà vu : on réaffiche immédiatement et on rafraîchit derrière.
-  const [liste, stats, top, colls, listeIA] = vu || await frais;
+  const [liste, stats, top, colls, listeIA, vitrine] = vu || await frais;
   retiens(liste?.posts); retiens(listeIA?.posts);
+  for (const r of vitrine?.rayons || []) retiens(r.posts);
   const { posts, total: combien, suite } = liste;
   const link = (over) => {
     const n = new URLSearchParams();
@@ -1537,11 +1598,15 @@ async function feedView(q) {
               ? html`<a class="btn primary" href="${S.me ? '#/partager' : '#/rejoindre'}">${ICON.etiquette}${S.me ? 'Mettre un produit en vente' : 'Rejoindre pour vendre'}</a>`
               : html`<a class="btn primary" href="${S.me ? '#/partager' : '#/rejoindre'}">${S.me ? 'New drop' : 'Rejoindre pour faire un drop'}</a>`}</div>`}
         </div>
-        ${suite ? html`<div class="plus"><button class="btn" data-action="plus" data-cible="liste-principale" data-suite="${suite}" data-params="${params}&rayon=${unRayon || 'produits'}">Voir plus<span class="muted"> · ${combien - posts.length} restants</span></button></div>` : ''}
+        ${suite ? html`<div class="plus"><button class="btn" data-action="plus" data-cible="liste-principale" data-suite="${suite}" data-params="${params}&rayon=${unRayon || 'produits'}${nu ? '&melange=1' : ''}">Voir plus<span class="muted"> · ${combien - posts.length} restants</span></button></div>` : ''}
       </section>` : ''}
 
+      ${(vitrine?.rayons || []).slice(0, 4).map(rayonVitrine)}
+      ${nu && listeIA?.posts?.length ? rayonClaude(listeIA) : ''}
+      ${(vitrine?.rayons || []).slice(4).map(rayonVitrine)}
+
       <!-- Le rayon de l'IA : les skills, prompts, agents et le reste gardent leurs cartes. -->
-      ${listeIA?.posts?.length ? html`
+      ${!nu && listeIA?.posts?.length ? html`
       <section class="gg-section">
         <div class="gg-tete">
           <h2 class="gg-titre">${nu ? 'Pour travailler avec Claude et l’IA' : 'Skills, prompts et outils IA'}<small>${listeIA.total}</small></h2>
@@ -3301,7 +3366,7 @@ window.makers = {
 // sur la page d'accueil, ses données partent en même temps que /api/me. C'est un
 // aller-retour entier de gagné avant le premier affichage.
 if ((location.hash || '#/') === '#/') {
-  prechauffer(['/posts?t=&tag=&q=&s=top&p=&m=&prix=&rayon=produits', '/stats', '/top?periode=semaine', '/collections?limit=3', '/posts?t=&tag=&q=&s=top&p=&m=&prix=&rayon=ia&limit=8']);
+  prechauffer(['/posts?t=&tag=&q=&s=top&p=&m=&prix=&rayon=produits&melange=1&limit=16', '/stats', '/top?periode=semaine', '/collections?limit=3', '/posts?t=&tag=&q=&s=top&p=&m=&prix=&rayon=ia&limit=8', '/vitrine']);
 }
 // Les pages publiques s'affichent sans attendre de savoir qui est connecté : /api/me
 // part en même temps, et la page n'est redessinée que si sa réponse change quelque
